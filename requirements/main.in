@@ -4,3 +4,6 @@
 #
 # After editing, update requirements/main.txt by running:
 #     make update-deps
+
+click
+pyyaml

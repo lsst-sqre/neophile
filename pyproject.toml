@@ -89,5 +89,5 @@ exclude = '''
 include_trailing_comma = true
 multi_line_output = 3
 known_first_party = ["neophile", "tests"]
-known_third_party = ["setuptools"]
+known_third_party = ["click", "setuptools", "yaml"]
 skip = ["docs/conf.py"]
