@@ -12,25 +12,33 @@ def test_scanner() -> None:
     scanner = Scanner(root=str(datapath))
     results = scanner.scan()
 
-    assert results == {
-        "elasticsearch": {
+    assert sorted(results, key=lambda r: r["name"]) == [
+        {
+            "name": "elasticsearch",
             "type": "helm",
             "version": ">=1.26.2",
             "repository": "https://kubernetes-charts.storage.googleapis.com/",
+            "path": str(datapath / "logging" / "requirements.yaml"),
         },
-        "fluentd-elasticsearch": {
+        {
+            "name": "fluentd-elasticsearch",
             "type": "helm",
             "version": ">=3.0.0",
             "repository": "https://kiwigrid.github.io",
+            "path": str(datapath / "logging" / "requirements.yaml"),
         },
-        "gafaelfawr": {
+        {
+            "name": "gafaelfawr",
             "type": "helm",
             "version": "1.3.1",
             "repository": "https://lsst-sqre.github.io/charts/",
+            "path": str(datapath / "gafaelfawr" / "Chart.yaml"),
         },
-        "kibana": {
+        {
+            "name": "kibana",
             "type": "helm",
             "version": ">=3.0.0",
             "repository": "https://kubernetes-charts.storage.googleapis.com/",
+            "path": str(datapath / "logging" / "requirements.yaml"),
         },
-    }
+    ]

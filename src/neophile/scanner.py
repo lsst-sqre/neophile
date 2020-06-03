@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import yaml
 
 if TYPE_CHECKING:
-    from typing import Dict
+    from typing import Dict, List
 
 __all__ = ["Scanner"]
 
@@ -26,20 +26,21 @@ class Scanner:
     def __init__(self, root: str) -> None:
         self._root = root
 
-    def scan(self) -> Dict[str, Dict[str, str]]:
+    def scan(self) -> List[Dict[str, str]]:
         """Scan a source tree for version references.
 
         Currently only looks for Helm chart dependencies.
 
         Returns
         -------
-        results : Dict[`str`, Dict[`str`, `str`]]
-            The top-level key will be the name of the external package.  The
-            value is a dict of information about that reference.  The keys
-            will include ``type`` (the type of dependency) and ``version``
+        results : List[Dict[str, str]]
+            A list of all discovered Helm chart dependencies.  Each member
+            contains information about that reference.  The keys will include
+            ``name`` (the name of the dependency), ``type`` (the type of
+            dependency), ``path`` (the path of the reference), and ``version``
             (the pinned version number).
         """
-        results = {}
+        results = []
         for dirpath, _, filenames in os.walk(self._root):
             for name in filenames:
                 if name not in ("Chart.yaml", "requirements.yaml"):
@@ -48,9 +49,12 @@ class Scanner:
                 with path.open() as f:
                     requirements = yaml.safe_load(f)
                 for dependency in requirements.get("dependencies", []):
-                    results[dependency["name"]] = {
+                    entry = {
+                        "name": dependency["name"],
+                        "path": str(path),
                         "type": "helm",
                         "version": dependency["version"],
                         "repository": dependency["repository"],
                     }
+                    results.append(entry)
         return results
