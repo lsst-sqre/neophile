@@ -2,18 +2,32 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
+from functools import wraps
 from typing import TYPE_CHECKING
 
+import aiohttp
 import click
 import yaml
 
+from neophile.inventory import HelmInventory
 from neophile.scanner import Scanner
 
 if TYPE_CHECKING:
-    from typing import Union
+    from typing import Any, Awaitable, Callable, Optional, TypeVar
 
-__all__ = ["main", "help", "scan"]
+    T = TypeVar("T")
+
+__all__ = ["main"]
+
+
+def coroutine(f: Callable[..., Awaitable[T]]) -> Callable[..., T]:
+    @wraps(f)
+    def wrapper(*args: Any, **kwargs: Any) -> T:
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -29,7 +43,7 @@ def main() -> None:
 @main.command()
 @click.argument("topic", default=None, required=False, nargs=1)
 @click.pass_context
-def help(ctx: click.Context, topic: Union[None, str]) -> None:
+def help(ctx: click.Context, topic: Optional[str]) -> None:
     """Show help for any command."""
     # The help command implementation is taken from
     # https://www.burgundywall.com/post/having-click-help-subcommand
@@ -41,6 +55,17 @@ def help(ctx: click.Context, topic: Union[None, str]) -> None:
     else:
         assert ctx.parent
         click.echo(ctx.parent.get_help())
+
+
+@main.command()
+@coroutine
+@click.argument("repository", required=True)
+async def inventory(repository: str) -> None:
+    """Inventory available versions."""
+    async with aiohttp.ClientSession() as session:
+        inventory = HelmInventory(session)
+        results = await inventory.inventory(repository)
+    print(yaml.dump(dict(results)))
 
 
 @main.command()

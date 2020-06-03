@@ -5,9 +5,11 @@
 # After editing, update requirements/dev.txt by running:
 #     make update-deps
 
+aioresponses
 coverage[toml]
 flake8
 mypy
 pre-commit
 pytest
+pytest-asyncio
 pytest-sugar
