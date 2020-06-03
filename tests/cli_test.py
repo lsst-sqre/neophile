@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import yaml
+from aioresponses import aioresponses
 from click.testing import CliRunner
 
 from neophile.cli import main
@@ -25,3 +29,27 @@ def test_help() -> None:
     result = runner.invoke(main, ["help", "unknown-command"])
     assert result.exit_code != 0
     assert "Unknown help topic unknown-command" in result.output
+
+
+def test_inventory() -> None:
+    runner = CliRunner()
+
+    index_path = Path(__file__).parent / "data" / "helm" / "sample-index.yaml"
+    index_data = index_path.read_bytes()
+    with aioresponses() as mock:
+        mock.get("https://example.com/index.yaml", body=index_data)
+        result = runner.invoke(main, ["inventory", "https://example.com/"])
+    assert result.exit_code == 0
+    data = yaml.safe_load(result.output)
+    assert data["gafaelfawr"] == ["1.3.1"]
+
+
+def test_scan() -> None:
+    runner = CliRunner()
+
+    path = Path(__file__).parent / "data" / "helm"
+    with path:
+        result = runner.invoke(main, ["scan"])
+    assert result.exit_code == 0
+    data = yaml.safe_load(result.output)
+    assert sorted(data, key=lambda r: r["name"])[0]["name"] == "elasticsearch"
