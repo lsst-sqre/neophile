@@ -8,4 +8,4 @@
 aiohttp
 click
 semver
-pyyaml
+ruamel.yaml

@@ -2,20 +2,32 @@
 
 from __future__ import annotations
 
+from io import StringIO
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import aiohttp
 import pytest
-import yaml
 from aioresponses import aioresponses
+from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
+
+if TYPE_CHECKING:
+    from typing import Any, Dict
+
+
+def yaml_to_string(data: Dict[str, Any]) -> str:
+    yaml = YAML()
+    output = StringIO()
+    yaml.dump(data, output)
+    return output.getvalue()
 
 
 @pytest.mark.asyncio
 async def test_analyzer() -> None:
     datapath = Path(__file__).parent / "data" / "helm"
-    googleapis = yaml.dump(
+    googleapis = yaml_to_string(
         {
             "entries": {
                 "elasticsearch": [
@@ -27,10 +39,10 @@ async def test_analyzer() -> None:
             }
         }
     )
-    kiwigrid = yaml.dump(
+    kiwigrid = yaml_to_string(
         {"entries": {"fluentd-elasticsearch": [{"version": "3.0.0"}]}}
     )
-    sqre = yaml.dump({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
+    sqre = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
 
     with aioresponses() as mock:
         mock.get(

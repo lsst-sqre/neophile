@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import yaml
+from ruamel.yaml import YAML
 
 if TYPE_CHECKING:
     from typing import Dict, List
@@ -25,6 +25,7 @@ class Scanner:
 
     def __init__(self, root: str) -> None:
         self._root = root
+        self._yaml = YAML()
 
     def scan(self) -> List[Dict[str, str]]:
         """Scan a source tree for version references.
@@ -47,7 +48,7 @@ class Scanner:
                     continue
                 path = Path(dirpath) / name
                 with path.open() as f:
-                    requirements = yaml.safe_load(f)
+                    requirements = self._yaml.load(f)
                 for dependency in requirements.get("dependencies", []):
                     entry = {
                         "name": dependency["name"],

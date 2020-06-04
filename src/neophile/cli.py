@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 from functools import wraps
 from typing import TYPE_CHECKING
 
 import aiohttp
 import click
-import yaml
+from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
 from neophile.inventory import HelmInventory
@@ -71,7 +72,9 @@ async def analyze(path: str, allow_expressions: bool) -> None:
     async with aiohttp.ClientSession() as session:
         analyzer = Analyzer(path, session, allow_expressions=allow_expressions)
         results = await analyzer.analyze()
-    print(yaml.dump(results))
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.dump(results, sys.stdout)
 
 
 @main.command()
@@ -82,7 +85,9 @@ async def inventory(repository: str) -> None:
     async with aiohttp.ClientSession() as session:
         inventory = HelmInventory(session)
         results = await inventory.inventory(repository)
-    print(yaml.dump(results))
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.dump(results, sys.stdout)
 
 
 @main.command()
@@ -91,4 +96,6 @@ def scan(path: str) -> None:
     """Scan the current directory for versions."""
     scanner = Scanner(root=path)
     results = scanner.scan()
-    print(yaml.dump(results))
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.dump(results, sys.stdout)

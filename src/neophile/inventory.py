@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
-import yaml
+from ruamel.yaml import YAML
 from semver import VersionInfo
 
 if TYPE_CHECKING:
@@ -28,6 +28,7 @@ class HelmInventory:
 
     def __init__(self, session: ClientSession) -> None:
         self._session = session
+        self._yaml = YAML()
 
     async def inventory(self, url: str) -> Dict[str, str]:
         """Inventory the available versions of Helm charts.
@@ -57,7 +58,7 @@ class HelmInventory:
             url += "/"
         index_url = urljoin(url, "index.yaml")
         r = await self._session.get(index_url, raise_for_status=True)
-        index = yaml.safe_load(await r.text())
+        index = self._yaml.load(await r.text())
 
         results = {}
         for name, data in index.get("entries", {}).items():
