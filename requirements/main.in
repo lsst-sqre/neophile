@@ -7,4 +7,5 @@
 
 aiohttp
 click
+semver
 pyyaml

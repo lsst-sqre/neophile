@@ -16,7 +16,7 @@ def test_scanner() -> None:
         {
             "name": "elasticsearch",
             "type": "helm",
-            "version": ">=1.26.2",
+            "version": "1.26.2",
             "repository": "https://kubernetes-charts.storage.googleapis.com/",
             "path": str(datapath / "logging" / "requirements.yaml"),
         },

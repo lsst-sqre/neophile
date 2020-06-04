@@ -319,8 +319,12 @@ entries:
     urls:
     - postgres-0.0.23.tgz
     version: 0.0.23
-  # One corrupt entry without a version.
   corrupt:
+  # One corrupt entry without a version.
   - apiVersion: v1
     name: corrupt
+  # Another corrupt entry with a bad version number.
+  - apiVersion: v1
+    name: corrupt
+    version: invalid
 generated: "2020-05-29T16:00:22.513708893-07:00"

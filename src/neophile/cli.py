@@ -11,6 +11,7 @@ import aiohttp
 import click
 import yaml
 
+from neophile.analysis import Analyzer
 from neophile.inventory import HelmInventory
 from neophile.scanner import Scanner
 
@@ -59,18 +60,30 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 
 @main.command()
 @coroutine
+@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze")
+async def analyze(path: str) -> None:
+    """Analyze the current directory for pending upgrades."""
+    async with aiohttp.ClientSession() as session:
+        analyzer = Analyzer(path, session)
+        results = await analyzer.analyze()
+    print(yaml.dump(results))
+
+
+@main.command()
+@coroutine
 @click.argument("repository", required=True)
 async def inventory(repository: str) -> None:
     """Inventory available versions."""
     async with aiohttp.ClientSession() as session:
         inventory = HelmInventory(session)
         results = await inventory.inventory(repository)
-    print(yaml.dump(dict(results)))
+    print(yaml.dump(results))
 
 
 @main.command()
-def scan() -> None:
+@click.option("--path", default=os.getcwd(), type=str, help="Path to scan")
+def scan(path: str) -> None:
     """Scan the current directory for versions."""
-    scanner = Scanner(root=os.getcwd())
+    scanner = Scanner(root=path)
     results = scanner.scan()
     print(yaml.dump(results))

@@ -1,6 +1,6 @@
 dependencies:
 - name: elasticsearch
-  version: ">=1.26.2"
+  version: "1.26.2"
   repository: https://kubernetes-charts.storage.googleapis.com/
 - name: kibana
   version: ">=3.0.0"

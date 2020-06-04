@@ -31,6 +31,24 @@ def test_help() -> None:
     assert "Unknown help topic unknown-command" in result.output
 
 
+def test_analyze() -> None:
+    runner = CliRunner()
+
+    sqre = yaml.dump({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
+    root = Path(__file__).parent / "data" / "helm" / "gafaelfawr"
+    with aioresponses() as mock:
+        mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
+        result = runner.invoke(main, ["analyze", "--path", str(root)])
+
+    print(result)
+    print(result.output)
+    assert result.exit_code == 0
+    data = yaml.safe_load(result.output)
+    assert data[0]["name"] == "gafaelfawr"
+    assert data[0]["current"] == "1.3.1"
+    assert data[0]["latest"] == "1.4.0"
+
+
 def test_inventory() -> None:
     runner = CliRunner()
 
@@ -41,15 +59,14 @@ def test_inventory() -> None:
         result = runner.invoke(main, ["inventory", "https://example.com/"])
     assert result.exit_code == 0
     data = yaml.safe_load(result.output)
-    assert data["gafaelfawr"] == ["1.3.1"]
+    assert data["gafaelfawr"] == "1.3.1"
 
 
 def test_scan() -> None:
     runner = CliRunner()
 
     path = Path(__file__).parent / "data" / "helm"
-    with path:
-        result = runner.invoke(main, ["scan"])
+    result = runner.invoke(main, ["scan", "--path", str(path)])
     assert result.exit_code == 0
     data = yaml.safe_load(result.output)
     assert sorted(data, key=lambda r: r["name"])[0]["name"] == "elasticsearch"
