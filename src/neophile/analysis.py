@@ -26,11 +26,22 @@ class Analyzer:
     session : `aiohttp.ClientSession`
         The aiohttp client session to use to make requests for external
         information, such as Helm repository indices.
+    allow_expressions : `bool`, optional
+        If set, allow dependencies to be expressed as expressions, and only
+        report a needed update if the latest version is outside the range of
+        the expression.  Defaults to false.
     """
 
-    def __init__(self, root: str, session: ClientSession) -> None:
+    def __init__(
+        self,
+        root: str,
+        session: ClientSession,
+        *,
+        allow_expressions: bool = False,
+    ) -> None:
         self._scanner = Scanner(root)
         self._helm_inventory = HelmInventory(session)
+        self._allow_expressions = allow_expressions
 
     async def analyze(self) -> List[Dict[str, str]]:
         """Analyze a tree and return a list of needed changes.
@@ -64,8 +75,7 @@ class Analyzer:
 
         return results
 
-    @staticmethod
-    def _needs_update(current: str, latest_str: str) -> bool:
+    def _needs_update(self, current: str, latest_str: str) -> bool:
         """Determine if a dependency needs to be updated.
 
         Parameters
@@ -86,5 +96,7 @@ class Analyzer:
         latest = VersionInfo.parse(latest_str)
         if VersionInfo.isvalid(current):
             return latest > current
+        elif self._allow_expressions:
+            return not latest.match(current)
         else:
             return True

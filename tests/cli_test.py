@@ -25,6 +25,7 @@ def test_help() -> None:
     result = runner.invoke(main, ["help", "scan"])
     assert result.exit_code == 0
     assert "Commands:" not in result.output
+    assert "Options:" in result.output
 
     result = runner.invoke(main, ["help", "unknown-command"])
     assert result.exit_code != 0

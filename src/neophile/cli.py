@@ -61,10 +61,15 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 @main.command()
 @coroutine
 @click.option("--path", default=os.getcwd(), type=str, help="Path to analyze")
-async def analyze(path: str) -> None:
+@click.option(
+    "--allow-expressions/--no-allow-expressions",
+    default=False,
+    help="Allow version match expressions",
+)
+async def analyze(path: str, allow_expressions: bool) -> None:
     """Analyze the current directory for pending upgrades."""
     async with aiohttp.ClientSession() as session:
-        analyzer = Analyzer(path, session)
+        analyzer = Analyzer(path, session, allow_expressions=allow_expressions)
         results = await analyzer.analyze()
     print(yaml.dump(results))
 
