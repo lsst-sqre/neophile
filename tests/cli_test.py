@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from io import StringIO
 from pathlib import Path
 
@@ -50,6 +51,27 @@ def test_analyze() -> None:
     assert data[0]["name"] == "gafaelfawr"
     assert data[0]["current"] == "1.3.1"
     assert data[0]["latest"] == "1.4.0"
+
+
+def test_analyze_update(tmp_path: Path) -> None:
+    runner = CliRunner()
+    src = Path(__file__).parent / "data" / "helm" / "gafaelfawr" / "Chart.yaml"
+    dst = tmp_path / "Chart.yaml"
+    shutil.copy(src, dst)
+    yaml = YAML()
+    output = StringIO()
+    yaml.dump({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}}, output)
+    sqre = output.getvalue()
+
+    with aioresponses() as mock:
+        mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
+        result = runner.invoke(
+            main, ["analyze", "--path", str(tmp_path), "--update"]
+        )
+
+    assert result.exit_code == 0
+    data = yaml.load(dst)
+    assert data["dependencies"][0]["version"] == "1.4.0"
 
 
 def test_inventory() -> None:

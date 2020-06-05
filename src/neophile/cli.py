@@ -15,6 +15,7 @@ from ruamel.yaml import YAML
 from neophile.analysis import Analyzer
 from neophile.inventory import HelmInventory
 from neophile.scanner import Scanner
+from neophile.update import HelmUpdater
 
 if TYPE_CHECKING:
     from typing import Any, Awaitable, Callable, Optional, TypeVar
@@ -61,20 +62,30 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 
 @main.command()
 @coroutine
-@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze")
 @click.option(
     "--allow-expressions/--no-allow-expressions",
     default=False,
     help="Allow version match expressions",
 )
-async def analyze(path: str, allow_expressions: bool) -> None:
+@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze")
+@click.option(
+    "--update/--no-update",
+    default=False,
+    help="Update out-of-date dependencies",
+)
+async def analyze(allow_expressions: bool, path: str, update: bool) -> None:
     """Analyze the current directory for pending upgrades."""
     async with aiohttp.ClientSession() as session:
         analyzer = Analyzer(path, session, allow_expressions=allow_expressions)
         results = await analyzer.analyze()
-    yaml = YAML()
-    yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.dump(results, sys.stdout)
+    if update:
+        updater = HelmUpdater()
+        for change in results:
+            updater.update(change["path"], change["name"], change["latest"])
+    else:
+        yaml = YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        yaml.dump(results, sys.stdout)
 
 
 @main.command()
