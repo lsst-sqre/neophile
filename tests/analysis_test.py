@@ -12,6 +12,7 @@ from aioresponses import aioresponses
 from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
+from neophile.update import HelmUpdate
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -64,36 +65,32 @@ async def test_analyzer() -> None:
             analyzer = Analyzer(str(datapath), session, allow_expressions=True)
             results_expressions = await analyzer.analyze()
 
-    assert sorted(results, key=lambda r: r["name"]) == [
-        {
-            "path": str(datapath / "logging" / "requirements.yaml"),
-            "name": "fluentd-elasticsearch",
-            "type": "helm",
-            "current": ">=3.0.0",
-            "latest": "3.0.0",
-        },
-        {
-            "path": str(datapath / "gafaelfawr" / "Chart.yaml"),
-            "name": "gafaelfawr",
-            "type": "helm",
-            "current": "1.3.1",
-            "latest": "1.4.0",
-        },
-        {
-            "path": str(datapath / "logging" / "requirements.yaml"),
-            "name": "kibana",
-            "type": "helm",
-            "current": ">=3.0.0",
-            "latest": "3.0.1",
-        },
+    assert sorted(results, key=lambda r: r.name) == [
+        HelmUpdate(
+            name="fluentd-elasticsearch",
+            current=">=3.0.0",
+            latest="3.0.0",
+            path=str(datapath / "logging" / "requirements.yaml"),
+        ),
+        HelmUpdate(
+            name="gafaelfawr",
+            current="1.3.1",
+            latest="1.4.0",
+            path=str(datapath / "gafaelfawr" / "Chart.yaml"),
+        ),
+        HelmUpdate(
+            name="kibana",
+            current=">=3.0.0",
+            latest="3.0.1",
+            path=str(datapath / "logging" / "requirements.yaml"),
+        ),
     ]
 
-    assert sorted(results_expressions, key=lambda r: r["name"]) == [
-        {
-            "path": str(datapath / "gafaelfawr" / "Chart.yaml"),
-            "name": "gafaelfawr",
-            "type": "helm",
-            "current": "1.3.1",
-            "latest": "1.4.0",
-        }
+    assert sorted(results_expressions, key=lambda r: r.name) == [
+        HelmUpdate(
+            name="gafaelfawr",
+            current="1.3.1",
+            latest="1.4.0",
+            path=str(datapath / "gafaelfawr" / "Chart.yaml"),
+        )
     ]

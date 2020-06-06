@@ -3,15 +3,42 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML
 
 if TYPE_CHECKING:
-    from typing import Dict, List
+    from typing import List
 
-__all__ = ["Scanner"]
+__all__ = [
+    "Dependency",
+    "HelmDependency",
+    "Scanner",
+]
+
+
+@dataclass(frozen=True, eq=True)
+class Dependency:
+    """Base class for a dependency on some external resource."""
+
+    name: str
+    """The name of the external dependency."""
+
+    version: str
+    """The version of the dependency (may be a match pattern)."""
+
+    path: str
+    """The file that contains the dependency declaration."""
+
+
+@dataclass(frozen=True, eq=True)
+class HelmDependency(Dependency):
+    """Represents a single Helm dependency."""
+
+    repository: str
+    """The name of the chart repository containing the dependency."""
 
 
 class Scanner:
@@ -27,19 +54,15 @@ class Scanner:
         self._root = root
         self._yaml = YAML()
 
-    def scan(self) -> List[Dict[str, str]]:
+    def scan(self) -> List[HelmDependency]:
         """Scan a source tree for version references.
 
         Currently only looks for Helm chart dependencies.
 
         Returns
         -------
-        results : List[Dict[str, str]]
-            A list of all discovered Helm chart dependencies.  Each member
-            contains information about that reference.  The keys will include
-            ``name`` (the name of the dependency), ``type`` (the type of
-            dependency), ``path`` (the path of the reference), and ``version``
-            (the pinned version number).
+        results : List[`HelmDependency`]
+            A list of all discovered Helm chart dependencies.
         """
         results = []
         for dirpath, _, filenames in os.walk(self._root):
@@ -49,13 +72,12 @@ class Scanner:
                 path = Path(dirpath) / name
                 with path.open() as f:
                     requirements = self._yaml.load(f)
-                for dependency in requirements.get("dependencies", []):
-                    entry = {
-                        "name": dependency["name"],
-                        "path": str(path),
-                        "type": "helm",
-                        "version": dependency["version"],
-                        "repository": dependency["repository"],
-                    }
-                    results.append(entry)
+                for data in requirements.get("dependencies", []):
+                    dependency = HelmDependency(
+                        name=data["name"],
+                        version=data["version"],
+                        path=str(path),
+                        repository=data["repository"],
+                    )
+                    results.append(dependency)
         return results

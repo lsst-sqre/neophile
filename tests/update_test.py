@@ -9,7 +9,7 @@ import pytest
 from ruamel.yaml import YAML
 
 from neophile.exceptions import DependencyNotFoundError
-from neophile.update import HelmUpdater
+from neophile.update import HelmUpdate
 
 
 def test_update(tmp_path: Path) -> None:
@@ -18,8 +18,13 @@ def test_update(tmp_path: Path) -> None:
     update_path = tmp_path / "Chart.yaml"
     shutil.copy(str(chart_path), str(update_path))
 
-    updater = HelmUpdater()
-    updater.update(str(update_path), "gafaelfawr", "2.0.0")
+    update = HelmUpdate(
+        name="gafaelfawr",
+        current="1.0.0",
+        latest="2.0.0",
+        path=str(update_path),
+    )
+    update.apply()
 
     yaml = YAML()
     expected = yaml.load(chart_path)
@@ -31,6 +36,11 @@ def test_update_not_found() -> None:
     helm_path = Path(__file__).parent / "data" / "helm"
     requirements_path = helm_path / "logging" / "requirements.yaml"
 
-    updater = HelmUpdater()
+    update = HelmUpdate(
+        name="gafaelfawr",
+        current="1.0.0",
+        latest="2.0.0",
+        path=str(requirements_path),
+    )
     with pytest.raises(DependencyNotFoundError):
-        updater.update(str(requirements_path), "gafaelfawr", "2.0.0")
+        update.apply()

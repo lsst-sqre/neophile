@@ -8,10 +8,11 @@ from semver import VersionInfo
 
 from neophile.inventory import HelmInventory
 from neophile.scanner import Scanner
+from neophile.update import HelmUpdate
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
-    from typing import Dict, List
+    from typing import List
 
 __all__ = ["Analyzer"]
 
@@ -43,34 +44,31 @@ class Analyzer:
         self._helm_inventory = HelmInventory(session)
         self._allow_expressions = allow_expressions
 
-    async def analyze(self) -> List[Dict[str, str]]:
+    async def analyze(self) -> List[HelmUpdate]:
         """Analyze a tree and return a list of needed changes.
 
         Returns
         -------
-        results : List[Dict[`str`, `str`]]
-            A list of change sets.  Each change set will specify a path, a
-            type of dependency, the name of the dependency, the old version,
-            and the new version.
+        results : List[`neophile.update.HelmUpdate`]
+            A list of updates.
         """
         helm_dependencies = self._scanner.scan()
-        helm_repositories = {d["repository"] for d in helm_dependencies}
+        helm_repositories = {d.repository for d in helm_dependencies}
         latest = {}
         for repo in helm_repositories:
             latest[repo] = await self._helm_inventory.inventory(repo)
 
         results = []
         for dependency in helm_dependencies:
-            repo = dependency["repository"]
-            name = dependency["name"]
-            if self._needs_update(dependency["version"], latest[repo][name]):
-                update = {
-                    "path": dependency["path"],
-                    "name": name,
-                    "type": dependency["type"],
-                    "current": dependency["version"],
-                    "latest": latest[repo][name],
-                }
+            repo = dependency.repository
+            name = dependency.name
+            if self._needs_update(dependency.version, latest[repo][name]):
+                update = HelmUpdate(
+                    name=name,
+                    current=dependency.version,
+                    latest=latest[repo][name],
+                    path=dependency.path,
+                )
                 results.append(update)
 
         return results

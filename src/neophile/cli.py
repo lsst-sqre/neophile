@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+from dataclasses import asdict
 from functools import wraps
 from typing import TYPE_CHECKING
 
@@ -15,7 +16,6 @@ from ruamel.yaml import YAML
 from neophile.analysis import Analyzer
 from neophile.inventory import HelmInventory
 from neophile.scanner import Scanner
-from neophile.update import HelmUpdater
 
 if TYPE_CHECKING:
     from typing import Any, Awaitable, Callable, Optional, TypeVar
@@ -79,13 +79,12 @@ async def analyze(allow_expressions: bool, path: str, update: bool) -> None:
         analyzer = Analyzer(path, session, allow_expressions=allow_expressions)
         results = await analyzer.analyze()
     if update:
-        updater = HelmUpdater()
         for change in results:
-            updater.update(change["path"], change["name"], change["latest"])
+            change.apply()
     else:
         yaml = YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
-        yaml.dump(results, sys.stdout)
+        yaml.dump([asdict(u) for u in results], sys.stdout)
 
 
 @main.command()
@@ -109,4 +108,4 @@ def scan(path: str) -> None:
     results = scanner.scan()
     yaml = YAML()
     yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.dump(results, sys.stdout)
+    yaml.dump([asdict(d) for d in results], sys.stdout)
