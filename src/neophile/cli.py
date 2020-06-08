@@ -14,7 +14,7 @@ import click
 from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
-from neophile.inventory import HelmInventory
+from neophile.inventory import CachedHelmInventory
 from neophile.scanner import Scanner
 
 if TYPE_CHECKING:
@@ -93,7 +93,7 @@ async def analyze(allow_expressions: bool, path: str, update: bool) -> None:
 async def inventory(repository: str) -> None:
     """Inventory available versions."""
     async with aiohttp.ClientSession() as session:
-        inventory = HelmInventory(session)
+        inventory = CachedHelmInventory(session)
         results = await inventory.inventory(repository)
     yaml = YAML()
     yaml.indent(mapping=2, sequence=4, offset=2)

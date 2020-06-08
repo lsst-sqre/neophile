@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from semver import VersionInfo
 
-from neophile.inventory import HelmInventory
+from neophile.inventory import CachedHelmInventory
 from neophile.scanner import Scanner
 from neophile.update import HelmUpdate
 
@@ -41,7 +41,7 @@ class Analyzer:
         allow_expressions: bool = False,
     ) -> None:
         self._scanner = Scanner(root)
-        self._helm_inventory = HelmInventory(session)
+        self._helm_inventory = CachedHelmInventory(session)
         self._allow_expressions = allow_expressions
 
     async def analyze(self) -> List[HelmUpdate]:

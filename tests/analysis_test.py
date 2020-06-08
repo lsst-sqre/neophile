@@ -26,7 +26,7 @@ def yaml_to_string(data: Dict[str, Any]) -> str:
 
 
 @pytest.mark.asyncio
-async def test_analyzer() -> None:
+async def test_analyzer(cache_path: Path) -> None:
     datapath = Path(__file__).parent / "data" / "helm"
     googleapis = yaml_to_string(
         {

@@ -89,5 +89,5 @@ exclude = '''
 include_trailing_comma = true
 multi_line_output = 3
 known_first_party = ["neophile", "tests"]
-known_third_party = ["aiohttp", "aioresponses", "click", "pytest", "ruamel", "semver", "setuptools"]
+known_third_party = ["aiohttp", "aioresponses", "click", "pytest", "ruamel", "semver", "setuptools", "xdg"]
 skip = ["docs/conf.py"]

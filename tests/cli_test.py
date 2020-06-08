@@ -34,7 +34,7 @@ def test_help() -> None:
     assert "Unknown help topic unknown-command" in result.output
 
 
-def test_analyze() -> None:
+def test_analyze(cache_path: Path) -> None:
     runner = CliRunner()
 
     yaml = YAML()
@@ -53,7 +53,7 @@ def test_analyze() -> None:
     assert data[0]["latest"] == "1.4.0"
 
 
-def test_analyze_update(tmp_path: Path) -> None:
+def test_analyze_update(tmp_path: Path, cache_path: Path) -> None:
     runner = CliRunner()
     src = Path(__file__).parent / "data" / "helm" / "gafaelfawr" / "Chart.yaml"
     dst = tmp_path / "Chart.yaml"
@@ -74,7 +74,7 @@ def test_analyze_update(tmp_path: Path) -> None:
     assert data["dependencies"][0]["version"] == "1.4.0"
 
 
-def test_inventory() -> None:
+def test_inventory(cache_path: Path) -> None:
     runner = CliRunner()
 
     index_path = Path(__file__).parent / "data" / "helm" / "sample-index.yaml"
