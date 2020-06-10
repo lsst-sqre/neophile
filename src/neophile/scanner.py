@@ -70,14 +70,38 @@ class Scanner:
                 if name not in ("Chart.yaml", "requirements.yaml"):
                     continue
                 path = Path(dirpath) / name
-                with path.open() as f:
-                    requirements = self._yaml.load(f)
-                for data in requirements.get("dependencies", []):
-                    dependency = HelmDependency(
-                        name=data["name"],
-                        version=data["version"],
-                        path=str(path),
-                        repository=data["repository"],
-                    )
-                    results.append(dependency)
+                results.extend(self._build_helm_dependencies(path))
+        return results
+
+    def _build_helm_dependencies(self, path: Path) -> List[HelmDependency]:
+        """Build Helm dependencies from chart dependencies.
+
+        Given the path to a Helm chart file specifying dependencies, construct
+        a list of all dependencies present.
+
+        Parameters
+        ----------
+        path : `pathlib.Path`
+            Path to the file containing the dependencies, either
+            ``Chart.yaml`` (the new syntax) or ``requirements.yaml`` (the old
+            syntax).
+
+        Returns
+        -------
+        results : List[`HelmDependency`]
+            A list of all discovered Helm chart dependencies.
+        """
+        results = []
+        with path.open() as f:
+            requirements = self._yaml.load(f)
+        for data in requirements.get("dependencies", []):
+            if not all(k in data for k in ("name", "version", "repository")):
+                continue
+            dependency = HelmDependency(
+                name=data["name"],
+                version=data["version"],
+                path=str(path),
+                repository=data["repository"],
+            )
+            results.append(dependency)
         return results
