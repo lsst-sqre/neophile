@@ -12,12 +12,13 @@ from aioresponses import aioresponses
 from git import Actor, PushInfo, Remote, Repo
 
 from neophile.config import Configuration
+from neophile.exceptions import PushError
 from neophile.pr import GitHubRepo, PullRequester
 from neophile.update import HelmUpdate
 
 
-@pytest.mark.asyncio
-async def test_pr(tmp_path: Path) -> None:
+def setup_repo(tmp_path: Path) -> Repo:
+    """Set up a repository with the Gafaelfawr Helm chart."""
     repo = Repo.init(str(tmp_path))
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     helm_path = Path(__file__).parent / "data" / "helm"
@@ -27,13 +28,19 @@ async def test_pr(tmp_path: Path) -> None:
     repo.index.add(str(update_path))
     actor = Actor("Someone", "someone@example.com")
     repo.index.commit("Initial commit", author=actor, committer=actor)
+    return repo
+
+
+@pytest.mark.asyncio
+async def test_pr(tmp_path: Path) -> None:
+    repo = setup_repo(tmp_path)
     config = Configuration(github_user="someone", github_token="some-token")
 
     update = HelmUpdate(
         name="gafaelfawr",
         current="1.0.0",
         latest="2.0.0",
-        path=str(update_path),
+        path=str(tmp_path / "Chart.yaml"),
     )
     payload = {"name": "Someone", "email": "someone@example.com"}
     with aioresponses() as mock_responses:
@@ -64,6 +71,33 @@ async def test_pr(tmp_path: Path) -> None:
     assert commit.message == f"Update dependencies\n\n- {change}\n"
     expected_url = "https://someone:some-token@github.com/foo/bar"
     assert repo.remotes["tmp-neophile"].url == expected_url
+
+
+@pytest.mark.asyncio
+async def test_pr_push_failure(tmp_path: Path) -> None:
+    setup_repo(tmp_path)
+    config = Configuration(github_user="someone", github_token="some-token")
+
+    update = HelmUpdate(
+        name="gafaelfawr",
+        current="1.0.0",
+        latest="2.0.0",
+        path=str(tmp_path / "Chart.yaml"),
+    )
+    payload = {"name": "Someone", "email": "someone@example.com"}
+    with aioresponses() as mock_responses:
+        mock_responses.get("https://api.github.com/user", payload=payload)
+        async with aiohttp.ClientSession() as session:
+            pr = PullRequester(str(tmp_path), config, session)
+            with patch.object(Remote, "push") as mock:
+                mock.return_value = [
+                    PushInfo(
+                        PushInfo.ERROR, None, "", None, summary="Some error"
+                    )
+                ]
+                with pytest.raises(PushError) as excinfo:
+                    await pr.make_pull_request([update])
+                assert "Some error" in str(excinfo.value)
 
 
 @pytest.mark.asyncio

@@ -171,7 +171,7 @@ class PullRequester:
         push_info = remote.push(f"{branch}:{branch}")
         for result in push_info:
             if result.flags & PushInfo.ERROR:
-                raise PushError(f"Pushing {branch} failed: {result.note}")
+                raise PushError(f"Pushing {branch} failed: {result.summary}")
 
         data = {
             "title": message.title,
