@@ -50,15 +50,11 @@ async def test_pr(tmp_path: Path) -> None:
                     PushInfo(PushInfo.NEW_HEAD, None, "", None)
                 ]
                 await pr.make_pull_request([update])
-                for head in repo.heads:
-                    if head.name.startswith("u/neophile/"):
-                        branch = head.name
-                        break
-                assert mock.call_args_list == [call(f"{branch}:{branch}")]
+                assert mock.call_args_list == [call("u/neophile:u/neophile")]
 
     assert not repo.is_dirty()
     assert repo.head.ref.name == "master"
-    repo.heads[branch].checkout()
+    repo.heads["u/neophile"].checkout()
     commit = repo.head.commit
     assert commit.author.name == "Someone"
     assert commit.author.email == "someone@example.com"

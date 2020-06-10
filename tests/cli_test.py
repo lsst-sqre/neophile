@@ -5,9 +5,11 @@ from __future__ import annotations
 import shutil
 from io import StringIO
 from pathlib import Path
+from unittest.mock import call, patch
 
 from aioresponses import aioresponses
 from click.testing import CliRunner
+from git import Actor, PushInfo, Remote, Repo
 from ruamel.yaml import YAML
 
 from neophile.cli import main
@@ -72,6 +74,49 @@ def test_analyze_update(tmp_path: Path, cache_path: Path) -> None:
     assert result.exit_code == 0
     data = yaml.load(dst)
     assert data["dependencies"][0]["version"] == "1.4.0"
+
+
+def test_analyze_pr(tmp_path: Path, cache_path: Path) -> None:
+    runner = CliRunner()
+    repo = Repo.init(str(tmp_path))
+    Remote.create(repo, "origin", "https://github.com/foo/bar")
+    src = Path(__file__).parent / "data" / "helm" / "gafaelfawr" / "Chart.yaml"
+    dst = tmp_path / "Chart.yaml"
+    shutil.copy(src, dst)
+    repo.index.add(str(dst))
+    actor = Actor("Someone", "someone@example.com")
+    repo.index.commit("Initial commit", author=actor, committer=actor)
+    yaml = YAML()
+    output = StringIO()
+    yaml.dump({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}}, output)
+    sqre = output.getvalue()
+    payload = {"name": "Someone", "email": "someone@example.com"}
+
+    with aioresponses() as mock:
+        mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
+        mock.get("https://api.github.com/user", payload=payload)
+        mock.post(
+            "https://api.github.com/repos/foo/bar/pulls",
+            payload={},
+            status=201,
+        )
+        with patch.object(Remote, "push") as mock:
+            mock.return_value = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
+            result = runner.invoke(
+                main, ["analyze", "--path", str(tmp_path), "--pr"]
+            )
+            assert mock.call_args_list == [call("u/neophile:u/neophile")]
+
+    assert result.exit_code == 0
+    assert repo.head.ref.name == "master"
+    repo.heads["u/neophile"].checkout()
+    data = yaml.load(dst)
+    assert data["dependencies"][0]["version"] == "1.4.0"
+    commit = repo.head.commit
+    assert commit.author.name == "Someone"
+    assert commit.author.email == "someone@example.com"
+    change = "Update gafaelfawr Helm chart from 1.3.1 to 1.4.0"
+    assert commit.message == f"Update dependencies\n\n- {change}\n"
 
 
 def test_inventory(cache_path: Path) -> None:

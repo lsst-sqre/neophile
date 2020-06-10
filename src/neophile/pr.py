@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 from urllib.parse import ParseResult, urlparse
 
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from neophile.config import Configuration
     from neophile.update import Update
-    from typing import List
+    from typing import List, Sequence
 
 __all__ = ["PullRequester"]
 
@@ -75,12 +74,12 @@ class PullRequester:
         )
         self._repo = Repo(path)
 
-    async def make_pull_request(self, changes: List[Update]) -> None:
+    async def make_pull_request(self, changes: Sequence[Update]) -> None:
         """Create a pull request for a list of changes.
 
         Parameters
         ----------
-        changes : List[`neophile.update.Update`]
+        changes : Sequence[`neophile.update.Update`]
             The changes.
 
         Raises
@@ -88,20 +87,20 @@ class PullRequester:
         neophile.exceptions.PushError
             Pushing the branch to GitHub failed.
         """
-        date = datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S")
         original_branch = self._repo.head.ref
-        branch = f"u/neophile/{date}"
-        self._create_branch(branch)
+        self._create_branch("u/neophile")
         message = await self._commit_changes(changes)
         await self._create_pr(message)
         original_branch.checkout()
 
-    def _build_commit_message(self, changes: List[Update]) -> CommitMessage:
+    def _build_commit_message(
+        self, changes: Sequence[Update]
+    ) -> CommitMessage:
         """Build a commit message from a list of changes.
 
         Parameters
         ----------
-        changes : List[`neophile.update.Update`]
+        changes : Sequence[`neophile.update.Update`]
             The changes.
 
         Returns
@@ -112,14 +111,16 @@ class PullRequester:
         descriptions = [change.description() for change in changes]
         return CommitMessage(title="Update dependencies", changes=descriptions)
 
-    async def _commit_changes(self, changes: List[Update]) -> CommitMessage:
+    async def _commit_changes(
+        self, changes: Sequence[Update]
+    ) -> CommitMessage:
         """Commit a set of changes to the repository.
 
         The changes will be committed on the current branch.
 
         Parameters
         ----------
-        changes : List[`neophile.update.Update`]
+        changes : Sequence[`neophile.update.Update`]
             The changes to apply and commit.
 
         Returns

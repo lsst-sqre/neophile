@@ -14,6 +14,8 @@ import click
 from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
+from neophile.config import Configuration
+from neophile.factory import Factory
 from neophile.inventory import CachedHelmInventory
 from neophile.scanner import Scanner
 
@@ -69,22 +71,32 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 )
 @click.option("--path", default=os.getcwd(), type=str, help="Path to analyze")
 @click.option(
+    "--pr/--no-pr", default=False, help="Generate a pull request of changes."
+)
+@click.option(
     "--update/--no-update",
     default=False,
     help="Update out-of-date dependencies",
 )
-async def analyze(allow_expressions: bool, path: str, update: bool) -> None:
+async def analyze(
+    allow_expressions: bool, path: str, pr: bool, update: bool
+) -> None:
     """Analyze the current directory for pending upgrades."""
     async with aiohttp.ClientSession() as session:
         analyzer = Analyzer(path, session, allow_expressions=allow_expressions)
         results = await analyzer.analyze()
-    if update:
-        for change in results:
-            change.apply()
-    else:
-        yaml = YAML()
-        yaml.indent(mapping=2, sequence=4, offset=2)
-        yaml.dump([asdict(u) for u in results], sys.stdout)
+        if pr:
+            config = Configuration()
+            factory = Factory(config, session)
+            pull_requester = factory.create_pull_requester(path)
+            await pull_requester.make_pull_request(results)
+        elif update:
+            for change in results:
+                change.apply()
+        else:
+            yaml = YAML()
+            yaml.indent(mapping=2, sequence=4, offset=2)
+            yaml.dump([asdict(u) for u in results], sys.stdout)
 
 
 @main.command()
