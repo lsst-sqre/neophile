@@ -5,8 +5,11 @@
 # After editing, update requirements/main.txt by running:
 #     make update-deps
 
+GitPython
 aiohttp
 click
-semver
+gidgethub
+pydantic
 ruamel.yaml
+semver
 xdg

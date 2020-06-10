@@ -16,8 +16,8 @@ __all__ = [
 ]
 
 
-class ApplyMixin(ABC):
-    """Add the abstract apply method.
+class MethodMixin(ABC):
+    """Add the abstract methods for an update.
 
     Workaround for https://github.com/python/mypy/issues/5374.
     """
@@ -32,6 +32,16 @@ class ApplyMixin(ABC):
             The specified file doesn't contain a dependency of that name.
         """
 
+    @abstractmethod
+    def description(self) -> str:
+        """Build a description of this update.
+
+        Returns
+        -------
+        description : `str`
+            Short text description of the update.
+        """
+
 
 @dataclass(frozen=True, eq=True)
 class UpdateMixin:
@@ -39,6 +49,18 @@ class UpdateMixin:
 
     Workaround for https://github.com/python/mypy/issues/5374.
     """
+
+    path: str
+    """The file that contains the dependency."""
+
+
+class Update(UpdateMixin, MethodMixin):
+    """Base class for a needed dependency version update."""
+
+
+@dataclass(frozen=True, eq=True)
+class HelmUpdate(Update):
+    """An update to a Helm chart dependency."""
 
     name: str
     """Name of the dependency."""
@@ -48,18 +70,6 @@ class UpdateMixin:
 
     latest: str
     """The latest available version."""
-
-    path: str
-    """The file that contains the dependency."""
-
-
-class Update(UpdateMixin, ApplyMixin):
-    """Base class for a needed dependency version update."""
-
-
-@dataclass(frozen=True, eq=True)
-class HelmUpdate(Update):
-    """An update to a Helm chart dependency."""
 
     def apply(self) -> None:
         """Apply an update to a Helm chart.
@@ -85,3 +95,16 @@ class HelmUpdate(Update):
 
         with dependency_file.open("w") as f:
             yaml.dump(data, f)
+
+    def description(self) -> str:
+        """Build a description of this update.
+
+        Returns
+        -------
+        description : `str`
+            Short text description of the update.
+        """
+        return (
+            f"Update {self.name} Helm chart from {self.current}"
+            f" to {self.latest}"
+        )
