@@ -8,3 +8,6 @@ dependencies:
 - name: fluentd-elasticsearch
   version: ">=3.0.0"
   repository: https://kiwigrid.github.io
+- name: unknown
+  version: "1.5.0"
+  repository: https://kiwigrid.github.io

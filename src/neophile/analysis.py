@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from semver import VersionInfo
@@ -62,6 +63,11 @@ class Analyzer:
         for dependency in helm_dependencies:
             repo = dependency.repository
             name = dependency.name
+            if name not in latest[repo]:
+                logging.warning(
+                    "Helm chart %s not found in repository %s", name, repo
+                )
+                continue
             if self._needs_update(dependency.version, latest[repo][name]):
                 update = HelmUpdate(
                     name=name,

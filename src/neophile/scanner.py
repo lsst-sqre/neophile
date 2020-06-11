@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -96,6 +97,7 @@ class Scanner:
             requirements = self._yaml.load(f)
         for data in requirements.get("dependencies", []):
             if not all(k in data for k in ("name", "version", "repository")):
+                logging.warning("Malformed dependency in %s", str(path))
                 continue
             dependency = HelmDependency(
                 name=data["name"],

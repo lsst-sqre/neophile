@@ -37,4 +37,10 @@ def test_scanner() -> None:
             path=str(datapath / "logging" / "requirements.yaml"),
             repository="https://kubernetes-charts.storage.googleapis.com/",
         ),
+        HelmDependency(
+            name="unknown",
+            version="1.5.0",
+            path=str(datapath / "logging" / "requirements.yaml"),
+            repository="https://kiwigrid.github.io",
+        ),
     ]
