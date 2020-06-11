@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
@@ -19,6 +20,20 @@ __all__ = [
     "CachedHelmInventory",
     "HelmInventory",
 ]
+
+
+@dataclass(frozen=True, order=True)
+class Version:
+    """Represents a version string."""
+
+    info: VersionInfo
+    """The parsed version of it, for sorting."""
+
+    version: str
+    """The raw version string, which may start with a v."""
+
+    def __str__(self) -> str:
+        return self.version
 
 
 class HelmInventory:
@@ -70,10 +85,18 @@ class HelmInventory:
             versions = []
             for release in data:
                 if "version" in release:
-                    if not VersionInfo.isvalid(release["version"]):
+                    if release["version"].startswith("v"):
+                        version = release["version"][1:]
+                    else:
+                        version = release["version"]
+                    if not VersionInfo.isvalid(version):
                         continue
-                    version = VersionInfo.parse(release["version"])
-                    versions.append(version)
+                    versions.append(
+                        Version(
+                            version=release["version"],
+                            info=VersionInfo.parse(version),
+                        )
+                    )
             if versions:
                 results[name] = str(max(versions))
 

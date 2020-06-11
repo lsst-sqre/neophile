@@ -99,9 +99,13 @@ class Scanner:
             if not all(k in data for k in ("name", "version", "repository")):
                 logging.warning("Malformed dependency in %s", str(path))
                 continue
+            if data["version"].startswith("v"):
+                version = data["version"][1:]
+            else:
+                version = data["version"]
             dependency = HelmDependency(
                 name=data["name"],
-                version=data["version"],
+                version=version,
                 path=str(path),
                 repository=data["repository"],
             )

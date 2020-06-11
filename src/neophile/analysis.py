@@ -97,7 +97,10 @@ class Analyzer:
             current version is invalid or if it is older than the latest
             version.
         """
-        latest = VersionInfo.parse(latest_str)
+        if latest_str.startswith("v"):
+            latest = VersionInfo.parse(latest_str[1:])
+        else:
+            latest = VersionInfo.parse(latest_str)
         if VersionInfo.isvalid(current):
             return latest > current
         elif self._allow_expressions:

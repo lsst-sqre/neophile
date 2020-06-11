@@ -43,7 +43,7 @@ async def test_analyzer(cache_path: Path) -> None:
     kiwigrid = yaml_to_string(
         {"entries": {"fluentd-elasticsearch": [{"version": "3.0.0"}]}}
     )
-    sqre = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
+    sqre = yaml_to_string({"entries": {"gafaelfawr": [{"version": "v1.4.0"}]}})
 
     with aioresponses() as mock:
         mock.get(
@@ -75,7 +75,7 @@ async def test_analyzer(cache_path: Path) -> None:
         HelmUpdate(
             name="gafaelfawr",
             current="1.3.1",
-            latest="1.4.0",
+            latest="v1.4.0",
             path=str(datapath / "gafaelfawr" / "Chart.yaml"),
         ),
         HelmUpdate(
@@ -90,7 +90,7 @@ async def test_analyzer(cache_path: Path) -> None:
         HelmUpdate(
             name="gafaelfawr",
             current="1.3.1",
-            latest="1.4.0",
+            latest="v1.4.0",
             path=str(datapath / "gafaelfawr" / "Chart.yaml"),
         )
     ]
