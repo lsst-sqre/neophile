@@ -17,7 +17,8 @@ from neophile.analysis import Analyzer
 from neophile.config import Configuration
 from neophile.factory import Factory
 from neophile.inventory import CachedHelmInventory
-from neophile.scanner import Scanner
+from neophile.scanner.helm import HelmScanner
+from neophile.scanner.pre_commit import PreCommitScanner
 
 if TYPE_CHECKING:
     from typing import Any, Awaitable, Callable, Optional, TypeVar
@@ -116,8 +117,15 @@ async def inventory(repository: str) -> None:
 @click.option("--path", default=os.getcwd(), type=str, help="Path to scan")
 def scan(path: str) -> None:
     """Scan the current directory for versions."""
-    scanner = Scanner(root=path)
-    results = scanner.scan()
+    helm_scanner = HelmScanner(root=path)
+    helm_results = helm_scanner.scan()
+    pre_commit_scanner = PreCommitScanner(root=path)
+    pre_commit_results = pre_commit_scanner.scan()
+    results = {
+        "helm": [asdict(d) for d in helm_results],
+        "pre-commit": [asdict(d) for d in pre_commit_results],
+    }
+
     yaml = YAML()
     yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.dump([asdict(d) for d in results], sys.stdout)
+    yaml.dump(results, sys.stdout)

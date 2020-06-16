@@ -12,7 +12,7 @@ from semver import VersionInfo
 
 from neophile.exceptions import UncommittedChangesError
 from neophile.inventory import CachedHelmInventory
-from neophile.scanner import Scanner
+from neophile.scanner.helm import HelmScanner
 from neophile.update import HelmUpdate, PythonFrozenUpdate
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class Analyzer:
         allow_expressions: bool = False,
     ) -> None:
         self._root = root
-        self._scanner = Scanner(root)
+        self._helm_scanner = HelmScanner(root)
         self._helm_inventory = CachedHelmInventory(session)
         self._allow_expressions = allow_expressions
 
@@ -71,7 +71,7 @@ class Analyzer:
         results : List[`neophile.update.Update`]
             A list of updates.
         """
-        helm_dependencies = self._scanner.scan()
+        helm_dependencies = self._helm_scanner.scan()
         helm_repositories = {d.repository for d in helm_dependencies}
         latest = {}
         for repo in helm_repositories:

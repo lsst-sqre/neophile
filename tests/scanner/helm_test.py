@@ -1,15 +1,15 @@
-"""Tests for the Scanner class."""
+"""Tests for the HelmScanner class."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from neophile.scanner import HelmDependency, Scanner
+from neophile.scanner.helm import HelmDependency, HelmScanner
 
 
 def test_scanner() -> None:
-    datapath = Path(__file__).parent / "data" / "helm"
-    scanner = Scanner(root=str(datapath))
+    datapath = Path(__file__).parent.parent / "data" / "helm"
+    scanner = HelmScanner(root=str(datapath))
     results = scanner.scan()
 
     assert sorted(results, key=lambda r: r.name) == [

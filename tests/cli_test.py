@@ -141,4 +141,5 @@ def test_scan() -> None:
     assert result.exit_code == 0
     yaml = YAML()
     data = yaml.load(result.output)
-    assert sorted(data, key=lambda r: r["name"])[0]["name"] == "elasticsearch"
+    helm_results = sorted(data["helm"], key=lambda r: r["name"])
+    assert helm_results[0]["name"] == "elasticsearch"

@@ -1,4 +1,4 @@
-"""Source tree scanning."""
+"""Helm dependency scanning."""
 
 from __future__ import annotations
 
@@ -14,18 +14,14 @@ if TYPE_CHECKING:
     from typing import List
 
 __all__ = [
-    "Dependency",
     "HelmDependency",
-    "Scanner",
+    "HelmScanner",
 ]
 
 
-@dataclass(frozen=True, eq=True)
-class Dependency:
-    """Base class for a dependency on some external resource."""
-
-    name: str
-    """The name of the external dependency."""
+@dataclass(frozen=True)
+class HelmDependency:
+    """Represents a single Helm dependency."""
 
     version: str
     """The version of the dependency (may be a match pattern)."""
@@ -33,17 +29,15 @@ class Dependency:
     path: str
     """The file that contains the dependency declaration."""
 
-
-@dataclass(frozen=True, eq=True)
-class HelmDependency(Dependency):
-    """Represents a single Helm dependency."""
+    name: str
+    """The name of the external dependency."""
 
     repository: str
     """The name of the chart repository containing the dependency."""
 
 
-class Scanner:
-    """Scan a source tree for version references.
+class HelmScanner:
+    """Scan a source tree for Helm version references.
 
     Parameters
     ----------
@@ -58,20 +52,20 @@ class Scanner:
     def scan(self) -> List[HelmDependency]:
         """Scan a source tree for version references.
 
-        Currently only looks for Helm chart dependencies.
-
         Returns
         -------
         results : List[`HelmDependency`]
-            A list of all discovered Helm chart dependencies.
+            A list of all discovered dependencies.
         """
         results = []
+
         for dirpath, _, filenames in os.walk(self._root):
             for name in filenames:
                 if name not in ("Chart.yaml", "requirements.yaml"):
                     continue
                 path = Path(dirpath) / name
                 results.extend(self._build_helm_dependencies(path))
+
         return results
 
     def _build_helm_dependencies(self, path: Path) -> List[HelmDependency]:
@@ -89,10 +83,11 @@ class Scanner:
 
         Returns
         -------
-        results : List[`HelmDependency`]
+        results : List[`Dependency`]
             A list of all discovered Helm chart dependencies.
         """
         results = []
+
         with path.open() as f:
             requirements = self._yaml.load(f)
         for data in requirements.get("dependencies", []):
@@ -110,4 +105,5 @@ class Scanner:
                 repository=data["repository"],
             )
             results.append(dependency)
+
         return results
