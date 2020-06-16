@@ -21,9 +21,7 @@ def test_python_update(tmp_path: Path) -> None:
                 new_hash = match.group(1)
     assert new_hash not in main_path.read_text()
 
-    update = PythonFrozenUpdate(
-        name="python-deps", path=str(tmp_path / "requirements")
-    )
+    update = PythonFrozenUpdate(path=str(tmp_path / "requirements"))
     assert "Python" in update.description()
     update.apply()
     assert new_hash in main_path.read_text()

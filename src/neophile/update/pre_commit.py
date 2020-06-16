@@ -1,24 +1,25 @@
-"""Helm dependency update."""
+"""pre-commit dependency update."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlparse
 
 from ruamel.yaml import YAML
 
 from neophile.exceptions import DependencyNotFoundError
 from neophile.update.base import Update
 
-__all__ = ["HelmUpdate"]
+__all__ = ["PreCommitUpdate"]
 
 
 @dataclass(frozen=True, order=True)
-class HelmUpdate(Update):
+class PreCommitUpdate(Update):
     """An update to a Helm chart dependency."""
 
-    name: str
-    """Name of the dependency."""
+    repository: str
+    """The URL of the GitHub repository providing this pre-commit hook."""
 
     current: str
     """The current version."""
@@ -34,21 +35,22 @@ class HelmUpdate(Update):
         neophile.exceptions.DependencyNotFoundError
             The specified file doesn't contain a dependency of that name.
         """
-        dependency_file = Path(self.path)
+        config_path = Path(self.path)
         yaml = YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
-        data = yaml.load(dependency_file)
+        data = yaml.load(config_path)
 
         found = False
-        for dependency in data.get("dependencies", []):
-            if dependency["name"] == self.name:
-                dependency["version"] = self.latest
+        for hook in data.get("repos", []):
+            if hook["repo"] == self.repository:
+                hook["rev"] = self.latest
                 found = True
         if not found:
-            msg = f"Cannot find dependency for {self.name} in {self.path}"
-            raise DependencyNotFoundError(msg)
+            raise DependencyNotFoundError(
+                f"Cannot find dependency for {self.repository} in {self.path}"
+            )
 
-        with dependency_file.open("w") as f:
+        with config_path.open("w") as f:
             yaml.dump(data, f)
 
     def description(self) -> str:
@@ -59,7 +61,8 @@ class HelmUpdate(Update):
         description : `str`
             Short text description of the update.
         """
+        short_repo = urlparse(self.repository).path[1:]
         return (
-            f"Update {self.name} Helm chart from {self.current}"
-            f" to {self.latest}"
+            f"Update {short_repo} pre-commit hook from {self.current} to"
+            f" {self.latest}"
         )

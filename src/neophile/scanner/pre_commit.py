@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from ruamel.yaml import YAML
 
@@ -23,6 +24,12 @@ class PreCommitDependency:
 
     repository: str
     """The URL of the GitHub repository providing this pre-commit hook."""
+
+    owner: str
+    """The GitHub repository owner of the pre-commit hook."""
+
+    repo: str
+    """The GitHub repository name of the pre-commit hook."""
 
     version: str
     """The version of the dependency (may be a match pattern)."""
@@ -60,12 +67,13 @@ class PreCommitScanner:
         with path.open() as f:
             config = self._yaml.load(f)
         for hook in config.get("repos", []):
-            if hook["rev"].startswith("v"):
-                version = hook["rev"][1:]
-            else:
-                version = hook["rev"]
+            path_components = urlparse(hook["repo"]).path[1:].split("/")
             dependency = PreCommitDependency(
-                version=version, path=str(path), repository=hook["repo"],
+                repository=hook["repo"],
+                owner=path_components[0],
+                repo=path_components[1],
+                version=hook["rev"],
+                path=str(path),
             )
             results.append(dependency)
 

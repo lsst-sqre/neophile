@@ -70,18 +70,18 @@ async def test_analyzer_helm(cache_path: Path) -> None:
             analyzer = Analyzer(str(datapath), session, allow_expressions=True)
             results_expressions = await analyzer.analyze()
 
-    assert sorted(results, key=lambda r: r.name) == [
-        HelmUpdate(
-            name="fluentd-elasticsearch",
-            current=">=3.0.0",
-            latest="3.0.0",
-            path=str(datapath / "logging" / "requirements.yaml"),
-        ),
+    assert sorted(results) == [
         HelmUpdate(
             name="gafaelfawr",
             current="1.3.1",
             latest="v1.4.0",
             path=str(datapath / "gafaelfawr" / "Chart.yaml"),
+        ),
+        HelmUpdate(
+            name="fluentd-elasticsearch",
+            current=">=3.0.0",
+            latest="3.0.0",
+            path=str(datapath / "logging" / "requirements.yaml"),
         ),
         HelmUpdate(
             name="kibana",
@@ -91,7 +91,7 @@ async def test_analyzer_helm(cache_path: Path) -> None:
         ),
     ]
 
-    assert sorted(results_expressions, key=lambda r: r.name) == [
+    assert results_expressions == [
         HelmUpdate(
             name="gafaelfawr",
             current="1.3.1",
@@ -116,11 +116,7 @@ async def test_analyzer_python_frozen(tmp_path: Path) -> None:
         analyzer = Analyzer(str(tmp_path), session)
         results = await analyzer.analyze()
 
-    assert results == [
-        PythonFrozenUpdate(
-            name="python-deps", path=str(tmp_path / "requirements")
-        )
-    ]
+    assert results == [PythonFrozenUpdate(path=str(tmp_path / "requirements"))]
 
     # Ensure that the tree is restored to the previous contents.
     assert not repo.is_dirty()

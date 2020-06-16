@@ -44,9 +44,6 @@ class MethodMixin(ABC):
 class UpdateMixin:
     """Add the base data elements for `Update`."""
 
-    name: str
-    """Name of the dependency."""
-
     path: str
     """The file that contains the dependency."""
 

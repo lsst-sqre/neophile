@@ -135,8 +135,7 @@ class Analyzer:
             repo.git.restore(".")
             return [
                 PythonFrozenUpdate(
-                    name="python-deps",
-                    path=os.path.join(self._root, "requirements"),
+                    path=os.path.join(self._root, "requirements")
                 )
             ]
         else:
