@@ -12,7 +12,7 @@ import pytest
 from aioresponses import aioresponses
 from ruamel.yaml import YAML
 
-from neophile.inventory import CachedHelmInventory, HelmInventory
+from neophile.inventory.helm import CachedHelmInventory, HelmInventory
 
 EXPECTED = {
     "cadc-tap": "0.1.9",
@@ -33,8 +33,10 @@ EXPECTED = {
 
 
 @pytest.mark.asyncio
-async def test_helm_inventory() -> None:
-    index_path = Path(__file__).parent / "data" / "helm" / "sample-index.yaml"
+async def test_inventory() -> None:
+    index_path = (
+        Path(__file__).parent.parent / "data" / "helm" / "sample-index.yaml"
+    )
     index = index_path.read_bytes()
 
     with aioresponses() as mock:
@@ -46,9 +48,11 @@ async def test_helm_inventory() -> None:
 
 
 @pytest.mark.asyncio
-async def test_cached_helm_inventory(cache_path: Path) -> None:
+async def test_cached_inventory(cache_path: Path) -> None:
     url = "https://example.com/charts"
-    index_path = Path(__file__).parent / "data" / "helm" / "sample-index.yaml"
+    index_path = (
+        Path(__file__).parent.parent / "data" / "helm" / "sample-index.yaml"
+    )
     index = index_path.read_bytes()
     assert not cache_path.exists()
 

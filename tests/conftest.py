@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from neophile.inventory import CachedHelmInventory
+from neophile.inventory.helm import CachedHelmInventory
 
 if TYPE_CHECKING:
     from typing import Iterator

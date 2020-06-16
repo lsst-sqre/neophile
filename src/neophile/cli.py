@@ -16,7 +16,8 @@ from ruamel.yaml import YAML
 from neophile.analysis import Analyzer
 from neophile.config import Configuration
 from neophile.factory import Factory
-from neophile.inventory import CachedHelmInventory
+from neophile.inventory.github import GitHubInventory
+from neophile.inventory.helm import CachedHelmInventory
 from neophile.scanner.helm import HelmScanner
 from neophile.scanner.pre_commit import PreCommitScanner
 
@@ -102,9 +103,22 @@ async def analyze(
 
 @main.command()
 @coroutine
+@click.argument("owner", required=True)
+@click.argument("repo", required=True)
+async def github_inventory(owner: str, repo: str) -> None:
+    """Inventory available GitHub tags."""
+    config = Configuration()
+    async with aiohttp.ClientSession() as session:
+        inventory = GitHubInventory(config, session)
+        result = await inventory.inventory(owner, repo)
+    print(result)
+
+
+@main.command()
+@coroutine
 @click.argument("repository", required=True)
-async def inventory(repository: str) -> None:
-    """Inventory available versions."""
+async def helm_inventory(repository: str) -> None:
+    """Inventory available Helm chart versions."""
     async with aiohttp.ClientSession() as session:
         inventory = CachedHelmInventory(session)
         results = await inventory.inventory(repository)

@@ -119,14 +119,29 @@ def test_analyze_pr(tmp_path: Path, cache_path: Path) -> None:
     assert commit.message == f"Update dependencies\n\n- {change}\n"
 
 
-def test_inventory(cache_path: Path) -> None:
+def test_github_inventory() -> None:
+    runner = CliRunner()
+    tags = [{"name": "1.1.0"}, {"name": "1.2.0"}]
+
+    with aioresponses() as mock:
+        mock.get("https://api.github.com/repos/foo/bar/tags", payload=tags)
+        result = runner.invoke(main, ["github-inventory", "foo", "bar"])
+
+    assert result.exit_code == 0
+    assert result.output == "1.2.0\n"
+
+
+def test_helm_inventory(cache_path: Path) -> None:
     runner = CliRunner()
 
     index_path = Path(__file__).parent / "data" / "helm" / "sample-index.yaml"
     index_data = index_path.read_bytes()
     with aioresponses() as mock:
         mock.get("https://example.com/index.yaml", body=index_data)
-        result = runner.invoke(main, ["inventory", "https://example.com/"])
+        result = runner.invoke(
+            main, ["helm-inventory", "https://example.com/"]
+        )
+
     assert result.exit_code == 0
     yaml = YAML()
     data = yaml.load(result.output)

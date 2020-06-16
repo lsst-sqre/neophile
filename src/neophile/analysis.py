@@ -11,7 +11,7 @@ from git import Repo
 from semver import VersionInfo
 
 from neophile.exceptions import UncommittedChangesError
-from neophile.inventory import CachedHelmInventory
+from neophile.inventory.helm import CachedHelmInventory
 from neophile.scanner.helm import HelmScanner
 from neophile.update import HelmUpdate, PythonFrozenUpdate
 

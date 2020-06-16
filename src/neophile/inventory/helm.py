@@ -1,4 +1,4 @@
-"""Inventory of available versions."""
+"""Inventory of available Helm chart versions."""
 
 from __future__ import annotations
 
