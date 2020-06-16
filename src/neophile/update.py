@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +13,7 @@ from neophile.exceptions import DependencyNotFoundError
 
 __all__ = [
     "HelmUpdate",
+    "PythonFrozenUpdate",
     "Update",
 ]
 
@@ -50,6 +52,9 @@ class UpdateMixin:
     Workaround for https://github.com/python/mypy/issues/5374.
     """
 
+    name: str
+    """Name of the dependency."""
+
     path: str
     """The file that contains the dependency."""
 
@@ -61,9 +66,6 @@ class Update(UpdateMixin, MethodMixin):
 @dataclass(frozen=True, eq=True)
 class HelmUpdate(Update):
     """An update to a Helm chart dependency."""
-
-    name: str
-    """Name of the dependency."""
 
     current: str
     """The current version."""
@@ -108,3 +110,34 @@ class HelmUpdate(Update):
             f"Update {self.name} Helm chart from {self.current}"
             f" to {self.latest}"
         )
+
+
+@dataclass(frozen=True, eq=True)
+class PythonFrozenUpdate(Update):
+    """An update to Python frozen dependencies."""
+
+    def apply(self) -> None:
+        """Apply an update to frozen Python dependencies.
+
+        Raises
+        ------
+        subprocess.CalledProcessError
+            Running ``make update-deps`` failed.
+        """
+        rootdir = Path(self.path).parent
+        subprocess.run(
+            ["make", "update-deps"],
+            cwd=str(rootdir),
+            check=True,
+            capture_output=True,
+        )
+
+    def description(self) -> str:
+        """Build a description of this update.
+
+        Returns
+        -------
+        description : `str`
+            Short text description of the update.
+        """
+        return "Update frozen Python dependencies"

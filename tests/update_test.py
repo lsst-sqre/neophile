@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
@@ -9,10 +10,10 @@ import pytest
 from ruamel.yaml import YAML
 
 from neophile.exceptions import DependencyNotFoundError
-from neophile.update import HelmUpdate
+from neophile.update import HelmUpdate, PythonFrozenUpdate
 
 
-def test_update(tmp_path: Path) -> None:
+def test_helm_update(tmp_path: Path) -> None:
     helm_path = Path(__file__).parent / "data" / "helm"
     chart_path = helm_path / "gafaelfawr" / "Chart.yaml"
     update_path = tmp_path / "Chart.yaml"
@@ -35,7 +36,7 @@ def test_update(tmp_path: Path) -> None:
     assert yaml.load(update_path) == expected
 
 
-def test_update_not_found() -> None:
+def test_helm_update_not_found() -> None:
     helm_path = Path(__file__).parent / "data" / "helm"
     requirements_path = helm_path / "logging" / "requirements.yaml"
 
@@ -47,3 +48,23 @@ def test_update_not_found() -> None:
     )
     with pytest.raises(DependencyNotFoundError):
         update.apply()
+
+
+def test_python_update(tmp_path: Path) -> None:
+    data_path = Path(__file__).parent / "data" / "python"
+    main_path = tmp_path / "requirements" / "main.txt"
+    shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
+
+    with (data_path / "Makefile").open() as f:
+        for line in f:
+            match = re.match("NEW = (.*)", line)
+            if match:
+                new_hash = match.group(1)
+    assert new_hash not in main_path.read_text()
+
+    update = PythonFrozenUpdate(
+        name="python-deps", path=str(tmp_path / "requirements")
+    )
+    assert "Python" in update.description()
+    update.apply()
+    assert new_hash in main_path.read_text()

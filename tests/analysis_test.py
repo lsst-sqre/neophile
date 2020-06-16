@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import shutil
+import subprocess
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -9,10 +11,12 @@ from typing import TYPE_CHECKING
 import aiohttp
 import pytest
 from aioresponses import aioresponses
+from git import Actor, Repo
 from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
-from neophile.update import HelmUpdate
+from neophile.exceptions import UncommittedChangesError
+from neophile.update import HelmUpdate, PythonFrozenUpdate
 
 if TYPE_CHECKING:
     from typing import Any, Dict
@@ -26,7 +30,7 @@ def yaml_to_string(data: Dict[str, Any]) -> str:
 
 
 @pytest.mark.asyncio
-async def test_analyzer(cache_path: Path) -> None:
+async def test_analyzer_helm(cache_path: Path) -> None:
     datapath = Path(__file__).parent / "data" / "helm"
     googleapis = yaml_to_string(
         {
@@ -94,3 +98,44 @@ async def test_analyzer(cache_path: Path) -> None:
             path=str(datapath / "gafaelfawr" / "Chart.yaml"),
         )
     ]
+
+
+@pytest.mark.asyncio
+async def test_analyzer_python_frozen(tmp_path: Path) -> None:
+    datapath = Path(__file__).parent / "data" / "python"
+    shutil.copytree(str(datapath), str(tmp_path), dirs_exist_ok=True)
+    repo = Repo.init(str(tmp_path))
+    repo.index.add(
+        [str(tmp_path / "Makefile"), str(tmp_path / "requirements")]
+    )
+    actor = Actor("Someone", "someone@example.com")
+    repo.index.commit("Initial commit", author=actor, committer=actor)
+
+    async with aiohttp.ClientSession() as session:
+        analyzer = Analyzer(str(tmp_path), session)
+        results = await analyzer.analyze()
+
+    assert results == [
+        PythonFrozenUpdate(
+            name="python-deps", path=str(tmp_path / "requirements")
+        )
+    ]
+
+    # Ensure that the tree is restored to the previous contents.
+    assert not repo.is_dirty()
+
+    # If the repo is dirty, analysis will fail.
+    subprocess.run(["make", "update-deps"], cwd=str(tmp_path), check=True)
+    assert repo.is_dirty()
+    async with aiohttp.ClientSession() as session:
+        analyzer = Analyzer(str(tmp_path), session)
+        with pytest.raises(UncommittedChangesError):
+            results = await analyzer.analyze()
+
+    # Commit the changed dependencies.  Analysis should now return no changes.
+    repo.index.add(str(tmp_path / "requirements"))
+    repo.index.commit("Update dependencies", author=actor, committer=actor)
+    async with aiohttp.ClientSession() as session:
+        analyzer = Analyzer(str(tmp_path), session)
+        results = await analyzer.analyze()
+    assert results == []
