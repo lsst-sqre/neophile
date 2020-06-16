@@ -26,8 +26,15 @@ __all__ = [
 class Version:
     """Represents a version string."""
 
-    info: VersionInfo
-    """The parsed version of it, for sorting."""
+    parsed_version: VersionInfo
+    """The parsed version of it, for sorting.
+
+    Notes
+    -----
+    This field must be first because it's the field we want to sort on and
+    dataclass ordering is done as if the dataclass were a tuple, via ordering
+    on each element of the tuple in sequence.
+    """
 
     version: str
     """The raw version string, which may start with a v."""
@@ -94,7 +101,7 @@ class HelmInventory:
                     versions.append(
                         Version(
                             version=release["version"],
-                            info=VersionInfo.parse(version),
+                            parsed_version=VersionInfo.parse(version),
                         )
                     )
             if versions:
