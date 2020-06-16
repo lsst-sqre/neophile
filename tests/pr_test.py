@@ -14,7 +14,7 @@ from git import Actor, PushInfo, Remote, Repo
 from neophile.config import Configuration
 from neophile.exceptions import PushError
 from neophile.pr import GitHubRepo, PullRequester
-from neophile.update import HelmUpdate
+from neophile.update.helm import HelmUpdate
 
 
 def setup_repo(tmp_path: Path) -> Repo:

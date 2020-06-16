@@ -16,7 +16,8 @@ from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
 from neophile.exceptions import UncommittedChangesError
-from neophile.update import HelmUpdate, PythonFrozenUpdate
+from neophile.update.helm import HelmUpdate
+from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
     from typing import Any, Dict

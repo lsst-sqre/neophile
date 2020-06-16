@@ -14,7 +14,7 @@ from neophile.exceptions import PushError
 if TYPE_CHECKING:
     from aiohttp import ClientSession
     from neophile.config import Configuration
-    from neophile.update import Update
+    from neophile.update.base import Update
     from typing import List, Sequence
 
 __all__ = ["PullRequester"]

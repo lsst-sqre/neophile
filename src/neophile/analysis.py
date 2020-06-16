@@ -13,11 +13,12 @@ from semver import VersionInfo
 from neophile.exceptions import UncommittedChangesError
 from neophile.inventory.helm import CachedHelmInventory
 from neophile.scanner.helm import HelmScanner
-from neophile.update import HelmUpdate, PythonFrozenUpdate
+from neophile.update.helm import HelmUpdate
+from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
-    from neophile.update import Update
+    from neophile.update.base import Update
     from typing import List
 
 __all__ = ["Analyzer"]
