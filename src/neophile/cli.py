@@ -84,11 +84,13 @@ async def analyze(
     allow_expressions: bool, path: str, pr: bool, update: bool
 ) -> None:
     """Analyze the current directory for pending upgrades."""
+    config = Configuration()
     async with aiohttp.ClientSession() as session:
-        analyzer = Analyzer(path, session, allow_expressions=allow_expressions)
+        analyzer = Analyzer(
+            path, config, session, allow_expressions=allow_expressions
+        )
         results = await analyzer.analyze()
         if pr:
-            config = Configuration()
             factory = Factory(config, session)
             pull_requester = factory.create_pull_requester(path)
             await pull_requester.make_pull_request(results)

@@ -15,12 +15,32 @@ from git import Actor, Repo
 from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
+from neophile.config import Configuration
 from neophile.exceptions import UncommittedChangesError
 from neophile.update.helm import HelmUpdate
+from neophile.update.pre_commit import PreCommitUpdate
 from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
-    from typing import Any, Dict
+    from typing import Any, Dict, Sequence
+
+
+def register_mock_github_tags(
+    mock: aioresponses, owner: str, repo: str, tags: Sequence[str]
+) -> None:
+    """Register a list of tags for a GitHub repository.
+
+    Parameters
+    ----------
+    mock : `aioresponses.aioresponses`
+        The mock object for aiohttp requests.
+    repo : `str`
+        The name of the GitHub repository.
+    tags : List[`str`]
+        The list of tags to return for that repository.
+    """
+    data = [{"name": version} for version in tags]
+    mock.get(f"https://api.github.com/repos/{owner}/{repo}/tags", payload=data)
 
 
 def yaml_to_string(data: Dict[str, Any]) -> str:
@@ -32,6 +52,7 @@ def yaml_to_string(data: Dict[str, Any]) -> str:
 
 @pytest.mark.asyncio
 async def test_analyzer_helm(cache_path: Path) -> None:
+    config = Configuration()
     datapath = Path(__file__).parent / "data" / "helm"
     googleapis = yaml_to_string(
         {
@@ -65,9 +86,11 @@ async def test_analyzer_helm(cache_path: Path) -> None:
             repeat=True,
         )
         async with aiohttp.ClientSession() as session:
-            analyzer = Analyzer(str(datapath), session)
+            analyzer = Analyzer(str(datapath), config, session)
             results = await analyzer.analyze()
-            analyzer = Analyzer(str(datapath), session, allow_expressions=True)
+            analyzer = Analyzer(
+                str(datapath), config, session, allow_expressions=True
+            )
             results_expressions = await analyzer.analyze()
 
     assert sorted(results) == [
@@ -102,37 +125,80 @@ async def test_analyzer_helm(cache_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_analyzer_python_frozen(tmp_path: Path) -> None:
+async def test_analyzer_python(tmp_path: Path) -> None:
+    config = Configuration()
     datapath = Path(__file__).parent / "data" / "python"
     shutil.copytree(str(datapath), str(tmp_path), dirs_exist_ok=True)
     repo = Repo.init(str(tmp_path))
     repo.index.add(
-        [str(tmp_path / "Makefile"), str(tmp_path / "requirements")]
+        [
+            str(tmp_path / ".pre-commit-config.yaml"),
+            str(tmp_path / "Makefile"),
+            str(tmp_path / "requirements"),
+        ]
     )
     actor = Actor("Someone", "someone@example.com")
     repo.index.commit("Initial commit", author=actor, committer=actor)
 
-    async with aiohttp.ClientSession() as session:
-        analyzer = Analyzer(str(tmp_path), session)
-        results = await analyzer.analyze()
+    with aioresponses() as mock:
+        register_mock_github_tags(
+            mock,
+            "pre-commit",
+            "pre-commit-hooks",
+            ["v3.0.0", "v3.1.0", "v3.2.0"],
+        )
+        register_mock_github_tags(
+            mock, "timothycrosley", "isort", ["4.3.21-2"]
+        )
+        register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
+        register_mock_github_tags(mock, "pycqa", "flake8", ["3.7.0", "3.9.0"])
+        async with aiohttp.ClientSession() as session:
+            analyzer = Analyzer(str(tmp_path), config, session)
+            results = await analyzer.analyze()
 
-    assert results == [PythonFrozenUpdate(path=str(tmp_path / "requirements"))]
+    pre_commit_path = tmp_path / ".pre-commit-config.yaml"
+    assert results == [
+        PreCommitUpdate(
+            path=str(pre_commit_path),
+            repository="https://github.com/pre-commit/pre-commit-hooks",
+            current="v3.1.0",
+            latest="v3.2.0",
+        ),
+        PreCommitUpdate(
+            path=str(pre_commit_path),
+            repository="https://github.com/ambv/black",
+            current="19.10b0",
+            latest="20.0.0",
+        ),
+        PreCommitUpdate(
+            path=str(pre_commit_path),
+            repository="https://gitlab.com/pycqa/flake8",
+            current="3.8.1",
+            latest="3.9.0",
+        ),
+        PythonFrozenUpdate(path=str(tmp_path / "requirements")),
+    ]
 
-    # Ensure that the tree is restored to the previous contents.
+    # Ensure that the tree is restored to the previous contents and remove the
+    # pre-commit configuration file, since the remaining tests are only for
+    # the Python dependencies.
     assert not repo.is_dirty()
+    repo.index.remove(str(pre_commit_path), working_tree=True)
+    repo.index.commit("Remove pre-commit", author=actor, committer=actor)
 
     # If the repo is dirty, analysis will fail.
     subprocess.run(["make", "update-deps"], cwd=str(tmp_path), check=True)
     assert repo.is_dirty()
     async with aiohttp.ClientSession() as session:
-        analyzer = Analyzer(str(tmp_path), session)
+        analyzer = Analyzer(str(tmp_path), config, session)
         with pytest.raises(UncommittedChangesError):
             results = await analyzer.analyze()
 
-    # Commit the changed dependencies.  Analysis should now return no changes.
+    # Commit the changed dependencies and remove the pre-commit configuration
+    # file.  Analysis should now return no changes.
     repo.index.add(str(tmp_path / "requirements"))
     repo.index.commit("Update dependencies", author=actor, committer=actor)
     async with aiohttp.ClientSession() as session:
-        analyzer = Analyzer(str(tmp_path), session)
+        analyzer = Analyzer(str(tmp_path), config, session)
         results = await analyzer.analyze()
     assert results == []

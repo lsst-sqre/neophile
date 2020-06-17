@@ -11,13 +11,17 @@ from git import Repo
 from semver import VersionInfo
 
 from neophile.exceptions import UncommittedChangesError
+from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
 from neophile.scanner.helm import HelmScanner
+from neophile.scanner.pre_commit import PreCommitScanner
 from neophile.update.helm import HelmUpdate
+from neophile.update.pre_commit import PreCommitUpdate
 from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
+    from neophile.config import Configuration
     from neophile.update.base import Update
     from typing import List
 
@@ -31,6 +35,8 @@ class Analyzer:
     ----------
     root : `str`
         Root of the directory tree to analyze.
+    config : `neophile.config.Configuration`
+        neophile configuration.
     session : `aiohttp.ClientSession`
         The aiohttp client session to use to make requests for external
         information, such as Helm repository indices.
@@ -43,13 +49,14 @@ class Analyzer:
     def __init__(
         self,
         root: str,
+        config: Configuration,
         session: ClientSession,
         *,
         allow_expressions: bool = False,
     ) -> None:
         self._root = root
-        self._helm_scanner = HelmScanner(root)
-        self._helm_inventory = CachedHelmInventory(session)
+        self._config = config
+        self._session = session
         self._allow_expressions = allow_expressions
 
     async def analyze(self) -> List[Update]:
@@ -61,6 +68,7 @@ class Analyzer:
             A list of updates.
         """
         results = await self._analyze_helm_dependencies()
+        results.extend(await self._analyze_pre_commit_dependencies())
         results.extend(self._analyze_python())
         return results
 
@@ -69,17 +77,19 @@ class Analyzer:
 
         Returns
         -------
-        results : List[`neophile.update.Update`]
+        results : List[`neophile.update.base.Update`]
             A list of updates.
         """
-        helm_dependencies = self._helm_scanner.scan()
-        helm_repositories = {d.repository for d in helm_dependencies}
+        scanner = HelmScanner(self._root)
+        dependencies = scanner.scan()
+        repositories = {d.repository for d in dependencies}
+        inventory = CachedHelmInventory(self._session)
         latest = {}
-        for repo in helm_repositories:
-            latest[repo] = await self._helm_inventory.inventory(repo)
+        for repo in repositories:
+            latest[repo] = await inventory.inventory(repo)
 
         results: List[Update] = []
-        for dependency in helm_dependencies:
+        for dependency in dependencies:
             repo = dependency.repository
             name = dependency.name
             if name not in latest[repo]:
@@ -87,12 +97,40 @@ class Analyzer:
                     "Helm chart %s not found in repository %s", name, repo
                 )
                 continue
-            if self._needs_update(dependency.version, latest[repo][name]):
+            if self._helm_needs_update(dependency.version, latest[repo][name]):
                 update = HelmUpdate(
                     name=name,
                     current=dependency.version,
                     latest=latest[repo][name],
                     path=dependency.path,
+                )
+                results.append(update)
+
+        return results
+
+    async def _analyze_pre_commit_dependencies(self) -> List[Update]:
+        """Analyze pre-commit configuration.
+
+        Returns
+        -------
+        results : List[`neophile.update.base.Update`]
+            A list of updates.
+        """
+        scanner = PreCommitScanner(self._root)
+        dependencies = scanner.scan()
+        inventory = GitHubInventory(self._config, self._session)
+
+        results: List[Update] = []
+        for dependency in dependencies:
+            latest = await inventory.inventory(
+                dependency.owner, dependency.repo
+            )
+            if latest != dependency.version:
+                update = PreCommitUpdate(
+                    path=dependency.path,
+                    repository=dependency.repository,
+                    current=dependency.version,
+                    latest=latest,
                 )
                 results.append(update)
 
@@ -141,8 +179,8 @@ class Analyzer:
         else:
             return []
 
-    def _needs_update(self, current: str, latest_str: str) -> bool:
-        """Determine if a dependency needs to be updated.
+    def _helm_needs_update(self, current: str, latest_str: str) -> bool:
+        """Determine if a Helm dependency needs to be updated.
 
         Parameters
         ----------
