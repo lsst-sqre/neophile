@@ -21,7 +21,7 @@ def setup_repo(tmp_path: Path) -> Repo:
     """Set up a repository with the Gafaelfawr Helm chart."""
     repo = Repo.init(str(tmp_path))
     Remote.create(repo, "origin", "https://github.com/foo/bar")
-    helm_path = Path(__file__).parent / "data" / "helm"
+    helm_path = Path(__file__).parent / "data" / "kubernetes"
     chart_path = helm_path / "gafaelfawr" / "Chart.yaml"
     update_path = tmp_path / "Chart.yaml"
     shutil.copy(str(chart_path), str(update_path))

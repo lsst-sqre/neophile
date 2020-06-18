@@ -19,6 +19,7 @@ from neophile.factory import Factory
 from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
 from neophile.scanner.helm import HelmScanner
+from neophile.scanner.kustomize import KustomizeScanner
 from neophile.scanner.pre_commit import PreCommitScanner
 
 if TYPE_CHECKING:
@@ -135,11 +136,14 @@ def scan(path: str) -> None:
     """Scan the current directory for versions."""
     helm_scanner = HelmScanner(root=path)
     helm_results = helm_scanner.scan()
+    kustomize_scanner = KustomizeScanner(root=path)
+    kustomize_results = kustomize_scanner.scan()
     pre_commit_scanner = PreCommitScanner(root=path)
     pre_commit_results = pre_commit_scanner.scan()
     results = {
         "helm": [asdict(d) for d in helm_results],
         "pre-commit": [asdict(d) for d in pre_commit_results],
+        "kustomize": [asdict(d) for d in kustomize_results],
     }
 
     yaml = YAML()

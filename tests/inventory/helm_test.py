@@ -35,7 +35,10 @@ EXPECTED = {
 @pytest.mark.asyncio
 async def test_inventory() -> None:
     index_path = (
-        Path(__file__).parent.parent / "data" / "helm" / "sample-index.yaml"
+        Path(__file__).parent.parent
+        / "data"
+        / "kubernetes"
+        / "sample-index.yaml"
     )
     index = index_path.read_bytes()
 
@@ -51,7 +54,10 @@ async def test_inventory() -> None:
 async def test_cached_inventory(cache_path: Path) -> None:
     url = "https://example.com/charts"
     index_path = (
-        Path(__file__).parent.parent / "data" / "helm" / "sample-index.yaml"
+        Path(__file__).parent.parent
+        / "data"
+        / "kubernetes"
+        / "sample-index.yaml"
     )
     index = index_path.read_bytes()
     assert not cache_path.exists()

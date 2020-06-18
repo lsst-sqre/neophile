@@ -8,7 +8,7 @@ from neophile.scanner.helm import HelmDependency, HelmScanner
 
 
 def test_scanner() -> None:
-    datapath = Path(__file__).parent.parent / "data" / "helm"
+    datapath = Path(__file__).parent.parent / "data" / "kubernetes"
     scanner = HelmScanner(root=str(datapath))
     results = scanner.scan()
 

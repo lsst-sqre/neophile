@@ -83,7 +83,7 @@ class HelmScanner:
 
         Returns
         -------
-        results : List[`Dependency`]
+        results : List[`HelmDependency`]
             A list of all discovered Helm chart dependencies.
         """
         results = []

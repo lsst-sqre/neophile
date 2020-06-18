@@ -43,7 +43,7 @@ def test_analyze(cache_path: Path) -> None:
     output = StringIO()
     yaml.dump({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}}, output)
     sqre = output.getvalue()
-    root = Path(__file__).parent / "data" / "helm" / "gafaelfawr"
+    root = Path(__file__).parent / "data" / "kubernetes" / "gafaelfawr"
     with aioresponses() as mock:
         mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
         result = runner.invoke(main, ["analyze", "--path", str(root)])
@@ -57,7 +57,13 @@ def test_analyze(cache_path: Path) -> None:
 
 def test_analyze_update(tmp_path: Path, cache_path: Path) -> None:
     runner = CliRunner()
-    src = Path(__file__).parent / "data" / "helm" / "gafaelfawr" / "Chart.yaml"
+    src = (
+        Path(__file__).parent
+        / "data"
+        / "kubernetes"
+        / "gafaelfawr"
+        / "Chart.yaml"
+    )
     dst = tmp_path / "Chart.yaml"
     shutil.copy(src, dst)
     yaml = YAML()
@@ -80,7 +86,13 @@ def test_analyze_pr(tmp_path: Path, cache_path: Path) -> None:
     runner = CliRunner()
     repo = Repo.init(str(tmp_path))
     Remote.create(repo, "origin", "https://github.com/foo/bar")
-    src = Path(__file__).parent / "data" / "helm" / "gafaelfawr" / "Chart.yaml"
+    src = (
+        Path(__file__).parent
+        / "data"
+        / "kubernetes"
+        / "gafaelfawr"
+        / "Chart.yaml"
+    )
     dst = tmp_path / "Chart.yaml"
     shutil.copy(src, dst)
     repo.index.add(str(dst))
@@ -134,7 +146,9 @@ def test_github_inventory() -> None:
 def test_helm_inventory(cache_path: Path) -> None:
     runner = CliRunner()
 
-    index_path = Path(__file__).parent / "data" / "helm" / "sample-index.yaml"
+    index_path = (
+        Path(__file__).parent / "data" / "kubernetes" / "sample-index.yaml"
+    )
     index_data = index_path.read_bytes()
     with aioresponses() as mock:
         mock.get("https://example.com/index.yaml", body=index_data)
@@ -151,7 +165,7 @@ def test_helm_inventory(cache_path: Path) -> None:
 def test_scan() -> None:
     runner = CliRunner()
 
-    path = Path(__file__).parent / "data" / "helm"
+    path = Path(__file__).parent / "data" / "kubernetes"
     result = runner.invoke(main, ["scan", "--path", str(path)])
     assert result.exit_code == 0
     yaml = YAML()

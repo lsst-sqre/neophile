@@ -13,7 +13,7 @@ from neophile.update.helm import HelmUpdate
 
 
 def test_update(tmp_path: Path) -> None:
-    helm_path = Path(__file__).parent.parent / "data" / "helm"
+    helm_path = Path(__file__).parent.parent / "data" / "kubernetes"
     chart_path = helm_path / "gafaelfawr" / "Chart.yaml"
     update_path = tmp_path / "Chart.yaml"
     shutil.copy(str(chart_path), str(update_path))
@@ -36,7 +36,7 @@ def test_update(tmp_path: Path) -> None:
 
 
 def test_update_not_found() -> None:
-    helm_path = Path(__file__).parent.parent / "data" / "helm"
+    helm_path = Path(__file__).parent.parent / "data" / "kubernetes"
     requirements_path = helm_path / "logging" / "requirements.yaml"
 
     update = HelmUpdate(

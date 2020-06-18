@@ -53,7 +53,7 @@ def yaml_to_string(data: Dict[str, Any]) -> str:
 @pytest.mark.asyncio
 async def test_analyzer_helm(cache_path: Path) -> None:
     config = Configuration()
-    datapath = Path(__file__).parent / "data" / "helm"
+    datapath = Path(__file__).parent / "data" / "kubernetes"
     googleapis = yaml_to_string(
         {
             "entries": {
