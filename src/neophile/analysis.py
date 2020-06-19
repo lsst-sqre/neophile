@@ -14,8 +14,10 @@ from neophile.exceptions import UncommittedChangesError
 from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
 from neophile.scanner.helm import HelmScanner
+from neophile.scanner.kustomize import KustomizeScanner
 from neophile.scanner.pre_commit import PreCommitScanner
 from neophile.update.helm import HelmUpdate
+from neophile.update.kustomize import KustomizeUpdate
 from neophile.update.pre_commit import PreCommitUpdate
 from neophile.update.python import PythonFrozenUpdate
 
@@ -68,6 +70,7 @@ class Analyzer:
             A list of updates.
         """
         results = await self._analyze_helm_dependencies()
+        results.extend(await self._analyze_kustomize_dependencies())
         results.extend(await self._analyze_pre_commit_dependencies())
         results.extend(self._analyze_python())
         return results
@@ -103,6 +106,34 @@ class Analyzer:
                     current=dependency.version,
                     latest=latest[repo][name],
                     path=dependency.path,
+                )
+                results.append(update)
+
+        return results
+
+    async def _analyze_kustomize_dependencies(self) -> List[Update]:
+        """Analyze a tree and return a list of needed Kustomize changes.
+
+        Returns
+        -------
+        results : List[`neophile.update.base.Update`]
+            A list of updates.
+        """
+        scanner = KustomizeScanner(self._root)
+        dependencies = scanner.scan()
+        inventory = GitHubInventory(self._config, self._session)
+
+        results: List[Update] = []
+        for dependency in dependencies:
+            latest = await inventory.inventory(
+                dependency.owner, dependency.repo
+            )
+            if latest != dependency.version:
+                update = KustomizeUpdate(
+                    path=dependency.path,
+                    url=dependency.url,
+                    current=dependency.version,
+                    latest=latest,
                 )
                 results.append(update)
 

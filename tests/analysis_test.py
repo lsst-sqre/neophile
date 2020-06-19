@@ -18,6 +18,7 @@ from neophile.analysis import Analyzer
 from neophile.config import Configuration
 from neophile.exceptions import UncommittedChangesError
 from neophile.update.helm import HelmUpdate
+from neophile.update.kustomize import KustomizeUpdate
 from neophile.update.pre_commit import PreCommitUpdate
 from neophile.update.python import PythonFrozenUpdate
 
@@ -40,7 +41,11 @@ def register_mock_github_tags(
         The list of tags to return for that repository.
     """
     data = [{"name": version} for version in tags]
-    mock.get(f"https://api.github.com/repos/{owner}/{repo}/tags", payload=data)
+    mock.get(
+        f"https://api.github.com/repos/{owner}/{repo}/tags",
+        payload=data,
+        repeat=True,
+    )
 
 
 def yaml_to_string(data: Dict[str, Any]) -> str:
@@ -51,7 +56,7 @@ def yaml_to_string(data: Dict[str, Any]) -> str:
 
 
 @pytest.mark.asyncio
-async def test_analyzer_helm(cache_path: Path) -> None:
+async def test_analyzer_kubernetes(cache_path: Path) -> None:
     config = Configuration()
     datapath = Path(__file__).parent / "data" / "kubernetes"
     googleapis = yaml_to_string(
@@ -85,6 +90,12 @@ async def test_analyzer_helm(cache_path: Path) -> None:
             body=sqre,
             repeat=True,
         )
+        register_mock_github_tags(
+            mock, "lsst-sqre", "sqrbot-jr", ["0.6.0", "0.6.1", "0.7.0"]
+        )
+        register_mock_github_tags(
+            mock, "lsst-sqre", "sqrbot", ["0.5.0", "0.6.0", "0.6.1", "0.7.0"]
+        )
         async with aiohttp.ClientSession() as session:
             analyzer = Analyzer(str(datapath), config, session)
             results = await analyzer.analyze()
@@ -93,26 +104,35 @@ async def test_analyzer_helm(cache_path: Path) -> None:
             )
             results_expressions = await analyzer.analyze()
 
-    assert sorted(results) == [
+    expected = [
         HelmUpdate(
+            path=str(datapath / "gafaelfawr" / "Chart.yaml"),
             name="gafaelfawr",
             current="1.3.1",
             latest="v1.4.0",
-            path=str(datapath / "gafaelfawr" / "Chart.yaml"),
         ),
         HelmUpdate(
+            path=str(datapath / "logging" / "requirements.yaml"),
             name="fluentd-elasticsearch",
             current=">=3.0.0",
             latest="3.0.0",
-            path=str(datapath / "logging" / "requirements.yaml"),
         ),
         HelmUpdate(
+            path=str(datapath / "logging" / "requirements.yaml"),
             name="kibana",
             current=">=3.0.0",
             latest="3.0.1",
-            path=str(datapath / "logging" / "requirements.yaml"),
+        ),
+        KustomizeUpdate(
+            path=str(datapath / "sqrbot-jr" / "kustomization.yaml"),
+            url="github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0",
+            current="0.6.0",
+            latest="0.7.0",
         ),
     ]
+    assert len(results) == 4
+    for update in expected:
+        assert update in results
 
     assert results_expressions == [
         HelmUpdate(
@@ -120,7 +140,13 @@ async def test_analyzer_helm(cache_path: Path) -> None:
             current="1.3.1",
             latest="v1.4.0",
             path=str(datapath / "gafaelfawr" / "Chart.yaml"),
-        )
+        ),
+        KustomizeUpdate(
+            path=str(datapath / "sqrbot-jr" / "kustomization.yaml"),
+            url="github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0",
+            current="0.6.0",
+            latest="0.7.0",
+        ),
     ]
 
 
