@@ -13,7 +13,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-__all__ = ["Update"]
+__all__ = [
+    "MethodMixin",
+    "Update",
+    "UpdateMixin",
+]
 
 
 class MethodMixin(ABC):

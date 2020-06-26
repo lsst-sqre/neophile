@@ -41,10 +41,7 @@ def coroutine(f: Callable[..., Awaitable[T]]) -> Callable[..., T]:
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(message="%(version)s")
 def main() -> None:
-    """neophile main.
-
-    Administrative command-line interface for neophile.
-    """
+    """Command-line interface for neophile."""
     pass
 
 

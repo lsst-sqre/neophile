@@ -33,7 +33,7 @@ class ParsedVersion:
 
     @classmethod
     def from_str(cls, string: str) -> ParsedVersion:
-        """Parse a string into a `Version`.
+        """Parse a string into a `~packaging.version.Version`.
 
         Parameters
         ----------
@@ -42,7 +42,7 @@ class ParsedVersion:
 
         Returns
         -------
-        version: `Version`
+        version: `packaging.version.Version`
             The parsed version.
         """
         parsed_version = version.parse(string)

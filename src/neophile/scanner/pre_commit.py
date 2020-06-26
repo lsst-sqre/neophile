@@ -56,7 +56,7 @@ class PreCommitScanner:
 
         Returns
         -------
-        results : List[`Dependency`]
+        results : List[`PreCommitDependency`]
             A list of all discovered pre-commit dependencies.
         """
         path = Path(self._root) / ".pre-commit-config.yaml"

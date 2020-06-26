@@ -42,11 +42,9 @@ class KustomizeDependency:
 class KustomizeScanner:
     """Scan a source tree for Kustomize version references.
 
-    This recognizes external resources in the format:
+    This recognizes external resources in the format::
 
-    ```
-        github.com/<owner>/<repo>(.git)?//<path>?ref=<version>
-    ```
+       github.com/<owner>/<repo>(.git)?//<path>?ref=<version>
 
     Parameters
     ----------

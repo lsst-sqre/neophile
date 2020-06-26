@@ -66,7 +66,7 @@ class Analyzer:
 
         Returns
         -------
-        results : List[`neophile.update.Update`]
+        results : List[`neophile.update.base.Update`]
             A list of updates.
         """
         results = await self._analyze_helm_dependencies()
@@ -172,7 +172,7 @@ class Analyzer:
 
         Returns
         -------
-        results : List[`neophile.update.Update`]
+        results : List[`neophile.update.base.Update`]
             Will contain either no elements (no updates needed) or a single
             element (an update needed).
 

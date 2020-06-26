@@ -79,7 +79,7 @@ class PullRequester:
 
         Parameters
         ----------
-        changes : Sequence[`neophile.update.Update`]
+        changes : Sequence[`neophile.update.base.Update`]
             The changes.
 
         Raises
@@ -100,7 +100,7 @@ class PullRequester:
 
         Parameters
         ----------
-        changes : Sequence[`neophile.update.Update`]
+        changes : Sequence[`neophile.update.base.Update`]
             The changes.
 
         Returns
@@ -120,7 +120,7 @@ class PullRequester:
 
         Parameters
         ----------
-        changes : Sequence[`neophile.update.Update`]
+        changes : Sequence[`neophile.update.base.Update`]
             The changes to apply and commit.
 
         Returns

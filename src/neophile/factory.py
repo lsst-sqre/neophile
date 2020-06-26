@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from neophile.config import Configuration
 
+__all__ = ["Factory"]
+
 
 class Factory:
     """Factory to create neophile components.
