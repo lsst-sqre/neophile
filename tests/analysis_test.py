@@ -4,15 +4,12 @@ from __future__ import annotations
 
 import shutil
 import subprocess
-from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import aiohttp
 import pytest
 from aioresponses import aioresponses
 from git import Actor, Repo
-from ruamel.yaml import YAML
 
 from neophile.analysis import Analyzer
 from neophile.config import Configuration
@@ -21,38 +18,7 @@ from neophile.update.helm import HelmUpdate
 from neophile.update.kustomize import KustomizeUpdate
 from neophile.update.pre_commit import PreCommitUpdate
 from neophile.update.python import PythonFrozenUpdate
-
-if TYPE_CHECKING:
-    from typing import Any, Dict, Sequence
-
-
-def register_mock_github_tags(
-    mock: aioresponses, owner: str, repo: str, tags: Sequence[str]
-) -> None:
-    """Register a list of tags for a GitHub repository.
-
-    Parameters
-    ----------
-    mock : `aioresponses.aioresponses`
-        The mock object for aiohttp requests.
-    repo : `str`
-        The name of the GitHub repository.
-    tags : List[`str`]
-        The list of tags to return for that repository.
-    """
-    data = [{"name": version} for version in tags]
-    mock.get(
-        f"https://api.github.com/repos/{owner}/{repo}/tags",
-        payload=data,
-        repeat=True,
-    )
-
-
-def yaml_to_string(data: Dict[str, Any]) -> str:
-    yaml = YAML()
-    output = StringIO()
-    yaml.dump(data, output)
-    return output.getvalue()
+from tests.util import register_mock_github_tags, yaml_to_string
 
 
 @pytest.mark.asyncio
@@ -94,7 +60,7 @@ async def test_analyzer_kubernetes(cache_path: Path) -> None:
             mock, "lsst-sqre", "sqrbot-jr", ["0.6.0", "0.6.1", "0.7.0"]
         )
         register_mock_github_tags(
-            mock, "lsst-sqre", "sqrbot", ["0.5.0", "0.6.0", "0.6.1", "0.7.0"]
+            mock, "lsst-sqre", "sqrbot", ["20170114", "0.6.1", "0.7.0"]
         )
         async with aiohttp.ClientSession() as session:
             analyzer = Analyzer(str(datapath), config, session)
@@ -131,6 +97,7 @@ async def test_analyzer_kubernetes(cache_path: Path) -> None:
         ),
     ]
     assert len(results) == 4
+    print(results)
     for update in expected:
         assert update in results
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from gidgethub.aiohttp import GitHubAPI
 
-from neophile.inventory.version import ParsedVersion
+from neophile.inventory.version import PackagingVersion, SemanticVersion
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -36,7 +36,9 @@ class GitHubInventory:
             oauth_token=config.github_token.get_secret_value(),
         )
 
-    async def inventory(self, owner: str, repo: str) -> str:
+    async def inventory(
+        self, owner: str, repo: str, semantic: bool = False
+    ) -> str:
         """Inventory the available tags of a GitHub repository.
 
         Parameters
@@ -45,6 +47,10 @@ class GitHubInventory:
             Owner of the repository.
         repo : `str`
             Name of the repository.
+        semantic : `bool`, optional
+            If set to true, only semantic versions will be considered and the
+            latest version will be determined by semantic version sorting
+            instead of :py:mod:`packaging.version`.
 
         Returns
         -------
@@ -59,5 +65,10 @@ class GitHubInventory:
             url_vars={"owner": owner, "repo": repo},
         )
 
-        versions = [ParsedVersion.from_str(tag["name"]) async for tag in tags]
-        return str(sorted(versions)[-1])
+        cls = SemanticVersion if semantic else PackagingVersion
+        versions = [
+            cls.from_str(tag["name"])
+            async for tag in tags
+            if cls.is_valid(tag["name"])
+        ]
+        return str(max(versions))

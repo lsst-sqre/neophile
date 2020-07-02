@@ -126,7 +126,7 @@ class Analyzer:
         results: List[Update] = []
         for dependency in dependencies:
             latest = await inventory.inventory(
-                dependency.owner, dependency.repo
+                dependency.owner, dependency.repo, semantic=True
             )
             if latest != dependency.version:
                 update = KustomizeUpdate(

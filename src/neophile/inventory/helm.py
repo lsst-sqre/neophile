@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
 from ruamel.yaml import YAML
-from semver import VersionInfo
 from xdg import XDG_CACHE_HOME
+
+from neophile.inventory.version import SemanticVersion
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -20,27 +20,6 @@ __all__ = [
     "CachedHelmInventory",
     "HelmInventory",
 ]
-
-
-@dataclass(frozen=True, order=True)
-class Version:
-    """Represents a version string."""
-
-    parsed_version: VersionInfo
-    """The parsed version of it, for sorting.
-
-    Notes
-    -----
-    This field must be first because it's the field we want to sort on and
-    dataclass ordering is done as if the dataclass were a tuple, via ordering
-    on each element of the tuple in sequence.
-    """
-
-    version: str
-    """The raw version string, which may start with a v."""
-
-    def __str__(self) -> str:
-        return self.version
 
 
 class HelmInventory:
@@ -92,18 +71,9 @@ class HelmInventory:
             versions = []
             for release in data:
                 if "version" in release:
-                    if release["version"].startswith("v"):
-                        version = release["version"][1:]
-                    else:
-                        version = release["version"]
-                    if not VersionInfo.isvalid(version):
-                        continue
-                    versions.append(
-                        Version(
-                            version=release["version"],
-                            parsed_version=VersionInfo.parse(version),
-                        )
-                    )
+                    version = release["version"]
+                    if SemanticVersion.is_valid(version):
+                        versions.append(SemanticVersion.from_str(version))
             if versions:
                 results[name] = str(max(versions))
 

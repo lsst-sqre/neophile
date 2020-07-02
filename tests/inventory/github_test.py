@@ -2,35 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import aiohttp
 import pytest
 from aioresponses import aioresponses
 
 from neophile.config import Configuration
 from neophile.inventory.github import GitHubInventory
-
-if TYPE_CHECKING:
-    from typing import Sequence
-
-
-def register_mock_tags(
-    mock: aioresponses, owner: str, repo: str, tags: Sequence[str]
-) -> None:
-    """Register a list of tags for a repository.
-
-    Parameters
-    ----------
-    mock : `aioresponses.aioresponses`
-        The mock object for aiohttp requests.
-    repo : `str`
-        The name of the GitHub repository.
-    tags : List[`str`]
-        The list of tags to return for that repository.
-    """
-    data = [{"name": version} for version in tags]
-    mock.get(f"https://api.github.com/repos/{owner}/{repo}/tags", payload=data)
+from tests.util import register_mock_github_tags
 
 
 @pytest.mark.asyncio
@@ -44,8 +22,22 @@ async def test_inventory() -> None:
 
     for test in tests:
         with aioresponses() as mock:
-            register_mock_tags(mock, "foo", "bar", test["tags"])
+            register_mock_github_tags(mock, "foo", "bar", test["tags"])
             async with aiohttp.ClientSession() as session:
                 inventory = GitHubInventory(Configuration(), session)
                 latest = await inventory.inventory("foo", "bar")
         assert latest == test["latest"]
+
+
+@pytest.mark.asyncio
+async def test_inventory_semantic() -> None:
+    tags = ["1.19.0", "1.18.0", "1.15.1", "20171120-1"]
+
+    with aioresponses() as mock:
+        register_mock_github_tags(mock, "foo", "bar", tags)
+        async with aiohttp.ClientSession() as session:
+            inventory = GitHubInventory(Configuration(), session)
+            latest = await inventory.inventory("foo", "bar")
+            assert latest == "20171120-1"
+            latest = await inventory.inventory("foo", "bar", semantic=True)
+            assert latest == "1.19.0"

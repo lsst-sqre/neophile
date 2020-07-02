@@ -43,11 +43,13 @@ async def test_inventory() -> None:
     index = index_path.read_bytes()
 
     with aioresponses() as mock:
-        mock.get("https://example.com/charts/index.yaml", body=index)
+        mock.get(
+            "https://example.com/charts/index.yaml", body=index, repeat=True
+        )
         async with aiohttp.ClientSession() as session:
             inventory = HelmInventory(session)
             results = await inventory.inventory("https://example.com/charts/")
-    assert results == EXPECTED
+            assert results == EXPECTED
 
 
 @pytest.mark.asyncio
