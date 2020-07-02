@@ -38,6 +38,13 @@ def coroutine(f: Callable[..., Awaitable[T]]) -> Callable[..., T]:
     return wrapper
 
 
+def print_yaml(results: Any) -> None:
+    """Print some results to stdout as YAML."""
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.dump(results, sys.stdout)
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(message="%(version)s")
 def main() -> None:
@@ -96,9 +103,7 @@ async def analyze(
             for change in results:
                 change.apply()
         else:
-            yaml = YAML()
-            yaml.indent(mapping=2, sequence=4, offset=2)
-            yaml.dump([asdict(u) for u in results], sys.stdout)
+            print_yaml([asdict(u) for u in results])
 
 
 @main.command()
@@ -122,9 +127,7 @@ async def helm_inventory(repository: str) -> None:
     async with aiohttp.ClientSession() as session:
         inventory = CachedHelmInventory(session)
         results = await inventory.inventory(repository)
-    yaml = YAML()
-    yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.dump(results, sys.stdout)
+    print_yaml(results)
 
 
 @main.command()
@@ -137,12 +140,10 @@ def scan(path: str) -> None:
     kustomize_results = kustomize_scanner.scan()
     pre_commit_scanner = PreCommitScanner(root=path)
     pre_commit_results = pre_commit_scanner.scan()
+
     results = {
         "helm": [asdict(d) for d in helm_results],
         "pre-commit": [asdict(d) for d in pre_commit_results],
         "kustomize": [asdict(d) for d in kustomize_results],
     }
-
-    yaml = YAML()
-    yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.dump(results, sys.stdout)
+    print_yaml(results)
