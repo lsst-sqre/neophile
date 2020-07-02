@@ -8,11 +8,11 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from git import Repo
-from semver import VersionInfo
 
 from neophile.exceptions import UncommittedChangesError
 from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
+from neophile.inventory.version import SemanticVersion
 from neophile.scanner.helm import HelmScanner
 from neophile.scanner.kustomize import KustomizeScanner
 from neophile.scanner.pre_commit import PreCommitScanner
@@ -228,13 +228,10 @@ class Analyzer:
             current version is invalid or if it is older than the latest
             version.
         """
-        if latest_str.startswith("v"):
-            latest = VersionInfo.parse(latest_str[1:])
-        else:
-            latest = VersionInfo.parse(latest_str)
-        if VersionInfo.isvalid(current):
-            return latest > current
+        latest = SemanticVersion.from_str(latest_str)
+        if SemanticVersion.is_valid(current):
+            return latest.parsed_version > current
         elif self._allow_expressions:
-            return not latest.match(current)
+            return not latest.parsed_version.match(current)
         else:
             return True
