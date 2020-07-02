@@ -50,9 +50,9 @@ def test_analyze(cache_path: Path) -> None:
 
     assert result.exit_code == 0
     data = yaml.load(result.output)
-    assert data[0]["name"] == "gafaelfawr"
-    assert data[0]["current"] == "1.3.1"
-    assert data[0]["latest"] == "1.4.0"
+    assert data["helm"][0]["name"] == "gafaelfawr"
+    assert data["helm"][0]["current"] == "1.3.1"
+    assert data["helm"][0]["latest"] == "1.4.0"
 
 
 def test_analyze_update(tmp_path: Path, cache_path: Path) -> None:

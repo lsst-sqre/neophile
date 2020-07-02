@@ -13,7 +13,6 @@ import aiohttp
 import click
 from ruamel.yaml import YAML
 
-from neophile.analysis import Analyzer
 from neophile.config import Configuration
 from neophile.factory import Factory
 from neophile.inventory.github import GitHubInventory
@@ -89,21 +88,25 @@ async def analyze(
     allow_expressions: bool, path: str, pr: bool, update: bool
 ) -> None:
     """Analyze the current directory for pending upgrades."""
-    config = Configuration()
     async with aiohttp.ClientSession() as session:
-        analyzer = Analyzer(
-            path, config, session, allow_expressions=allow_expressions
+        factory = Factory(session)
+        analyzers = factory.create_all_analyzers(
+            path, allow_expressions=allow_expressions
         )
-        results = await analyzer.analyze()
+
+        results = {a.name(): await a.analyze() for a in analyzers}
         if pr:
-            factory = Factory(config, session)
             pull_requester = factory.create_pull_requester(path)
-            await pull_requester.make_pull_request(results)
+            all_updates = []
+            for updates in results.values():
+                all_updates.extend(updates)
+            await pull_requester.make_pull_request(all_updates)
         elif update:
-            for change in results:
-                change.apply()
+            for updates in results.values():
+                for change in updates:
+                    change.apply()
         else:
-            print_yaml([asdict(u) for u in results])
+            print_yaml({k: [asdict(u) for u in v] for k, v in results.items()})
 
 
 @main.command()
