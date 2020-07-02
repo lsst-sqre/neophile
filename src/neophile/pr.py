@@ -166,12 +166,17 @@ class PullRequester:
         """
         remote_url = self._get_authenticated_remote()
         github_repo = self._get_github_repo()
-        remote = Remote.add(self._repo, "tmp-neophile", remote_url)
         branch = self._repo.head.ref.name
-        push_info = remote.push(f"{branch}:{branch}")
-        for result in push_info:
-            if result.flags & PushInfo.ERROR:
-                raise PushError(f"Pushing {branch} failed: {result.summary}")
+
+        remote = Remote.add(self._repo, "tmp-neophile", remote_url)
+        try:
+            push_info = remote.push(f"{branch}:{branch}")
+            for result in push_info:
+                if result.flags & PushInfo.ERROR:
+                    msg = f"Pushing {branch} failed: {result.summary}"
+                    raise PushError(msg)
+        finally:
+            Remote.remove(self._repo, "tmp-neophile")
 
         data = {
             "title": message.title,

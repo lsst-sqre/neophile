@@ -69,8 +69,7 @@ async def test_pr(tmp_path: Path) -> None:
     assert commit.committer.email == "someone@example.com"
     change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
     assert commit.message == f"Update dependencies\n\n- {change}\n"
-    expected_url = "https://someone:some-token@github.com/foo/bar"
-    assert repo.remotes["tmp-neophile"].url == expected_url
+    assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
 @pytest.mark.asyncio
