@@ -74,6 +74,8 @@ class KustomizeScanner:
         results = []
 
         for dirpath, _, filenames in os.walk(self._root):
+            if dirpath.startswith(os.path.join(self._root, "tests")):
+                continue
             for name in filenames:
                 if name != "kustomization.yaml":
                     continue
