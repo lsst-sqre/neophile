@@ -94,18 +94,21 @@ async def analyze(
             path, allow_expressions=allow_expressions
         )
 
-        results = {a.name(): await a.analyze() for a in analyzers}
         if pr:
-            pull_requester = factory.create_pull_requester(path)
+            repo = factory.create_repository(path)
+            repo.switch_branch()
             all_updates = []
-            for updates in results.values():
+            for analyzer in analyzers:
+                updates = await analyzer.update()
                 all_updates.extend(updates)
+            pull_requester = factory.create_pull_requester(path)
             await pull_requester.make_pull_request(all_updates)
+            repo.restore_branch()
         elif update:
-            for updates in results.values():
-                for change in updates:
-                    change.apply()
+            for analyzer in analyzers:
+                await analyzer.update()
         else:
+            results = {a.name(): await a.analyze() for a in analyzers}
             print_yaml({k: [asdict(u) for u in v] for k, v in results.items()})
 
 

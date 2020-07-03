@@ -15,6 +15,9 @@ __all__ = ["PythonFrozenUpdate"]
 class PythonFrozenUpdate(Update):
     """An update to Python frozen dependencies."""
 
+    applied: bool
+    """Whether the update has already been applied."""
+
     def apply(self) -> None:
         """Apply an update to frozen Python dependencies.
 
@@ -23,6 +26,8 @@ class PythonFrozenUpdate(Update):
         subprocess.CalledProcessError
             Running ``make update-deps`` failed.
         """
+        if self.applied:
+            return
         rootdir = Path(self.path).parent
         subprocess.run(
             ["make", "update-deps"],

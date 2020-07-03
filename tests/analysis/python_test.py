@@ -15,8 +15,8 @@ from neophile.factory import Factory
 from neophile.update.python import PythonFrozenUpdate
 
 
-@pytest.mark.asyncio
-async def test_analyzer_python(tmp_path: Path) -> None:
+def setup_repo(tmp_path: Path) -> Repo:
+    """Set up a test repository."""
     data_path = Path(__file__).parent.parent / "data" / "python"
     shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
     repo = Repo.init(str(tmp_path))
@@ -29,13 +29,22 @@ async def test_analyzer_python(tmp_path: Path) -> None:
     )
     actor = Actor("Someone", "someone@example.com")
     repo.index.commit("Initial commit", author=actor, committer=actor)
+    return repo
+
+
+@pytest.mark.asyncio
+async def test_analyzer(tmp_path: Path) -> None:
+    repo = setup_repo(tmp_path)
+    actor = Actor("Someone", "someone@example.com")
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(session)
         analyzer = factory.create_python_analyzer(str(tmp_path))
         results = await analyzer.analyze()
 
-    assert results == [PythonFrozenUpdate(path=str(tmp_path / "requirements"))]
+    assert results == [
+        PythonFrozenUpdate(path=str(tmp_path / "requirements"), applied=False)
+    ]
 
     # Ensure that the tree is restored to the previous contents.
     assert not repo.is_dirty()
@@ -58,3 +67,18 @@ async def test_analyzer_python(tmp_path: Path) -> None:
         analyzer = factory.create_python_analyzer(str(tmp_path))
         results = await analyzer.analyze()
     assert results == []
+
+
+@pytest.mark.asyncio
+async def test_analyzer_update(tmp_path: Path) -> None:
+    repo = setup_repo(tmp_path)
+
+    async with aiohttp.ClientSession() as session:
+        factory = Factory(session)
+        analyzer = factory.create_python_analyzer(str(tmp_path))
+        results = await analyzer.update()
+
+    assert results == [
+        PythonFrozenUpdate(path=str(tmp_path / "requirements"), applied=True)
+    ]
+    assert repo.is_dirty()

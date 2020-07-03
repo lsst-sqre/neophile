@@ -14,6 +14,7 @@ from git import Actor, PushInfo, Remote, Repo
 from neophile.config import Configuration
 from neophile.exceptions import PushError
 from neophile.pr import GitHubRepo, PullRequester
+from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
 
 
@@ -51,6 +52,8 @@ async def test_pr(tmp_path: Path) -> None:
             status=201,
         )
         async with aiohttp.ClientSession() as session:
+            repository = Repository(str(tmp_path))
+            repository.switch_branch()
             pr = PullRequester(str(tmp_path), config, session)
             with patch.object(Remote, "push") as mock:
                 mock.return_value = [
@@ -58,6 +61,7 @@ async def test_pr(tmp_path: Path) -> None:
                 ]
                 await pr.make_pull_request([update])
                 assert mock.call_args_list == [call("u/neophile:u/neophile")]
+            repository.restore_branch()
 
     assert not repo.is_dirty()
     assert repo.head.ref.name == "master"

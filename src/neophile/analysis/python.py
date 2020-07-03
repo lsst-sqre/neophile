@@ -28,11 +28,18 @@ class PythonAnalyzer(BaseAnalyzer):
         Root of the directory tree to analyze.
     """
 
-    def __init__(self, root: str,) -> None:
+    def __init__(self, root: str) -> None:
         self._root = root
 
-    async def analyze(self) -> List[Update]:
+    async def analyze(self, update: bool = False) -> List[Update]:
         """Analyze a tree and return needed Python frozen dependency updates.
+
+        Parameters
+        ----------
+        update : `bool`, optional
+            If set to `True`, leave the update applied.  This avoids having
+            to run ``make update-deps`` twice, once to see if an update is
+            needed and again to apply it properly.
 
         Returns
         -------
@@ -64,15 +71,16 @@ class PythonAnalyzer(BaseAnalyzer):
             capture_output=True,
         )
 
-        if repo.is_dirty():
-            repo.git.restore(".")
-            return [
-                PythonFrozenUpdate(
-                    path=os.path.join(self._root, "requirements")
-                )
-            ]
-        else:
+        if not repo.is_dirty():
             return []
+
+        if not update:
+            repo.git.restore(".")
+        return [
+            PythonFrozenUpdate(
+                path=os.path.join(self._root, "requirements"), applied=update,
+            )
+        ]
 
     def name(self) -> str:
         return "python"

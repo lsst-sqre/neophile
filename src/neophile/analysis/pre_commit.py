@@ -36,8 +36,13 @@ class PreCommitAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self) -> List[Update]:
+    async def analyze(self, update: bool = False) -> List[Update]:
         """Analyze a tree and return a list of needed pre-commit hook changes.
+
+        Parameters
+        ----------
+        update : `bool`, optional
+            Ignored for this analyzer.
 
         Returns
         -------
@@ -52,13 +57,13 @@ class PreCommitAnalyzer(BaseAnalyzer):
                 dependency.owner, dependency.repo
             )
             if latest != dependency.version:
-                update = PreCommitUpdate(
+                pre_commit_update = PreCommitUpdate(
                     path=dependency.path,
                     repository=dependency.repository,
                     current=dependency.version,
                     latest=latest,
                 )
-                results.append(update)
+                results.append(pre_commit_update)
 
         return results
 

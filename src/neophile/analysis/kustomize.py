@@ -36,8 +36,13 @@ class KustomizeAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self) -> List[Update]:
+    async def analyze(self, update: bool = False) -> List[Update]:
         """Analyze a tree and return a list of needed Kustomize changes.
+
+        Parameters
+        ----------
+        update : `bool`, optional
+            Ignored for this analyzer.
 
         Returns
         -------
@@ -52,13 +57,13 @@ class KustomizeAnalyzer(BaseAnalyzer):
                 dependency.owner, dependency.repo, semantic=True
             )
             if latest != dependency.version:
-                update = KustomizeUpdate(
+                kustomize_update = KustomizeUpdate(
                     path=dependency.path,
                     url=dependency.url,
                     current=dependency.version,
                     latest=latest,
                 )
-                results.append(update)
+                results.append(kustomize_update)
 
         return results
 

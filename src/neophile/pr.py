@@ -87,11 +87,8 @@ class PullRequester:
         neophile.exceptions.PushError
             Pushing the branch to GitHub failed.
         """
-        original_branch = self._repo.head.ref
-        self._create_branch("u/neophile")
         message = await self._commit_changes(changes)
         await self._create_pr(message)
-        original_branch.checkout()
 
     def _build_commit_message(
         self, changes: Sequence[Update]
@@ -129,25 +126,9 @@ class PullRequester:
             The commit message of the commit.
         """
         message = self._build_commit_message(changes)
-        for change in changes:
-            change.apply()
-            self._repo.index.add(change.path)
         actor = await self._get_github_actor()
         self._repo.index.commit(str(message), author=actor, committer=actor)
         return message
-
-    def _create_branch(self, name: str) -> None:
-        """Create and switch to a new Git branch in the local repository.
-
-        The new branch will be based on the current HEAD commit.
-
-        Parameters
-        ----------
-        name : `str`
-            The name of the new branch.
-        """
-        branch = self._repo.create_head(name)
-        branch.checkout()
 
     async def _create_pr(self, message: CommitMessage) -> None:
         """Create a new PR for the current branch.

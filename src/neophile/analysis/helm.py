@@ -48,8 +48,13 @@ class HelmAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self) -> List[Update]:
+    async def analyze(self, update: bool = False) -> List[Update]:
         """Analyze a tree and return a list of needed Helm changes.
+
+        Parameters
+        ----------
+        update : `bool`, optional
+            Ignored for this analyzer.
 
         Returns
         -------
@@ -72,13 +77,13 @@ class HelmAnalyzer(BaseAnalyzer):
                 )
                 continue
             if self._helm_needs_update(dependency.version, latest[repo][name]):
-                update = HelmUpdate(
+                helm_update = HelmUpdate(
                     name=name,
                     current=dependency.version,
                     latest=latest[repo][name],
                     path=dependency.path,
                 )
-                results.append(update)
+                results.append(helm_update)
 
         return results
 
