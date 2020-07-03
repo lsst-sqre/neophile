@@ -58,18 +58,21 @@ async def test_analyzer() -> None:
     assert sorted(results) == [
         HelmUpdate(
             path=str(data_path / "gafaelfawr" / "Chart.yaml"),
+            applied=False,
             name="gafaelfawr",
             current="1.3.1",
             latest="v1.4.0",
         ),
         HelmUpdate(
             path=str(data_path / "logging" / "requirements.yaml"),
+            applied=False,
             name="fluentd-elasticsearch",
             current=">=3.0.0",
             latest="3.0.0",
         ),
         HelmUpdate(
             path=str(data_path / "logging" / "requirements.yaml"),
+            applied=False,
             name="kibana",
             current=">=3.0.0",
             latest="3.0.1",
@@ -78,6 +81,7 @@ async def test_analyzer() -> None:
     assert results_expressions == [
         HelmUpdate(
             name="gafaelfawr",
+            applied=False,
             current="1.3.1",
             latest="v1.4.0",
             path=str(data_path / "gafaelfawr" / "Chart.yaml"),

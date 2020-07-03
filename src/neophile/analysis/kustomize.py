@@ -59,6 +59,7 @@ class KustomizeAnalyzer(BaseAnalyzer):
             if latest != dependency.version:
                 kustomize_update = KustomizeUpdate(
                     path=dependency.path,
+                    applied=False,
                     url=dependency.url,
                     current=dependency.version,
                     latest=latest,

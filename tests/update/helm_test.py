@@ -19,12 +19,14 @@ def test_update(tmp_path: Path) -> None:
     shutil.copy(str(chart_path), str(update_path))
 
     update = HelmUpdate(
+        path=str(update_path),
+        applied=False,
         name="gafaelfawr",
         current="1.0.0",
         latest="2.0.0",
-        path=str(update_path),
     )
     update.apply()
+    assert update.applied
 
     description = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
     assert update.description() == description
@@ -40,10 +42,17 @@ def test_update_not_found() -> None:
     requirements_path = helm_path / "logging" / "requirements.yaml"
 
     update = HelmUpdate(
+        path=str(requirements_path),
+        applied=False,
         name="gafaelfawr",
         current="1.0.0",
         latest="2.0.0",
-        path=str(requirements_path),
     )
     with pytest.raises(DependencyNotFoundError):
         update.apply()
+    assert not update.applied
+
+    # Test that if the update is already applied, we won't try again, by
+    # running apply and showing that it doesn't thrown an exception.
+    update.applied = True
+    update.apply()

@@ -23,10 +23,11 @@ def test_update(tmp_path: Path) -> None:
     shutil.copy(str(source_path), str(config_path))
 
     update = PreCommitUpdate(
+        path=str(config_path),
+        applied=False,
         repository="https://github.com/pre-commit/pre-commit-hooks",
         current="v3.1.0",
         latest="v3.1.1",
-        path=str(config_path),
     )
     update.apply()
 
@@ -52,9 +53,16 @@ def test_update_not_found() -> None:
 
     update = PreCommitUpdate(
         repository="https://github.com/foo/bar",
+        applied=False,
         current="1.0.0",
         latest="1.2.0",
         path=str(source_path),
     )
     with pytest.raises(DependencyNotFoundError):
         update.apply()
+    assert not update.applied
+
+    # Test that if the update is already applied, we won't try again, by
+    # running apply and showing that it doesn't thrown an exception.
+    update.applied = True
+    update.apply()

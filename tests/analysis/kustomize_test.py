@@ -32,6 +32,7 @@ async def test_analyzer() -> None:
     assert results == [
         KustomizeUpdate(
             path=str(datapath / "sqrbot-jr" / "kustomization.yaml"),
+            applied=False,
             url="github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0",
             current="0.6.0",
             latest="0.7.0",

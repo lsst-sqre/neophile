@@ -26,9 +26,14 @@ def test_update(tmp_path: Path) -> None:
     current = "github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0"
     new = "github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=1.0.0"
     update = KustomizeUpdate(
-        path=str(update_path), url=current, current="0.6.0", latest="1.0.0",
+        path=str(update_path),
+        applied=False,
+        url=current,
+        current="0.6.0",
+        latest="1.0.0",
     )
     update.apply()
+    assert update.applied
 
     description = (
         "Update lsst-sqre/sqrbot-jr Kustomize resource from 0.6.0 to 1.0.0"
@@ -55,9 +60,16 @@ def test_update_not_found() -> None:
 
     update = KustomizeUpdate(
         path=str(kustomization_path),
+        applied=False,
         url="github.com/lsst-sqre/sqrbot//manifests/base?ref=0.7.1",
         current="0.7.0",
         latest="0.8.0",
     )
     with pytest.raises(DependencyNotFoundError):
         update.apply()
+    assert not update.applied
+
+    # Test that if the update is already applied, we won't try again, by
+    # running apply and showing that it doesn't thrown an exception.
+    update.applied = True
+    update.apply()

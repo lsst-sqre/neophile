@@ -44,12 +44,15 @@ class MethodMixin(ABC):
         """
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass(eq=True)
 class UpdateMixin:
     """Add the base data elements for `Update`."""
 
     path: str
     """The file that contains the dependency."""
+
+    applied: bool
+    """Whether the update has already been applied."""
 
 
 class Update(UpdateMixin, MethodMixin):

@@ -59,6 +59,7 @@ class PreCommitAnalyzer(BaseAnalyzer):
             if latest != dependency.version:
                 pre_commit_update = PreCommitUpdate(
                     path=dependency.path,
+                    applied=False,
                     repository=dependency.repository,
                     current=dependency.version,
                     latest=latest,

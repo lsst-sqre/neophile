@@ -38,10 +38,11 @@ async def test_pr(tmp_path: Path) -> None:
     config = Configuration(github_user="someone", github_token="some-token")
 
     update = HelmUpdate(
+        path=str(tmp_path / "Chart.yaml"),
+        applied=False,
         name="gafaelfawr",
         current="1.0.0",
         latest="2.0.0",
-        path=str(tmp_path / "Chart.yaml"),
     )
     payload = {"name": "Someone", "email": "someone@example.com"}
     with aioresponses() as mock_responses:
@@ -82,10 +83,11 @@ async def test_pr_push_failure(tmp_path: Path) -> None:
     config = Configuration(github_user="someone", github_token="some-token")
 
     update = HelmUpdate(
+        path=str(tmp_path / "Chart.yaml"),
+        applied=False,
         name="gafaelfawr",
         current="1.0.0",
         latest="2.0.0",
-        path=str(tmp_path / "Chart.yaml"),
     )
     payload = {"name": "Someone", "email": "someone@example.com"}
     with aioresponses() as mock_responses:

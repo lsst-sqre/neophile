@@ -14,7 +14,7 @@ from neophile.update.base import Update
 __all__ = ["KustomizeUpdate"]
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(order=True)
 class KustomizeUpdate(Update):
     """An update to a Helm chart dependency."""
 
@@ -35,6 +35,9 @@ class KustomizeUpdate(Update):
         neophile.exceptions.DependencyNotFoundError
             The specified file doesn't contain a dependency of that name.
         """
+        if self.applied:
+            return
+
         dependency_file = Path(self.path)
         yaml = YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
@@ -56,6 +59,8 @@ class KustomizeUpdate(Update):
 
         with dependency_file.open("w") as f:
             yaml.dump(data, f)
+
+        self.applied = True
 
     def description(self) -> str:
         """Build a description of this update.

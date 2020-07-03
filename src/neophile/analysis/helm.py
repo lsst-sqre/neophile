@@ -78,10 +78,11 @@ class HelmAnalyzer(BaseAnalyzer):
                 continue
             if self._helm_needs_update(dependency.version, latest[repo][name]):
                 helm_update = HelmUpdate(
+                    path=dependency.path,
+                    applied=False,
                     name=name,
                     current=dependency.version,
                     latest=latest[repo][name],
-                    path=dependency.path,
                 )
                 results.append(helm_update)
 

@@ -14,7 +14,7 @@ from neophile.update.base import Update
 __all__ = ["PreCommitUpdate"]
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(order=True)
 class PreCommitUpdate(Update):
     """An update to a Helm chart dependency."""
 
@@ -35,6 +35,9 @@ class PreCommitUpdate(Update):
         neophile.exceptions.DependencyNotFoundError
             The specified file doesn't contain a dependency of that name.
         """
+        if self.applied:
+            return
+
         config_path = Path(self.path)
         yaml = YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
@@ -52,6 +55,8 @@ class PreCommitUpdate(Update):
 
         with config_path.open("w") as f:
             yaml.dump(data, f)
+
+        self.applied = True
 
     def description(self) -> str:
         """Build a description of this update.

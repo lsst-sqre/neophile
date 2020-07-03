@@ -38,18 +38,21 @@ async def test_analyzer() -> None:
     assert results == [
         PreCommitUpdate(
             path=str(pre_commit_path),
+            applied=False,
             repository="https://github.com/pre-commit/pre-commit-hooks",
             current="v3.1.0",
             latest="v3.2.0",
         ),
         PreCommitUpdate(
             path=str(pre_commit_path),
+            applied=False,
             repository="https://github.com/ambv/black",
             current="19.10b0",
             latest="20.0.0",
         ),
         PreCommitUpdate(
             path=str(pre_commit_path),
+            applied=False,
             repository="https://gitlab.com/pycqa/flake8",
             current="3.8.1",
             latest="3.9.0",

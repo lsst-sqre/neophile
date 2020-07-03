@@ -11,12 +11,9 @@ from neophile.update.base import Update
 __all__ = ["PythonFrozenUpdate"]
 
 
-@dataclass(frozen=True)
+@dataclass
 class PythonFrozenUpdate(Update):
     """An update to Python frozen dependencies."""
-
-    applied: bool
-    """Whether the update has already been applied."""
 
     def apply(self) -> None:
         """Apply an update to frozen Python dependencies.
@@ -35,6 +32,7 @@ class PythonFrozenUpdate(Update):
             check=True,
             capture_output=True,
         )
+        self.applied = True
 
     def description(self) -> str:
         """Build a description of this update.
