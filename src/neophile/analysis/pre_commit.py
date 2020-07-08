@@ -56,7 +56,7 @@ class PreCommitAnalyzer(BaseAnalyzer):
             latest = await self._inventory.inventory(
                 dependency.owner, dependency.repo
             )
-            if latest != dependency.version:
+            if latest is not None and latest != dependency.version:
                 pre_commit_update = PreCommitUpdate(
                     path=dependency.path,
                     applied=False,

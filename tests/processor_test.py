@@ -55,14 +55,7 @@ async def test_processor(tmp_path: Path) -> None:
         return CallbackResult(status=201)
 
     with aioresponses() as mock:
-        register_mock_github_tags(
-            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-        )
-        register_mock_github_tags(
-            mock, "timothycrosley", "isort", ["4.3.21-2"]
-        )
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
-        register_mock_github_tags(mock, "pycqa", "flake8", ["3.7.0", "3.9.0"])
         mock.get("https://api.github.com/user", payload=user)
         mock.post(
             "https://api.github.com/repos/foo/bar/pulls",

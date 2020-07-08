@@ -56,7 +56,7 @@ class KustomizeAnalyzer(BaseAnalyzer):
             latest = await self._inventory.inventory(
                 dependency.owner, dependency.repo, semantic=True
             )
-            if latest != dependency.version:
+            if latest is not None and latest != dependency.version:
                 kustomize_update = KustomizeUpdate(
                     path=dependency.path,
                     applied=False,

@@ -41,3 +41,14 @@ async def test_inventory_semantic() -> None:
             assert latest == "20171120-1"
             latest = await inventory.inventory("foo", "bar", semantic=True)
             assert latest == "1.19.0"
+
+
+@pytest.mark.asyncio
+async def test_inventory_missing() -> None:
+    """Missing and empty version lists should return None."""
+    with aioresponses() as mock:
+        register_mock_github_tags(mock, "foo", "bar", [])
+        async with aiohttp.ClientSession() as session:
+            inventory = GitHubInventory(Configuration(), session)
+            assert await inventory.inventory("foo", "bar") is None
+            assert await inventory.inventory("foo", "nonexistent") is None

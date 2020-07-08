@@ -16,7 +16,7 @@ from tests.util import register_mock_github_tags
 
 @pytest.mark.asyncio
 async def test_analyzer() -> None:
-    datapath = Path(__file__).parent.parent / "data" / "kubernetes"
+    data_path = Path(__file__).parent.parent / "data" / "kubernetes"
 
     with aioresponses() as mock:
         register_mock_github_tags(
@@ -27,15 +27,27 @@ async def test_analyzer() -> None:
         )
         async with aiohttp.ClientSession() as session:
             factory = Factory(Configuration(), session)
-            analyzer = factory.create_kustomize_analyzer(str(datapath))
+            analyzer = factory.create_kustomize_analyzer(str(data_path))
             results = await analyzer.analyze()
 
     assert results == [
         KustomizeUpdate(
-            path=str(datapath / "sqrbot-jr" / "kustomization.yaml"),
+            path=str(data_path / "sqrbot-jr" / "kustomization.yaml"),
             applied=False,
             url="github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0",
             current="0.6.0",
             latest="0.7.0",
         ),
     ]
+
+
+@pytest.mark.asyncio
+async def test_analyzer_missing() -> None:
+    """Test missing GitHub tags for all resources."""
+    data_path = Path(__file__).parent.parent / "data" / "kubernetes"
+
+    with aioresponses():
+        async with aiohttp.ClientSession() as session:
+            factory = Factory(Configuration(), session)
+            analyzer = factory.create_kustomize_analyzer(str(data_path))
+            assert await analyzer.analyze() == []
