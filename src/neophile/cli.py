@@ -7,6 +7,7 @@ import os
 import sys
 from dataclasses import asdict
 from functools import wraps
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiohttp
@@ -118,7 +119,7 @@ async def analyze(
         )
 
         if pr:
-            repo = factory.create_repository(path)
+            repo = factory.create_repository(Path(path))
             repo.switch_branch()
             all_updates = []
             for analyzer in analyzers:
@@ -160,6 +161,18 @@ async def helm_inventory(ctx: click.Context, repository: str) -> None:
         inventory = CachedHelmInventory(session)
         results = await inventory.inventory(repository)
     print_yaml(results)
+
+
+@main.command()
+@coroutine
+@click.pass_context
+async def process(ctx: click.Context) -> None:
+    """Process all configured repositories."""
+    config = ctx.obj["config"]
+    async with aiohttp.ClientSession() as session:
+        factory = Factory(config, session)
+        processor = factory.create_processor()
+        await processor.process()
 
 
 @main.command()

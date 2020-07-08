@@ -162,6 +162,30 @@ def test_helm_inventory(cache_path: Path) -> None:
     assert data["gafaelfawr"] == "1.3.1"
 
 
+def test_process(tmp_path: Path) -> None:
+    """Test the process subcommand.
+
+    Notes
+    -----
+    This tests processing an empty set of repositories, since otherwise the
+    amount of setup required to mock everything out is too tedious.
+    Processing with all of the mocks is tested separately in the unit test for
+    the processor object.
+    """
+    runner = CliRunner()
+    config = {
+        "repositories": [],
+        "work_area": str(tmp_path),
+    }
+    config_path = tmp_path / "neophile.yaml"
+    with config_path.open("w") as f:
+        yaml = YAML()
+        yaml.dump(config, f)
+
+    result = runner.invoke(main, ["-c", str(config_path), "process"])
+    assert result.exit_code == 0
+
+
 def test_scan() -> None:
     runner = CliRunner()
 

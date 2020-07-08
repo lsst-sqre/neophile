@@ -2,40 +2,23 @@
 
 from __future__ import annotations
 
-import shutil
 import subprocess
 from pathlib import Path
 
 import aiohttp
 import pytest
-from git import Actor, Repo
+from git import Actor
 
 from neophile.config import Configuration
 from neophile.exceptions import UncommittedChangesError
 from neophile.factory import Factory
 from neophile.update.python import PythonFrozenUpdate
-
-
-def setup_repo(tmp_path: Path) -> Repo:
-    """Set up a test repository."""
-    data_path = Path(__file__).parent.parent / "data" / "python"
-    shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
-    repo = Repo.init(str(tmp_path))
-    repo.index.add(
-        [
-            str(tmp_path / ".pre-commit-config.yaml"),
-            str(tmp_path / "Makefile"),
-            str(tmp_path / "requirements"),
-        ]
-    )
-    actor = Actor("Someone", "someone@example.com")
-    repo.index.commit("Initial commit", author=actor, committer=actor)
-    return repo
+from tests.util import setup_python_repo
 
 
 @pytest.mark.asyncio
 async def test_analyzer(tmp_path: Path) -> None:
-    repo = setup_repo(tmp_path)
+    repo = setup_python_repo(tmp_path)
     actor = Actor("Someone", "someone@example.com")
 
     async with aiohttp.ClientSession() as session:
@@ -72,7 +55,7 @@ async def test_analyzer(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_analyzer_update(tmp_path: Path) -> None:
-    repo = setup_repo(tmp_path)
+    repo = setup_python_repo(tmp_path)
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(Configuration(), session)

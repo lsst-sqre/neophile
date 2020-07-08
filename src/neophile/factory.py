@@ -11,6 +11,7 @@ from neophile.analysis.python import PythonAnalyzer
 from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
 from neophile.pr import PullRequester
+from neophile.processor import Processor
 from neophile.repository import Repository
 from neophile.scanner.helm import HelmScanner
 from neophile.scanner.kustomize import KustomizeScanner
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from neophile.analysis.base import BaseAnalyzer
     from neophile.config import Configuration
+    from pathlib import Path
     from typing import List
 
 __all__ = ["Factory"]
@@ -47,7 +49,7 @@ class Factory:
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
         allow_expressions : `bool`, optional
             If set, allow dependencies to be expressed as expressions, and
@@ -58,14 +60,21 @@ class Factory:
         -------
         analyzers : List[`neophile.analysis.base.BaseAnalyzer`]
             List of all available analyzers.
+
+        Notes
+        -----
+        The Python analyzer requires a clean Git tree in order to determine if
+        any changes were necessary, and therefore must run first if the
+        analyzers are run in update mode (which means they will make changes
+        to the working tree).
         """
         return [
+            self.create_python_analyzer(path),
             self.create_helm_analyzer(
                 path, allow_expressions=allow_expressions
             ),
             self.create_kustomize_analyzer(path),
             self.create_pre_commit_analyzer(path),
-            self.create_python_analyzer(path),
         ]
 
     def create_helm_analyzer(
@@ -140,6 +149,10 @@ class Factory:
         """
         return PythonAnalyzer(path)
 
+    def create_processor(self) -> Processor:
+        """Create a new repository processor."""
+        return Processor(self._config, self)
+
     def create_pull_requester(self, path: str) -> PullRequester:
         """Create a new pull requester.
 
@@ -155,12 +168,12 @@ class Factory:
         """
         return PullRequester(path, self._config, self._session)
 
-    def create_repository(self, path: str) -> Repository:
+    def create_repository(self, path: Path) -> Repository:
         """Create a new repository wrapper.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns

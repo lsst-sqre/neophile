@@ -125,6 +125,8 @@ class PullRequester:
         message : `CommitMessage`
             The commit message of the commit.
         """
+        for change in changes:
+            self._repo.index.add(change.path)
         message = self._build_commit_message(changes)
         actor = await self._get_github_actor()
         self._repo.index.commit(str(message), author=actor, committer=actor)

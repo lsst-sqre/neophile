@@ -53,7 +53,7 @@ async def test_pr(tmp_path: Path) -> None:
             status=201,
         )
         async with aiohttp.ClientSession() as session:
-            repository = Repository(str(tmp_path))
+            repository = Repository(tmp_path)
             repository.switch_branch()
             pr = PullRequester(str(tmp_path), config, session)
             with patch.object(Remote, "push") as mock:

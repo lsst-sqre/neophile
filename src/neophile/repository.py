@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from git import Repo
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Repository:
@@ -14,8 +19,32 @@ class Repository:
         Root path of the Git repository.
     """
 
-    def __init__(self, path: str) -> None:
-        self._repo = Repo(path)
+    @classmethod
+    def clone_or_update(cls, path: Path, url: str) -> Repository:
+        """Clone a repository or update an existing repository.
+
+        Parameters
+        ----------
+        path : `pathlib.Path`
+            Path to where the clone should be kept (and may already exist).
+        url : `str`
+            URL of the remote repository.
+
+        Returns
+        -------
+        repo : `Repository`
+            Newly-created repository object.
+        """
+        if path.is_dir():
+            repo = cls(path)
+            repo.update()
+            return repo
+
+        Repo.clone_from(url, str(path))
+        return cls(path)
+
+    def __init__(self, path: Path) -> None:
+        self._repo = Repo(str(path))
         self._branch = self._repo.head.ref
 
     def restore_branch(self) -> None:
@@ -33,3 +62,7 @@ class Repository:
         """
         branch = self._repo.create_head("u/neophile")
         branch.checkout()
+
+    def update(self) -> None:
+        """Update an existing checkout to its current upstream."""
+        self._repo.remotes.origin.pull(ff_only=True)
