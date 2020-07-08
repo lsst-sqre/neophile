@@ -60,6 +60,7 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
     # https://www.burgundywall.com/post/having-click-help-subcommand
     if topic:
         if topic in main.commands:
+            ctx.info_name = topic
             click.echo(main.commands[topic].get_help(ctx))
         else:
             raise click.UsageError(f"Unknown help topic {topic}", ctx)
