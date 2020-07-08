@@ -8,6 +8,7 @@ import aiohttp
 import pytest
 from aioresponses import aioresponses
 
+from neophile.config import Configuration
 from neophile.factory import Factory
 from neophile.update.kustomize import KustomizeUpdate
 from tests.util import register_mock_github_tags
@@ -25,7 +26,7 @@ async def test_analyzer() -> None:
             mock, "lsst-sqre", "sqrbot", ["20170114", "0.6.1", "0.7.0"]
         )
         async with aiohttp.ClientSession() as session:
-            factory = Factory(session)
+            factory = Factory(Configuration(), session)
             analyzer = factory.create_kustomize_analyzer(str(datapath))
             results = await analyzer.analyze()
 

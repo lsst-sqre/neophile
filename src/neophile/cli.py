@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import aiohttp
 import click
 from ruamel.yaml import YAML
+from xdg import XDG_CONFIG_HOME
 
 from neophile.config import Configuration
 from neophile.factory import Factory
@@ -45,10 +46,24 @@ def print_yaml(results: Any) -> None:
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.option(
+    "-c",
+    "--config-path",
+    type=str,
+    metavar="PATH",
+    default=str(XDG_CONFIG_HOME / "neophile.yaml"),
+    envvar="NEOPHILE_CONFIG",
+    help="Path to configuration.",
+)
 @click.version_option(message="%(version)s")
-def main() -> None:
+@click.pass_context
+def main(ctx: click.Context, config_path: str) -> None:
     """Command-line interface for neophile."""
-    pass
+    ctx.ensure_object(dict)
+    if os.path.exists(config_path):
+        ctx.obj["config"] = Configuration.from_file(config_path)
+    else:
+        ctx.obj["config"] = Configuration()
 
 
 @main.command()
@@ -85,12 +100,19 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
     default=False,
     help="Update out-of-date dependencies",
 )
+@click.pass_context
 async def analyze(
-    allow_expressions: bool, path: str, pr: bool, update: bool
+    ctx: click.Context,
+    allow_expressions: bool,
+    path: str,
+    pr: bool,
+    update: bool,
 ) -> None:
     """Analyze the current directory for pending upgrades."""
+    config = ctx.obj["config"]
+
     async with aiohttp.ClientSession() as session:
-        factory = Factory(session)
+        factory = Factory(config, session)
         analyzers = factory.create_all_analyzers(
             path, allow_expressions=allow_expressions
         )
@@ -117,9 +139,11 @@ async def analyze(
 @coroutine
 @click.argument("owner", required=True)
 @click.argument("repo", required=True)
-async def github_inventory(owner: str, repo: str) -> None:
+@click.pass_context
+async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
     """Inventory available GitHub tags."""
-    config = Configuration()
+    config = ctx.obj["config"]
+
     async with aiohttp.ClientSession() as session:
         inventory = GitHubInventory(config, session)
         result = await inventory.inventory(owner, repo)
@@ -129,7 +153,8 @@ async def github_inventory(owner: str, repo: str) -> None:
 @main.command()
 @coroutine
 @click.argument("repository", required=True)
-async def helm_inventory(repository: str) -> None:
+@click.pass_context
+async def helm_inventory(ctx: click.Context, repository: str) -> None:
     """Inventory available Helm chart versions."""
     async with aiohttp.ClientSession() as session:
         inventory = CachedHelmInventory(session)

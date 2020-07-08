@@ -8,6 +8,7 @@ import aiohttp
 import pytest
 from aioresponses import aioresponses
 
+from neophile.config import Configuration
 from neophile.factory import Factory
 from neophile.update.pre_commit import PreCommitUpdate
 from tests.util import register_mock_github_tags
@@ -30,7 +31,7 @@ async def test_analyzer() -> None:
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
         register_mock_github_tags(mock, "pycqa", "flake8", ["3.7.0", "3.9.0"])
         async with aiohttp.ClientSession() as session:
-            factory = Factory(session)
+            factory = Factory(Configuration(), session)
             analyzer = factory.create_pre_commit_analyzer(str(data_path))
             results = await analyzer.analyze()
 

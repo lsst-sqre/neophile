@@ -8,7 +8,6 @@ from neophile.analysis.helm import HelmAnalyzer
 from neophile.analysis.kustomize import KustomizeAnalyzer
 from neophile.analysis.pre_commit import PreCommitAnalyzer
 from neophile.analysis.python import PythonAnalyzer
-from neophile.config import Configuration
 from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
 from neophile.pr import PullRequester
@@ -20,6 +19,7 @@ from neophile.scanner.pre_commit import PreCommitScanner
 if TYPE_CHECKING:
     from aiohttp import ClientSession
     from neophile.analysis.base import BaseAnalyzer
+    from neophile.config import Configuration
     from typing import List
 
 __all__ = ["Factory"]
@@ -36,8 +36,8 @@ class Factory:
         The client session to use for requests.
     """
 
-    def __init__(self, session: ClientSession) -> None:
-        self._config = Configuration()
+    def __init__(self, config: Configuration, session: ClientSession) -> None:
+        self._config = config
         self._session = session
 
     def create_all_analyzers(

@@ -10,6 +10,7 @@ import aiohttp
 import pytest
 from git import Actor, Repo
 
+from neophile.config import Configuration
 from neophile.exceptions import UncommittedChangesError
 from neophile.factory import Factory
 from neophile.update.python import PythonFrozenUpdate
@@ -38,7 +39,7 @@ async def test_analyzer(tmp_path: Path) -> None:
     actor = Actor("Someone", "someone@example.com")
 
     async with aiohttp.ClientSession() as session:
-        factory = Factory(session)
+        factory = Factory(Configuration(), session)
         analyzer = factory.create_python_analyzer(str(tmp_path))
         results = await analyzer.analyze()
 
@@ -53,7 +54,7 @@ async def test_analyzer(tmp_path: Path) -> None:
     subprocess.run(["make", "update-deps"], cwd=str(tmp_path), check=True)
     assert repo.is_dirty()
     async with aiohttp.ClientSession() as session:
-        factory = Factory(session)
+        factory = Factory(Configuration(), session)
         analyzer = factory.create_python_analyzer(str(tmp_path))
         with pytest.raises(UncommittedChangesError):
             results = await analyzer.analyze()
@@ -63,7 +64,7 @@ async def test_analyzer(tmp_path: Path) -> None:
     repo.index.add(str(tmp_path / "requirements"))
     repo.index.commit("Update dependencies", author=actor, committer=actor)
     async with aiohttp.ClientSession() as session:
-        factory = Factory(session)
+        factory = Factory(Configuration(), session)
         analyzer = factory.create_python_analyzer(str(tmp_path))
         results = await analyzer.analyze()
     assert results == []
@@ -74,7 +75,7 @@ async def test_analyzer_update(tmp_path: Path) -> None:
     repo = setup_repo(tmp_path)
 
     async with aiohttp.ClientSession() as session:
-        factory = Factory(session)
+        factory = Factory(Configuration(), session)
         analyzer = factory.create_python_analyzer(str(tmp_path))
         results = await analyzer.update()
 
