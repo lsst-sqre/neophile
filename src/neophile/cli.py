@@ -74,9 +74,9 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 @click.option(
     "--allow-expressions/--no-allow-expressions",
     default=False,
-    help="Allow version match expressions",
+    help="Allow version match expressions.",
 )
-@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze")
+@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze.")
 @click.option(
     "--pr/--no-pr", default=False, help="Generate a pull request of changes."
 )
@@ -138,9 +138,9 @@ async def helm_inventory(repository: str) -> None:
 
 
 @main.command()
-@click.option("--path", default=os.getcwd(), type=str, help="Path to scan")
+@click.option("--path", default=os.getcwd(), type=str, help="Path to scan.")
 def scan(path: str) -> None:
-    """Scan the current directory for versions."""
+    """Scan a path for versions."""
     helm_scanner = HelmScanner(root=path)
     helm_results = helm_scanner.scan()
     kustomize_scanner = KustomizeScanner(root=path)
