@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from neophile.analysis.base import BaseAnalyzer
     from neophile.config import Configuration
+    from neophile.scanner.base import BaseScanner
     from pathlib import Path
     from typing import List
 
@@ -44,7 +45,7 @@ class Factory:
     def create_all_analyzers(
         self, path: Path, *, allow_expressions: bool = False
     ) -> List[BaseAnalyzer]:
-        """Create a new Helm analyzer.
+        """Create all analyzers.
 
         Parameters
         ----------
@@ -74,6 +75,25 @@ class Factory:
             ),
             self.create_kustomize_analyzer(path),
             self.create_pre_commit_analyzer(path),
+        ]
+
+    def create_all_scanners(self, path: Path) -> List[BaseScanner]:
+        """Create all scanners.
+
+        Parameters
+        ----------
+        path : `pathlib.Path`
+            Path to the Git repository to scan.
+
+        Returns
+        -------
+        scanners : List[`neophile.scanner.base.BaseScanner`]
+            List of all available scanners.
+        """
+        return [
+            HelmScanner(path),
+            KustomizeScanner(path),
+            PreCommitScanner(path),
         ]
 
     def create_helm_analyzer(

@@ -30,6 +30,9 @@ class PreCommitScanner(BaseScanner):
         self._root = root
         self._yaml = YAML()
 
+    def name(self) -> str:
+        return "pre-commit"
+
     def scan(self) -> List[PreCommitDependency]:
         """Scan a source tree for pre-commit hook version references.
 

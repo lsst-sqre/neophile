@@ -42,6 +42,9 @@ class KustomizeScanner(BaseScanner):
         self._root = root
         self._yaml = YAML()
 
+    def name(self) -> str:
+        return "kustomize"
+
     def scan(self) -> List[KustomizeDependency]:
         """Scan a source tree for version references.
 

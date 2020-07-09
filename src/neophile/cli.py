@@ -18,9 +18,6 @@ from neophile.config import Configuration
 from neophile.factory import Factory
 from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
-from neophile.scanner.helm import HelmScanner
-from neophile.scanner.kustomize import KustomizeScanner
-from neophile.scanner.pre_commit import PreCommitScanner
 
 if TYPE_CHECKING:
     from typing import Any, Awaitable, Callable, Optional, TypeVar
@@ -165,19 +162,14 @@ async def process(ctx: click.Context) -> None:
 
 
 @main.command()
+@coroutine
 @click.option("--path", default=os.getcwd(), type=str, help="Path to scan.")
-def scan(path: str) -> None:
+@click.pass_context
+async def scan(ctx: click.Context, path: str) -> None:
     """Scan a path for versions."""
-    helm_scanner = HelmScanner(Path(path))
-    helm_results = helm_scanner.scan()
-    kustomize_scanner = KustomizeScanner(Path(path))
-    kustomize_results = kustomize_scanner.scan()
-    pre_commit_scanner = PreCommitScanner(Path(path))
-    pre_commit_results = pre_commit_scanner.scan()
-
-    results = {
-        "helm": [d.to_dict() for d in helm_results],
-        "pre-commit": [d.to_dict() for d in pre_commit_results],
-        "kustomize": [d.to_dict() for d in kustomize_results],
-    }
-    print_yaml(results)
+    config = ctx.obj["config"]
+    async with aiohttp.ClientSession() as session:
+        factory = Factory(config, session)
+        scanners = factory.create_all_scanners(Path(path))
+        results = {s.name(): s.scan() for s in scanners}
+        print_yaml({k: [u.to_dict() for u in v] for k, v in results.items()})

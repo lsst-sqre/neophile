@@ -31,6 +31,9 @@ class HelmScanner(BaseScanner):
         self._root = root
         self._yaml = YAML()
 
+    def name(self) -> str:
+        return "helm"
+
     def scan(self) -> List[HelmDependency]:
         """Scan a source tree for version references.
 

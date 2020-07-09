@@ -14,6 +14,17 @@ class BaseScanner(ABC):
     """Base class for dependency scanners."""
 
     @abstractmethod
+    def name(self) -> str:
+        """The name of the scanner type.
+
+        Returns
+        -------
+        name : `str`
+            A string representing the type of scanner this is.  Used for
+            reporting results accumulated from a bunch of scanners.
+        """
+
+    @abstractmethod
     def scan(self) -> Sequence[BaseDependency]:
         """Scan a source tree for dependencies.
 
