@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from ruamel.yaml import YAML
 
 from neophile.dependency.pre_commit import PreCommitDependency
+from neophile.scanner.base import BaseScanner
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 __all__ = ["PreCommitScanner"]
 
 
-class PreCommitScanner:
+class PreCommitScanner(BaseScanner):
     """Scan a source tree for pre-commit hook version references.
 
     Parameters

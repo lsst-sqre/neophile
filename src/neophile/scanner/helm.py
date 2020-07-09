@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from ruamel.yaml import YAML
 
 from neophile.dependency.helm import HelmDependency
+from neophile.scanner.base import BaseScanner
 from neophile.scanner.util import find_files
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 __all__ = ["HelmScanner"]
 
 
-class HelmScanner:
+class HelmScanner(BaseScanner):
     """Scan a source tree for Helm version references.
 
     Parameters

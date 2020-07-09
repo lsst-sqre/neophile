@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from ruamel.yaml import YAML
 
 from neophile.dependency.kustomize import KustomizeDependency
+from neophile.scanner.base import BaseScanner
 from neophile.scanner.util import find_files
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 __all__ = ["KustomizeScanner"]
 
 
-class KustomizeScanner:
+class KustomizeScanner(BaseScanner):
     """Scan a source tree for Kustomize version references.
 
     This recognizes external resources in the format::
