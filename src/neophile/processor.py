@@ -46,13 +46,13 @@ class Processor:
         url = f"https://github.com/{github_repo.owner}/{github_repo.repo}"
         path = self._config.work_area / github_repo.repo
         repo = Repository.clone_or_update(path, url)
-        analyzers = self._factory.create_all_analyzers(str(path))
+        analyzers = self._factory.create_all_analyzers(path)
 
         repo.switch_branch()
         all_updates = []
         for analyzer in analyzers:
             updates = await analyzer.update()
             all_updates.extend(updates)
-        pull_requester = self._factory.create_pull_requester(str(path))
+        pull_requester = self._factory.create_pull_requester(path)
         await pull_requester.make_pull_request(all_updates)
         repo.restore_branch()

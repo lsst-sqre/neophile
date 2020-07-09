@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from neophile.config import Configuration
     from neophile.update.base import Update
+    from pathlib import Path
     from typing import List, Sequence
 
 __all__ = ["PullRequester"]
@@ -55,7 +56,7 @@ class PullRequester:
 
     Parameters
     ----------
-    path : `str`
+    path : `pathlib.Path`
         Path to the Git repository.
     config : `neophile.config.Configuration`
         neophile configuration.
@@ -64,7 +65,7 @@ class PullRequester:
     """
 
     def __init__(
-        self, path: str, config: Configuration, session: ClientSession
+        self, path: Path, config: Configuration, session: ClientSession
     ) -> None:
         self._config = config
         self._github = GitHubAPI(
@@ -72,7 +73,7 @@ class PullRequester:
             config.github_user,
             oauth_token=config.github_token.get_secret_value(),
         )
-        self._repo = Repo(path)
+        self._repo = Repo(str(path))
 
     async def make_pull_request(self, changes: Sequence[Update]) -> None:
         """Create a pull request for a list of changes.
@@ -126,7 +127,7 @@ class PullRequester:
             The commit message of the commit.
         """
         for change in changes:
-            self._repo.index.add(change.path)
+            self._repo.index.add(str(change.path))
         message = self._build_commit_message(changes)
         actor = await self._get_github_actor()
         self._repo.index.commit(str(message), author=actor, committer=actor)

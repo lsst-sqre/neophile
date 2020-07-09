@@ -38,7 +38,7 @@ async def test_pr(tmp_path: Path) -> None:
     config = Configuration(github_user="someone", github_token="some-token")
 
     update = HelmUpdate(
-        path=str(tmp_path / "Chart.yaml"),
+        path=tmp_path / "Chart.yaml",
         applied=False,
         name="gafaelfawr",
         current="1.0.0",
@@ -55,7 +55,7 @@ async def test_pr(tmp_path: Path) -> None:
         async with aiohttp.ClientSession() as session:
             repository = Repository(tmp_path)
             repository.switch_branch()
-            pr = PullRequester(str(tmp_path), config, session)
+            pr = PullRequester(tmp_path, config, session)
             with patch.object(Remote, "push") as mock:
                 mock.return_value = [
                     PushInfo(PushInfo.NEW_HEAD, None, "", None)
@@ -83,7 +83,7 @@ async def test_pr_push_failure(tmp_path: Path) -> None:
     config = Configuration(github_user="someone", github_token="some-token")
 
     update = HelmUpdate(
-        path=str(tmp_path / "Chart.yaml"),
+        path=tmp_path / "Chart.yaml",
         applied=False,
         name="gafaelfawr",
         current="1.0.0",
@@ -93,7 +93,7 @@ async def test_pr_push_failure(tmp_path: Path) -> None:
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=payload)
         async with aiohttp.ClientSession() as session:
-            pr = PullRequester(str(tmp_path), config, session)
+            pr = PullRequester(tmp_path, config, session)
             with patch.object(Remote, "push") as mock:
                 mock.return_value = [
                     PushInfo(
@@ -111,7 +111,7 @@ async def test_get_authenticated_remote(tmp_path: Path) -> None:
 
     config = Configuration(github_user="test", github_token="some-token")
     async with aiohttp.ClientSession() as session:
-        pr = PullRequester(str(tmp_path), config, session)
+        pr = PullRequester(tmp_path, config, session)
 
         remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
         url = pr._get_authenticated_remote()
@@ -136,7 +136,7 @@ async def test_get_github_repo(tmp_path: Path) -> None:
 
     config = Configuration(github_user="test", github_token="some-token")
     async with aiohttp.ClientSession() as session:
-        pr = PullRequester(str(tmp_path), config, session)
+        pr = PullRequester(tmp_path, config, session)
 
         remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
         assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")

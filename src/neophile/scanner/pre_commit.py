@@ -2,40 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from ruamel.yaml import YAML
 
+from neophile.dependency.pre_commit import PreCommitDependency
+
 if TYPE_CHECKING:
+    from pathlib import Path
     from typing import List
 
-__all__ = [
-    "PreCommitDependency",
-    "PreCommitScanner",
-]
-
-
-@dataclass(frozen=True)
-class PreCommitDependency:
-    """Represents a single pre-commit dependency."""
-
-    repository: str
-    """The URL of the GitHub repository providing this pre-commit hook."""
-
-    owner: str
-    """The GitHub repository owner of the pre-commit hook."""
-
-    repo: str
-    """The GitHub repository name of the pre-commit hook."""
-
-    version: str
-    """The version of the dependency (may be a match pattern)."""
-
-    path: str
-    """The file that contains the dependency declaration."""
+__all__ = ["PreCommitScanner"]
 
 
 class PreCommitScanner:
@@ -43,11 +21,11 @@ class PreCommitScanner:
 
     Parameters
     ----------
-    root : `str`
+    root : `pathlib.Path`
         The root of the source tree.
     """
 
-    def __init__(self, root: str) -> None:
+    def __init__(self, root: Path) -> None:
         self._root = root
         self._yaml = YAML()
 
@@ -59,7 +37,7 @@ class PreCommitScanner:
         results : List[`PreCommitDependency`]
             A list of all discovered pre-commit dependencies.
         """
-        path = Path(self._root) / ".pre-commit-config.yaml"
+        path = self._root / ".pre-commit-config.yaml"
         if not path.exists():
             return []
         results = []
@@ -73,7 +51,7 @@ class PreCommitScanner:
                 owner=path_components[0],
                 repo=path_components[1],
                 version=hook["rev"],
-                path=str(path),
+                path=path,
             )
             results.append(dependency)
 

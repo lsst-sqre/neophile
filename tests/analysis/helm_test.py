@@ -46,32 +46,30 @@ async def test_analyzer() -> None:
         for url, index in MOCK_REPOSITORIES.items():
             mock.get(url, body=yaml_to_string(index), repeat=True)
         async with aiohttp.ClientSession() as session:
-            scanner = HelmScanner(str(data_path))
+            scanner = HelmScanner(data_path)
             inventory = HelmInventory(session)
-            analyzer = HelmAnalyzer(str(data_path), scanner, inventory)
+            analyzer = HelmAnalyzer(scanner, inventory)
             results = await analyzer.analyze()
-            analyzer = HelmAnalyzer(
-                str(data_path), scanner, inventory, allow_expressions=True
-            )
+            analyzer = HelmAnalyzer(scanner, inventory, allow_expressions=True)
             results_expressions = await analyzer.analyze()
 
     assert sorted(results) == [
         HelmUpdate(
-            path=str(data_path / "gafaelfawr" / "Chart.yaml"),
+            path=data_path / "gafaelfawr" / "Chart.yaml",
             applied=False,
             name="gafaelfawr",
             current="1.3.1",
             latest="v1.4.0",
         ),
         HelmUpdate(
-            path=str(data_path / "logging" / "requirements.yaml"),
+            path=data_path / "logging" / "requirements.yaml",
             applied=False,
             name="fluentd-elasticsearch",
             current=">=3.0.0",
             latest="3.0.0",
         ),
         HelmUpdate(
-            path=str(data_path / "logging" / "requirements.yaml"),
+            path=data_path / "logging" / "requirements.yaml",
             applied=False,
             name="kibana",
             current=">=3.0.0",
@@ -80,10 +78,10 @@ async def test_analyzer() -> None:
     ]
     assert results_expressions == [
         HelmUpdate(
-            name="gafaelfawr",
+            path=data_path / "gafaelfawr" / "Chart.yaml",
             applied=False,
+            name="gafaelfawr",
             current="1.3.1",
             latest="v1.4.0",
-            path=str(data_path / "gafaelfawr" / "Chart.yaml"),
         ),
     ]

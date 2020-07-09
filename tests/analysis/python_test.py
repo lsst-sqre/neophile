@@ -23,11 +23,11 @@ async def test_analyzer(tmp_path: Path) -> None:
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(str(tmp_path))
+        analyzer = factory.create_python_analyzer(tmp_path)
         results = await analyzer.analyze()
 
     assert results == [
-        PythonFrozenUpdate(path=str(tmp_path / "requirements"), applied=False)
+        PythonFrozenUpdate(path=tmp_path / "requirements", applied=False)
     ]
 
     # Ensure that the tree is restored to the previous contents.
@@ -38,7 +38,7 @@ async def test_analyzer(tmp_path: Path) -> None:
     assert repo.is_dirty()
     async with aiohttp.ClientSession() as session:
         factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(str(tmp_path))
+        analyzer = factory.create_python_analyzer(tmp_path)
         with pytest.raises(UncommittedChangesError):
             results = await analyzer.analyze()
 
@@ -48,7 +48,7 @@ async def test_analyzer(tmp_path: Path) -> None:
     repo.index.commit("Update dependencies", author=actor, committer=actor)
     async with aiohttp.ClientSession() as session:
         factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(str(tmp_path))
+        analyzer = factory.create_python_analyzer(tmp_path)
         results = await analyzer.analyze()
     assert results == []
 
@@ -59,10 +59,10 @@ async def test_analyzer_update(tmp_path: Path) -> None:
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(str(tmp_path))
+        analyzer = factory.create_python_analyzer(tmp_path)
         results = await analyzer.update()
 
     assert results == [
-        PythonFrozenUpdate(path=str(tmp_path / "requirements"), applied=True)
+        PythonFrozenUpdate(path=tmp_path / "requirements", applied=True)
     ]
     assert repo.is_dirty()

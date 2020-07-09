@@ -32,27 +32,27 @@ async def test_analyzer() -> None:
         register_mock_github_tags(mock, "pycqa", "flake8", ["3.7.0", "3.9.0"])
         async with aiohttp.ClientSession() as session:
             factory = Factory(Configuration(), session)
-            analyzer = factory.create_pre_commit_analyzer(str(data_path))
+            analyzer = factory.create_pre_commit_analyzer(data_path)
             results = await analyzer.analyze()
 
     pre_commit_path = data_path / ".pre-commit-config.yaml"
     assert results == [
         PreCommitUpdate(
-            path=str(pre_commit_path),
+            path=pre_commit_path,
             applied=False,
             repository="https://github.com/pre-commit/pre-commit-hooks",
             current="v3.1.0",
             latest="v3.2.0",
         ),
         PreCommitUpdate(
-            path=str(pre_commit_path),
+            path=pre_commit_path,
             applied=False,
             repository="https://github.com/ambv/black",
             current="19.10b0",
             latest="20.0.0",
         ),
         PreCommitUpdate(
-            path=str(pre_commit_path),
+            path=pre_commit_path,
             applied=False,
             repository="https://gitlab.com/pycqa/flake8",
             current="3.8.1",

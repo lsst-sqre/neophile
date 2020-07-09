@@ -3,37 +3,18 @@
 from __future__ import annotations
 
 import logging
-import os
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML
 
+from neophile.dependency.helm import HelmDependency
+from neophile.scanner.util import find_files
+
 if TYPE_CHECKING:
     from typing import List
 
-__all__ = [
-    "HelmDependency",
-    "HelmScanner",
-]
-
-
-@dataclass(frozen=True)
-class HelmDependency:
-    """Represents a single Helm dependency."""
-
-    version: str
-    """The version of the dependency (may be a match pattern)."""
-
-    path: str
-    """The file that contains the dependency declaration."""
-
-    name: str
-    """The name of the external dependency."""
-
-    repository: str
-    """The name of the chart repository containing the dependency."""
+__all__ = ["HelmScanner"]
 
 
 class HelmScanner:
@@ -41,11 +22,11 @@ class HelmScanner:
 
     Parameters
     ----------
-    root : `str`
+    root : `pathlib.Path`
         The root of the source tree.
     """
 
-    def __init__(self, root: str) -> None:
+    def __init__(self, root: Path) -> None:
         self._root = root
         self._yaml = YAML()
 
@@ -57,16 +38,12 @@ class HelmScanner:
         results : List[`HelmDependency`]
             A list of all discovered dependencies.
         """
-        results = []
+        wanted_files = {"Chart.yaml", "requirements.yaml"}
+        dependency_paths = find_files(self._root, wanted_files)
 
-        for dirpath, _, filenames in os.walk(self._root):
-            if dirpath.startswith(os.path.join(self._root, "tests")):
-                continue
-            for name in filenames:
-                if name not in ("Chart.yaml", "requirements.yaml"):
-                    continue
-                path = Path(dirpath) / name
-                results.extend(self._build_helm_dependencies(path))
+        results = []
+        for path in dependency_paths:
+            results.extend(self._build_helm_dependencies(path))
 
         return results
 
@@ -103,7 +80,7 @@ class HelmScanner:
             dependency = HelmDependency(
                 name=data["name"],
                 version=version,
-                path=str(path),
+                path=path,
                 repository=data["repository"],
             )
             results.append(dependency)

@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
-from dataclasses import asdict
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -115,7 +114,7 @@ async def analyze(
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
         analyzers = factory.create_all_analyzers(
-            path, allow_expressions=allow_expressions
+            Path(path), allow_expressions=allow_expressions
         )
 
         if pr:
@@ -125,7 +124,7 @@ async def analyze(
             for analyzer in analyzers:
                 updates = await analyzer.update()
                 all_updates.extend(updates)
-            pull_requester = factory.create_pull_requester(path)
+            pull_requester = factory.create_pull_requester(Path(path))
             await pull_requester.make_pull_request(all_updates)
             repo.restore_branch()
         elif update:
@@ -133,7 +132,9 @@ async def analyze(
                 await analyzer.update()
         else:
             results = {a.name(): await a.analyze() for a in analyzers}
-            print_yaml({k: [asdict(u) for u in v] for k, v in results.items()})
+            print_yaml(
+                {k: [u.to_dict() for u in v] for k, v in results.items()}
+            )
 
 
 @main.command()
@@ -179,16 +180,16 @@ async def process(ctx: click.Context) -> None:
 @click.option("--path", default=os.getcwd(), type=str, help="Path to scan.")
 def scan(path: str) -> None:
     """Scan a path for versions."""
-    helm_scanner = HelmScanner(root=path)
+    helm_scanner = HelmScanner(Path(path))
     helm_results = helm_scanner.scan()
-    kustomize_scanner = KustomizeScanner(root=path)
+    kustomize_scanner = KustomizeScanner(Path(path))
     kustomize_results = kustomize_scanner.scan()
-    pre_commit_scanner = PreCommitScanner(root=path)
+    pre_commit_scanner = PreCommitScanner(Path(path))
     pre_commit_results = pre_commit_scanner.scan()
 
     results = {
-        "helm": [asdict(d) for d in helm_results],
-        "pre-commit": [asdict(d) for d in pre_commit_results],
-        "kustomize": [asdict(d) for d in kustomize_results],
+        "helm": [d.to_dict() for d in helm_results],
+        "pre-commit": [d.to_dict() for d in pre_commit_results],
+        "kustomize": [d.to_dict() for d in kustomize_results],
     }
     print_yaml(results)

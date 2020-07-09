@@ -2,41 +2,19 @@
 
 from __future__ import annotations
 
-import os
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML
 
+from neophile.dependency.kustomize import KustomizeDependency
+from neophile.scanner.util import find_files
+
 if TYPE_CHECKING:
     from typing import List
 
-__all__ = [
-    "KustomizeDependency",
-    "KustomizeScanner",
-]
-
-
-@dataclass(frozen=True, order=True)
-class KustomizeDependency:
-    """Represents a single Kustomize dependency."""
-
-    url: str
-    """The full URL of the dependency."""
-
-    owner: str
-    """The owner of the referenced GitHub repository."""
-
-    repo: str
-    """The name of the referenced GitHub repository."""
-
-    version: str
-    """The version of the dependency."""
-
-    path: str
-    """The file that contains the dependency declaration."""
+__all__ = ["KustomizeScanner"]
 
 
 class KustomizeScanner:
@@ -48,7 +26,7 @@ class KustomizeScanner:
 
     Parameters
     ----------
-    root : `str`
+    root : `pathlib.Path`
         The root of the source tree.
     """
 
@@ -59,7 +37,7 @@ class KustomizeScanner:
     will be the repository name, and the third match group will be the tag.
     """
 
-    def __init__(self, root: str) -> None:
+    def __init__(self, root: Path) -> None:
         self._root = root
         self._yaml = YAML()
 
@@ -71,16 +49,11 @@ class KustomizeScanner:
         results : List[`KustomizeDependency`]
             A list of all discovered dependencies.
         """
-        results = []
+        dependency_paths = find_files(self._root, {"kustomization.yaml"})
 
-        for dirpath, _, filenames in os.walk(self._root):
-            if dirpath.startswith(os.path.join(self._root, "tests")):
-                continue
-            for name in filenames:
-                if name != "kustomization.yaml":
-                    continue
-                path = Path(dirpath) / name
-                results.extend(self._build_kustomize_dependencies(path))
+        results = []
+        for path in dependency_paths:
+            results.extend(self._build_kustomize_dependencies(path))
 
         return results
 
@@ -115,7 +88,7 @@ class KustomizeScanner:
                 owner=match.group(1),
                 repo=match.group(2),
                 version=match.group(3),
-                path=str(path),
+                path=path,
             )
             results.append(dependency)
 

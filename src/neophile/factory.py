@@ -43,7 +43,7 @@ class Factory:
         self._session = session
 
     def create_all_analyzers(
-        self, path: str, *, allow_expressions: bool = False
+        self, path: Path, *, allow_expressions: bool = False
     ) -> List[BaseAnalyzer]:
         """Create a new Helm analyzer.
 
@@ -78,13 +78,13 @@ class Factory:
         ]
 
     def create_helm_analyzer(
-        self, path: str, *, allow_expressions: bool = False
+        self, path: Path, *, allow_expressions: bool = False
     ) -> HelmAnalyzer:
         """Create a new Helm analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
         allow_expressions : `bool`, optional
             If set, allow dependencies to be expressed as expressions, and
@@ -98,14 +98,14 @@ class Factory:
         """
         scanner = HelmScanner(path)
         inventory = CachedHelmInventory(self._session)
-        return HelmAnalyzer(path, scanner, inventory)
+        return HelmAnalyzer(scanner, inventory)
 
-    def create_kustomize_analyzer(self, path: str) -> KustomizeAnalyzer:
+    def create_kustomize_analyzer(self, path: Path) -> KustomizeAnalyzer:
         """Create a new Helm analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns
@@ -115,14 +115,14 @@ class Factory:
         """
         scanner = KustomizeScanner(path)
         inventory = GitHubInventory(self._config, self._session)
-        return KustomizeAnalyzer(path, scanner, inventory)
+        return KustomizeAnalyzer(scanner, inventory)
 
-    def create_pre_commit_analyzer(self, path: str) -> PreCommitAnalyzer:
+    def create_pre_commit_analyzer(self, path: Path) -> PreCommitAnalyzer:
         """Create a new pre-commit hook analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns
@@ -132,14 +132,14 @@ class Factory:
         """
         scanner = PreCommitScanner(path)
         inventory = GitHubInventory(self._config, self._session)
-        return PreCommitAnalyzer(path, scanner, inventory)
+        return PreCommitAnalyzer(scanner, inventory)
 
-    def create_python_analyzer(self, path: str) -> PythonAnalyzer:
+    def create_python_analyzer(self, path: Path) -> PythonAnalyzer:
         """Create a new Python frozen dependency analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns
@@ -153,12 +153,12 @@ class Factory:
         """Create a new repository processor."""
         return Processor(self._config, self)
 
-    def create_pull_requester(self, path: str) -> PullRequester:
+    def create_pull_requester(self, path: Path) -> PullRequester:
         """Create a new pull requester.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns

@@ -19,7 +19,7 @@ def test_update(tmp_path: Path) -> None:
     shutil.copy(str(chart_path), str(update_path))
 
     update = HelmUpdate(
-        path=str(update_path),
+        path=update_path,
         applied=False,
         name="gafaelfawr",
         current="1.0.0",
@@ -42,7 +42,7 @@ def test_update_not_found() -> None:
     requirements_path = helm_path / "logging" / "requirements.yaml"
 
     update = HelmUpdate(
-        path=str(requirements_path),
+        path=requirements_path,
         applied=False,
         name="gafaelfawr",
         current="1.0.0",

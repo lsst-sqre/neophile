@@ -23,8 +23,6 @@ class HelmAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `str`
-        Root of the directory tree to analyze.
     scanner : `neophile.scanner.HelmScanner`
         Scanner for Helm dependencies.
     inventory : `neophile.inventory.HelmInventory`
@@ -37,13 +35,11 @@ class HelmAnalyzer(BaseAnalyzer):
 
     def __init__(
         self,
-        root: str,
         scanner: HelmScanner,
         inventory: HelmInventory,
         *,
         allow_expressions: bool = False,
     ) -> None:
-        self._root = root
         self._allow_expressions = allow_expressions
         self._scanner = scanner
         self._inventory = inventory

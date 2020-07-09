@@ -27,12 +27,12 @@ async def test_analyzer() -> None:
         )
         async with aiohttp.ClientSession() as session:
             factory = Factory(Configuration(), session)
-            analyzer = factory.create_kustomize_analyzer(str(data_path))
+            analyzer = factory.create_kustomize_analyzer(data_path)
             results = await analyzer.analyze()
 
     assert results == [
         KustomizeUpdate(
-            path=str(data_path / "sqrbot-jr" / "kustomization.yaml"),
+            path=data_path / "sqrbot-jr" / "kustomization.yaml",
             applied=False,
             url="github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0",
             current="0.6.0",
@@ -49,5 +49,5 @@ async def test_analyzer_missing() -> None:
     with aioresponses():
         async with aiohttp.ClientSession() as session:
             factory = Factory(Configuration(), session)
-            analyzer = factory.create_kustomize_analyzer(str(data_path))
+            analyzer = factory.create_kustomize_analyzer(data_path)
             assert await analyzer.analyze() == []

@@ -21,8 +21,6 @@ class PreCommitAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `str`
-        Root of the directory tree to analyze.
     scanner : `neophile.scanner.PreCommitScanner`
         Scanner for pre-commit hook dependencies.
     inventory : `neophile.inventory.GitHubInventory`
@@ -30,9 +28,8 @@ class PreCommitAnalyzer(BaseAnalyzer):
     """
 
     def __init__(
-        self, root: str, scanner: PreCommitScanner, inventory: GitHubInventory,
+        self, scanner: PreCommitScanner, inventory: GitHubInventory
     ) -> None:
-        self._root = root
         self._scanner = scanner
         self._inventory = inventory
 

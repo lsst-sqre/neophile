@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -14,6 +13,7 @@ from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
     from neophile.update.base import Update
+    from pathlib import Path
     from typing import List
 
 __all__ = ["PythonAnalyzer"]
@@ -24,11 +24,11 @@ class PythonAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `str`
+    root : `pathlib.Path`
         Root of the directory tree to analyze.
     """
 
-    def __init__(self, root: str) -> None:
+    def __init__(self, root: Path) -> None:
         self._root = root
 
     async def analyze(self, update: bool = False) -> List[Update]:
@@ -56,9 +56,9 @@ class PythonAnalyzer(BaseAnalyzer):
             Running ``make update-deps`` failed.
         """
         for name in ("Makefile", "requirements/main.in"):
-            if not os.path.exists(os.path.join(self._root, name)):
+            if not (self._root / name).exists():
                 return []
-        repo = Repo(self._root)
+        repo = Repo(str(self._root))
 
         if repo.is_dirty():
             msg = "Working tree contains uncommitted changes"
@@ -66,7 +66,7 @@ class PythonAnalyzer(BaseAnalyzer):
 
         subprocess.run(
             ["make", "update-deps"],
-            cwd=self._root,
+            cwd=str(self._root),
             check=True,
             capture_output=True,
         )
@@ -78,7 +78,7 @@ class PythonAnalyzer(BaseAnalyzer):
             repo.git.restore(".")
         return [
             PythonFrozenUpdate(
-                path=os.path.join(self._root, "requirements"), applied=update,
+                path=self._root / "requirements", applied=update,
             )
         ]
 

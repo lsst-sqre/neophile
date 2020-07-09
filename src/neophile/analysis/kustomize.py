@@ -21,8 +21,6 @@ class KustomizeAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `str`
-        Root of the directory tree to analyze.
     scanner : `neophile.scanner.KustomizeScanner`
         Scanner for Kustomize dependencies.
     inventory : `neophile.inventory.GitHubInventory`
@@ -30,9 +28,8 @@ class KustomizeAnalyzer(BaseAnalyzer):
     """
 
     def __init__(
-        self, root: str, scanner: KustomizeScanner, inventory: GitHubInventory,
+        self, scanner: KustomizeScanner, inventory: GitHubInventory,
     ) -> None:
-        self._root = root
         self._scanner = scanner
         self._inventory = inventory
 

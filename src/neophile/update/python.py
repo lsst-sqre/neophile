@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
 
 from neophile.update.base import Update
 
@@ -25,7 +24,7 @@ class PythonFrozenUpdate(Update):
         """
         if self.applied:
             return
-        rootdir = Path(self.path).parent
+        rootdir = self.path.parent
         subprocess.run(
             ["make", "update-deps"],
             cwd=str(rootdir),

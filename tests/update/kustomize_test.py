@@ -26,7 +26,7 @@ def test_update(tmp_path: Path) -> None:
     current = "github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0"
     new = "github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=1.0.0"
     update = KustomizeUpdate(
-        path=str(update_path),
+        path=update_path,
         applied=False,
         url=current,
         current="0.6.0",
@@ -59,7 +59,7 @@ def test_update_not_found() -> None:
     )
 
     update = KustomizeUpdate(
-        path=str(kustomization_path),
+        path=kustomization_path,
         applied=False,
         url="github.com/lsst-sqre/sqrbot//manifests/base?ref=0.7.1",
         current="0.7.0",
