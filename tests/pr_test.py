@@ -59,14 +59,13 @@ async def test_pr(tmp_path: Path, mock_push: Mock) -> None:
         async with aiohttp.ClientSession() as session:
             repository = Repository(tmp_path)
             repository.switch_branch()
+            update.apply()
             pr = PullRequester(tmp_path, config, session)
             await pr.make_pull_request([update])
-            repository.restore_branch()
 
-    assert not repo.is_dirty()
-    assert repo.head.ref.name == "master"
     assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
-    repo.heads["u/neophile"].checkout()
+    assert not repo.is_dirty()
+    assert repo.head.ref.name == "u/neophile"
     commit = repo.head.commit
     assert commit.author.name == "Someone"
     assert commit.author.email == "someone@example.com"

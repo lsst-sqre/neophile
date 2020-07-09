@@ -48,8 +48,12 @@ class Repository:
         self._branch = self._repo.head.ref
 
     def restore_branch(self) -> None:
-        """Switch back to the branch before switch_branch was called."""
+        """Switch back to the branch before switch_branch was called.
+
+        Also deletes the neophile branch to clean up.
+        """
         self._branch.checkout()
+        self._repo.delete_head("u/neophile", force=True)
 
     def switch_branch(self) -> None:
         """Switch to the neophile working branch.

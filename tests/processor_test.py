@@ -78,4 +78,5 @@ async def test_processor(tmp_path: Path) -> None:
     repo = Repo(str(tmp_path / "work" / "bar"))
     assert not repo.is_dirty()
     assert repo.head.ref.name == "master"
+    assert "u/neophile" not in [h.name for h in repo.heads]
     assert "tmp-neophile" not in [r.name for r in repo.remotes]

@@ -2,20 +2,23 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import call
 
-from aioresponses import aioresponses
+from aioresponses import CallbackResult, aioresponses
 from click.testing import CliRunner
 from git import Actor, Remote, Repo
 from ruamel.yaml import YAML
 
 from neophile.cli import main
+from tests.util import yaml_to_string
 
 if TYPE_CHECKING:
+    from typing import Any
     from unittest.mock import Mock
 
 
@@ -102,35 +105,49 @@ def test_analyze_pr(tmp_path: Path, cache_path: Path, mock_push: Mock) -> None:
     repo.index.add(str(dst))
     actor = Actor("Someone", "someone@example.com")
     repo.index.commit("Initial commit", author=actor, committer=actor)
-    yaml = YAML()
-    output = StringIO()
-    yaml.dump({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}}, output)
-    sqre = output.getvalue()
+    sqre = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
     payload = {"name": "Someone", "email": "someone@example.com"}
+    created_pr = False
+
+    def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
+        change = "Update gafaelfawr Helm chart from 1.3.1 to 1.4.0"
+        assert json.loads(kwargs["data"]) == {
+            "title": "Update dependencies",
+            "body": f"- {change}\n",
+            "head": "u/neophile",
+            "base": "master",
+            "maintainer_can_modify": True,
+            "draft": False,
+        }
+
+        assert repo.head.ref.name == "u/neophile"
+        yaml = YAML()
+        data = yaml.load(dst)
+        assert data["dependencies"][0]["version"] == "1.4.0"
+        commit = repo.head.commit
+        assert commit.author.name == "Someone"
+        assert commit.author.email == "someone@example.com"
+        assert commit.message == f"Update dependencies\n\n- {change}\n"
+
+        nonlocal created_pr
+        created_pr = True
+        return CallbackResult(status=201)
 
     with aioresponses() as mock:
         mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
         mock.get("https://api.github.com/user", payload=payload)
         mock.post(
             "https://api.github.com/repos/foo/bar/pulls",
-            payload={},
-            status=201,
+            callback=check_pr_post,
         )
         result = runner.invoke(
             main, ["analyze", "--path", str(tmp_path), "--pr"]
         )
 
+    assert created_pr
     assert result.exit_code == 0
     assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
     assert repo.head.ref.name == "master"
-    repo.heads["u/neophile"].checkout()
-    data = yaml.load(dst)
-    assert data["dependencies"][0]["version"] == "1.4.0"
-    commit = repo.head.commit
-    assert commit.author.name == "Someone"
-    assert commit.author.email == "someone@example.com"
-    change = "Update gafaelfawr Helm chart from 1.3.1 to 1.4.0"
-    assert commit.message == f"Update dependencies\n\n- {change}\n"
 
 
 def test_github_inventory() -> None:
