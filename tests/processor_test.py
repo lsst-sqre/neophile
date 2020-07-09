@@ -35,6 +35,7 @@ async def test_processor(tmp_path: Path) -> None:
         work_area=tmp_path / "work",
     )
     user = {"name": "Someone", "email": "someone@example.com"}
+    push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
     created_pr = False
 
     def mock_clone_from(
@@ -62,14 +63,14 @@ async def test_processor(tmp_path: Path) -> None:
             callback=check_pr_post,
         )
 
+        # Unfortunately, the mock_push fixture can't be used here because we
+        # want to use git.Remote.push above.
         async with aiohttp.ClientSession() as session:
             factory = Factory(config, session)
             processor = factory.create_processor()
             with patch.object(Repo, "clone_from", side_effect=mock_clone_from):
                 with patch.object(Remote, "push") as mock_push:
-                    mock_push.return_value = [
-                        PushInfo(PushInfo.NEW_HEAD, None, "", None)
-                    ]
+                    mock_push.return_value = push_result
                     await processor.process()
 
     assert mock_push.call_args_list == [call("u/neophile:u/neophile")]

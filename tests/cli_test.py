@@ -5,14 +5,18 @@ from __future__ import annotations
 import shutil
 from io import StringIO
 from pathlib import Path
-from unittest.mock import call, patch
+from typing import TYPE_CHECKING
+from unittest.mock import call
 
 from aioresponses import aioresponses
 from click.testing import CliRunner
-from git import Actor, PushInfo, Remote, Repo
+from git import Actor, Remote, Repo
 from ruamel.yaml import YAML
 
 from neophile.cli import main
+
+if TYPE_CHECKING:
+    from unittest.mock import Mock
 
 
 def test_help() -> None:
@@ -82,7 +86,7 @@ def test_analyze_update(tmp_path: Path, cache_path: Path) -> None:
     assert data["dependencies"][0]["version"] == "1.4.0"
 
 
-def test_analyze_pr(tmp_path: Path, cache_path: Path) -> None:
+def test_analyze_pr(tmp_path: Path, cache_path: Path, mock_push: Mock) -> None:
     runner = CliRunner()
     repo = Repo.init(str(tmp_path))
     Remote.create(repo, "origin", "https://github.com/foo/bar")
@@ -112,14 +116,12 @@ def test_analyze_pr(tmp_path: Path, cache_path: Path) -> None:
             payload={},
             status=201,
         )
-        with patch.object(Remote, "push") as mock:
-            mock.return_value = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
-            result = runner.invoke(
-                main, ["analyze", "--path", str(tmp_path), "--pr"]
-            )
-            assert mock.call_args_list == [call("u/neophile:u/neophile")]
+        result = runner.invoke(
+            main, ["analyze", "--path", str(tmp_path), "--pr"]
+        )
 
     assert result.exit_code == 0
+    assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
     assert repo.head.ref.name == "master"
     repo.heads["u/neophile"].checkout()
     data = yaml.load(dst)
