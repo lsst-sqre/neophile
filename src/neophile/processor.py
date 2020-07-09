@@ -53,6 +53,7 @@ class Processor:
         for analyzer in analyzers:
             updates = await analyzer.update()
             all_updates.extend(updates)
-        pull_requester = self._factory.create_pull_requester(path)
-        await pull_requester.make_pull_request(all_updates)
+        if all_updates:
+            pull_requester = self._factory.create_pull_requester(path)
+            await pull_requester.make_pull_request(all_updates)
         repo.restore_branch()
