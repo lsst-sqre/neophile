@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -9,7 +11,7 @@ from unittest.mock import call, patch
 
 import aiohttp
 import pytest
-from aioresponses import aioresponses
+from aioresponses import CallbackResult, aioresponses
 from git import Actor, PushInfo, Remote, Repo
 
 from neophile.config import Configuration
@@ -19,6 +21,7 @@ from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
 
 if TYPE_CHECKING:
+    from typing import Any
     from unittest.mock import Mock
 
 
@@ -40,7 +43,6 @@ def setup_repo(tmp_path: Path) -> Repo:
 async def test_pr(tmp_path: Path, mock_push: Mock) -> None:
     repo = setup_repo(tmp_path)
     config = Configuration(github_user="someone", github_token="some-token")
-
     update = HelmUpdate(
         path=tmp_path / "Chart.yaml",
         applied=False,
@@ -49,8 +51,11 @@ async def test_pr(tmp_path: Path, mock_push: Mock) -> None:
         latest="2.0.0",
     )
     payload = {"name": "Someone", "email": "someone@example.com"}
+
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=payload)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(pattern, payload=[])
         mock_responses.post(
             "https://api.github.com/repos/foo/bar/pulls",
             payload={},
@@ -92,6 +97,8 @@ async def test_pr_push_failure(tmp_path: Path) -> None:
 
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=user)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(pattern, payload=[])
         async with aiohttp.ClientSession() as session:
             pr = PullRequester(tmp_path, config, session)
             with patch.object(Remote, "push") as mock:
@@ -100,6 +107,52 @@ async def test_pr_push_failure(tmp_path: Path) -> None:
                     await pr.make_pull_request([update])
 
     assert "Some error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_pr_update(tmp_path: Path, mock_push: Mock) -> None:
+    """Test updating an existing PR."""
+    repo = setup_repo(tmp_path)
+    config = Configuration(github_user="someone", github_token="some-token")
+    update = HelmUpdate(
+        path=tmp_path / "Chart.yaml",
+        applied=False,
+        name="gafaelfawr",
+        current="1.0.0",
+        latest="2.0.0",
+    )
+    user = {"name": "Someone", "email": "someone@example.com"}
+    updated_pr = False
+
+    def check_pr_update(url: str, **kwargs: Any) -> CallbackResult:
+        change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
+        assert json.loads(kwargs["data"]) == {
+            "title": "Update dependencies",
+            "body": f"- {change}\n",
+        }
+
+        nonlocal updated_pr
+        updated_pr = True
+        return CallbackResult(status=200)
+
+    with aioresponses() as mock_responses:
+        mock_responses.get("https://api.github.com/user", payload=user)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(pattern, payload=[{"number": "1234"}])
+        mock_responses.patch(
+            "https://api.github.com/repos/foo/bar/pulls/1234",
+            callback=check_pr_update,
+        )
+        async with aiohttp.ClientSession() as session:
+            repository = Repository(tmp_path)
+            repository.switch_branch()
+            update.apply()
+            pr = PullRequester(tmp_path, config, session)
+            await pr.make_pull_request([update])
+
+    assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
+    assert not repo.is_dirty()
+    assert repo.head.ref.name == "u/neophile"
 
 
 @pytest.mark.asyncio

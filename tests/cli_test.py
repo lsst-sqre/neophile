@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from io import StringIO
 from pathlib import Path
@@ -136,6 +137,8 @@ def test_analyze_pr(tmp_path: Path, cache_path: Path, mock_push: Mock) -> None:
     with aioresponses() as mock:
         mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
         mock.get("https://api.github.com/user", payload=payload)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock.get(pattern, payload=[])
         mock.post(
             "https://api.github.com/repos/foo/bar/pulls",
             callback=check_pr_post,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 from typing import TYPE_CHECKING
 from unittest.mock import call, patch
@@ -58,6 +59,8 @@ async def test_processor(tmp_path: Path) -> None:
     with aioresponses() as mock:
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
         mock.get("https://api.github.com/user", payload=user)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock.get(pattern, payload=[])
         mock.post(
             "https://api.github.com/repos/foo/bar/pulls",
             callback=check_pr_post,

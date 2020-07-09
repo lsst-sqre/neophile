@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import urlencode, urlparse
 
 from gidgethub.aiohttp import GitHubAPI
 from git import Actor, PushInfo, Remote, Repo
@@ -16,7 +16,8 @@ if TYPE_CHECKING:
     from neophile.config import Configuration
     from neophile.update.base import Update
     from pathlib import Path
-    from typing import List, Sequence
+    from typing import List, Optional, Sequence
+    from urllib.parse import ParseResult
 
 __all__ = ["PullRequester"]
 
@@ -76,7 +77,7 @@ class PullRequester:
         self._repo = Repo(str(path))
 
     async def make_pull_request(self, changes: Sequence[Update]) -> None:
-        """Create a pull request for a list of changes.
+        """Create or update a pull request for a list of changes.
 
         Parameters
         ----------
@@ -88,8 +89,15 @@ class PullRequester:
         neophile.exceptions.PushError
             Pushing the branch to GitHub failed.
         """
+        github_repo = self._get_github_repo()
+        pull_number = await self._get_pr(github_repo)
+
         message = await self._commit_changes(changes)
-        await self._create_pr(message)
+        self._push_branch()
+        if pull_number is not None:
+            await self._update_pr(github_repo, pull_number, message)
+        else:
+            await self._create_pr(github_repo, message)
 
     def _build_commit_message(
         self, changes: Sequence[Update]
@@ -126,42 +134,26 @@ class PullRequester:
         message : `CommitMessage`
             The commit message of the commit.
         """
+        actor = await self._get_github_actor()
         for change in changes:
             self._repo.index.add(str(change.path))
         message = self._build_commit_message(changes)
-        actor = await self._get_github_actor()
         self._repo.index.commit(str(message), author=actor, committer=actor)
         return message
 
-    async def _create_pr(self, message: CommitMessage) -> None:
+    async def _create_pr(
+        self, github_repo: GitHubRepo, message: CommitMessage
+    ) -> None:
         """Create a new PR for the current branch.
 
         Parameters
         ----------
-        title : `str`
-            The title of the pull request message.
-        body : `str`
-            The body of the pull request message.
-
-        Raises
-        ------
-        neophile.exceptions.PushError
-            Pushing the branch to GitHub failed.
+        github_repo : `GitHubRepo`
+            GitHub repository in which to create the pull request.
+        message : `CommitMessage`
+            The commit message to use for the pull request.
         """
-        remote_url = self._get_authenticated_remote()
-        github_repo = self._get_github_repo()
         branch = self._repo.head.ref.name
-
-        remote = Remote.add(self._repo, "tmp-neophile", remote_url)
-        try:
-            push_info = remote.push(f"{branch}:{branch}")
-            for result in push_info:
-                if result.flags & PushInfo.ERROR:
-                    msg = f"Pushing {branch} failed: {result.summary}"
-                    raise PushError(msg)
-        finally:
-            Remote.remove(self._repo, "tmp-neophile")
-
         data = {
             "title": message.title,
             "body": message.body,
@@ -225,6 +217,34 @@ class PullRequester:
             repo = repo[: -len(".git")]
         return GitHubRepo(owner=owner, repo=repo)
 
+    async def _get_pr(self, github_repo: GitHubRepo) -> Optional[str]:
+        """Get the pull request number of an existing neophile PR.
+
+        Returns
+        -------
+        pull_number : `str` or `None`
+            The PR number or `None` if there is no open pull request from
+            neophile.
+
+        Notes
+        -----
+        The pull request is found by searching for all PRs in the open state
+        whose branch is u/neophile.
+        """
+        query = {
+            "state": "open",
+            "head": f"{github_repo.owner}:u/neophile",
+            "base": "master",
+        }
+
+        prs = self._github.getiter(
+            f"/repos{{/owner}}{{/repo}}/pulls?{urlencode(query)}",
+            url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
+        )
+        async for pr in prs:
+            return pr["number"]
+        return None
+
     def _get_remote_url(self) -> ParseResult:
         """Get the parsed URL of the origin remote.
 
@@ -242,3 +262,51 @@ class PullRequester:
         else:
             path = url.rsplit(":", 1)[-1]
             return urlparse(f"https://github.com/{path}")
+
+    def _push_branch(self) -> None:
+        """Push the u/neophile branch to GitHub.
+
+        Raises
+        ------
+        neophile.exceptions.PushError
+            Pushing the branch to GitHub failed.
+        """
+        branch = self._repo.head.ref.name
+        remote_url = self._get_authenticated_remote()
+        remote = Remote.add(self._repo, "tmp-neophile", remote_url)
+        try:
+            push_info = remote.push(f"{branch}:{branch}")
+            for result in push_info:
+                if result.flags & PushInfo.ERROR:
+                    msg = f"Pushing {branch} failed: {result.summary}"
+                    raise PushError(msg)
+        finally:
+            Remote.remove(self._repo, "tmp-neophile")
+
+    async def _update_pr(
+        self, github_repo: GitHubRepo, pull_number: str, message: CommitMessage
+    ) -> None:
+        """Update an existing PR with a new commit message.
+
+        Parameters
+        ----------
+        github_repo : `GitHubRepo`
+            GitHub repository in which to create the pull request.
+        pull_number : `str`
+            The number of the pull request to update.
+        message : `CommitMessage`
+            The commit message to use for the pull request.
+        """
+        data = {
+            "title": message.title,
+            "body": message.body,
+        }
+        await self._github.patch(
+            "/repos{/owner}{/repo}/pulls{/pull_number}",
+            url_vars={
+                "owner": github_repo.owner,
+                "repo": github_repo.repo,
+                "pull_number": pull_number,
+            },
+            data=data,
+        )
