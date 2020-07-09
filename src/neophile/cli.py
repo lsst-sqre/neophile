@@ -113,25 +113,13 @@ async def analyze(
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
-        analyzers = factory.create_all_analyzers(
-            Path(path), allow_expressions=allow_expressions
-        )
-
+        processor = factory.create_processor()
         if pr:
-            repo = factory.create_repository(Path(path))
-            repo.switch_branch()
-            all_updates = []
-            for analyzer in analyzers:
-                updates = await analyzer.update()
-                all_updates.extend(updates)
-            pull_requester = factory.create_pull_requester(Path(path))
-            await pull_requester.make_pull_request(all_updates)
-            repo.restore_branch()
+            await processor.process_checkout(Path(path))
         elif update:
-            for analyzer in analyzers:
-                await analyzer.update()
+            await processor.update_checkout(Path(path))
         else:
-            results = {a.name(): await a.analyze() for a in analyzers}
+            results = await processor.analyze_checkout(Path(path))
             print_yaml(
                 {k: [u.to_dict() for u in v] for k, v in results.items()}
             )

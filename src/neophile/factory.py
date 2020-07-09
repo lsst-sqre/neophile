@@ -12,7 +12,6 @@ from neophile.inventory.github import GitHubInventory
 from neophile.inventory.helm import CachedHelmInventory
 from neophile.pr import PullRequester
 from neophile.processor import Processor
-from neophile.repository import Repository
 from neophile.scanner.helm import HelmScanner
 from neophile.scanner.kustomize import KustomizeScanner
 from neophile.scanner.pre_commit import PreCommitScanner
@@ -167,18 +166,3 @@ class Factory:
             New pull requester.
         """
         return PullRequester(path, self._config, self._session)
-
-    def create_repository(self, path: Path) -> Repository:
-        """Create a new repository wrapper.
-
-        Parameters
-        ----------
-        path : `pathlib.Path`
-            Path to the Git repository.
-
-        Returns
-        -------
-        repository : `neophile.repository.Repository`
-            New repository wrapper.
-        """
-        return Repository(path)
