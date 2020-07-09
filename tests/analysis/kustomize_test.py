@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import aiohttp
 import pytest
 from aioresponses import aioresponses
 
@@ -13,9 +13,12 @@ from neophile.factory import Factory
 from neophile.update.kustomize import KustomizeUpdate
 from tests.util import register_mock_github_tags
 
+if TYPE_CHECKING:
+    from aiohttp import ClientSession
+
 
 @pytest.mark.asyncio
-async def test_analyzer() -> None:
+async def test_analyzer(session: ClientSession) -> None:
     data_path = Path(__file__).parent.parent / "data" / "kubernetes"
 
     with aioresponses() as mock:
@@ -25,10 +28,9 @@ async def test_analyzer() -> None:
         register_mock_github_tags(
             mock, "lsst-sqre", "sqrbot", ["20170114", "0.6.1", "0.7.0"]
         )
-        async with aiohttp.ClientSession() as session:
-            factory = Factory(Configuration(), session)
-            analyzer = factory.create_kustomize_analyzer(data_path)
-            results = await analyzer.analyze()
+        factory = Factory(Configuration(), session)
+        analyzer = factory.create_kustomize_analyzer(data_path)
+        results = await analyzer.analyze()
 
     assert results == [
         KustomizeUpdate(
@@ -42,12 +44,11 @@ async def test_analyzer() -> None:
 
 
 @pytest.mark.asyncio
-async def test_analyzer_missing() -> None:
+async def test_analyzer_missing(session: ClientSession) -> None:
     """Test missing GitHub tags for all resources."""
     data_path = Path(__file__).parent.parent / "data" / "kubernetes"
 
     with aioresponses():
-        async with aiohttp.ClientSession() as session:
-            factory = Factory(Configuration(), session)
-            analyzer = factory.create_kustomize_analyzer(data_path)
-            assert await analyzer.analyze() == []
+        factory = Factory(Configuration(), session)
+        analyzer = factory.create_kustomize_analyzer(data_path)
+        assert await analyzer.analyze() == []

@@ -7,12 +7,13 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
+from aiohttp import ClientSession
 from git import PushInfo, Remote
 
 from neophile.inventory.helm import CachedHelmInventory
 
 if TYPE_CHECKING:
-    from typing import Iterator
+    from typing import AsyncIterator, Iterator
     from unittest.mock import Mock
 
 
@@ -39,3 +40,10 @@ def mock_push() -> Iterator[Mock]:
     with patch.object(Remote, "push") as mock:
         mock.return_value = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
         yield mock
+
+
+@pytest.fixture
+async def session() -> AsyncIterator[ClientSession]:
+    """Return an `aiohttp.ClientSession` for testing."""
+    async with ClientSession() as session:
+        yield session

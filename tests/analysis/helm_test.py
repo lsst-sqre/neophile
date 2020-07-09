@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import aiohttp
 import pytest
 from aioresponses import aioresponses
 
@@ -13,6 +13,9 @@ from neophile.inventory.helm import HelmInventory
 from neophile.scanner.helm import HelmScanner
 from neophile.update.helm import HelmUpdate
 from tests.util import yaml_to_string
+
+if TYPE_CHECKING:
+    from aiohttp import ClientSession
 
 MOCK_REPOSITORIES = {
     "https://kubernetes-charts.storage.googleapis.com/index.yaml": {
@@ -36,7 +39,7 @@ MOCK_REPOSITORIES = {
 
 
 @pytest.mark.asyncio
-async def test_analyzer() -> None:
+async def test_analyzer(session: ClientSession) -> None:
     data_path = Path(__file__).parent.parent / "data" / "kubernetes"
 
     # Do not use Factory here because it will use a CachedHelmInventory, which
@@ -45,13 +48,12 @@ async def test_analyzer() -> None:
     with aioresponses() as mock:
         for url, index in MOCK_REPOSITORIES.items():
             mock.get(url, body=yaml_to_string(index), repeat=True)
-        async with aiohttp.ClientSession() as session:
-            scanner = HelmScanner(data_path)
-            inventory = HelmInventory(session)
-            analyzer = HelmAnalyzer(scanner, inventory)
-            results = await analyzer.analyze()
-            analyzer = HelmAnalyzer(scanner, inventory, allow_expressions=True)
-            results_expressions = await analyzer.analyze()
+        scanner = HelmScanner(data_path)
+        inventory = HelmInventory(session)
+        analyzer = HelmAnalyzer(scanner, inventory)
+        results = await analyzer.analyze()
+        analyzer = HelmAnalyzer(scanner, inventory, allow_expressions=True)
+        results_expressions = await analyzer.analyze()
 
     assert sorted(results) == [
         HelmUpdate(

@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import call, patch
 
-import aiohttp
 import pytest
 from aioresponses import CallbackResult, aioresponses
 from git import Actor, PushInfo, Remote, Repo
@@ -21,6 +20,7 @@ from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
 
 if TYPE_CHECKING:
+    from aiohttp import ClientSession
     from typing import Any
     from unittest.mock import Mock
 
@@ -40,7 +40,9 @@ def setup_repo(tmp_path: Path) -> Repo:
 
 
 @pytest.mark.asyncio
-async def test_pr(tmp_path: Path, mock_push: Mock) -> None:
+async def test_pr(
+    tmp_path: Path, session: ClientSession, mock_push: Mock
+) -> None:
     repo = setup_repo(tmp_path)
     config = Configuration(github_user="someone", github_token="some-token")
     update = HelmUpdate(
@@ -61,12 +63,11 @@ async def test_pr(tmp_path: Path, mock_push: Mock) -> None:
             payload={},
             status=201,
         )
-        async with aiohttp.ClientSession() as session:
-            repository = Repository(tmp_path)
-            repository.switch_branch()
-            update.apply()
-            pr = PullRequester(tmp_path, config, session)
-            await pr.make_pull_request([update])
+        repository = Repository(tmp_path)
+        repository.switch_branch()
+        update.apply()
+        pr = PullRequester(tmp_path, config, session)
+        await pr.make_pull_request([update])
 
     assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
     assert not repo.is_dirty()
@@ -82,7 +83,7 @@ async def test_pr(tmp_path: Path, mock_push: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_pr_push_failure(tmp_path: Path) -> None:
+async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
     setup_repo(tmp_path)
     config = Configuration(github_user="someone", github_token="some-token")
     update = HelmUpdate(
@@ -99,18 +100,19 @@ async def test_pr_push_failure(tmp_path: Path) -> None:
         mock_responses.get("https://api.github.com/user", payload=user)
         pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
         mock_responses.get(pattern, payload=[])
-        async with aiohttp.ClientSession() as session:
-            pr = PullRequester(tmp_path, config, session)
-            with patch.object(Remote, "push") as mock:
-                mock.return_value = [push_error]
-                with pytest.raises(PushError) as excinfo:
-                    await pr.make_pull_request([update])
+        pr = PullRequester(tmp_path, config, session)
+        with patch.object(Remote, "push") as mock:
+            mock.return_value = [push_error]
+            with pytest.raises(PushError) as excinfo:
+                await pr.make_pull_request([update])
 
     assert "Some error" in str(excinfo.value)
 
 
 @pytest.mark.asyncio
-async def test_pr_update(tmp_path: Path, mock_push: Mock) -> None:
+async def test_pr_update(
+    tmp_path: Path, session: ClientSession, mock_push: Mock
+) -> None:
     """Test updating an existing PR."""
     repo = setup_repo(tmp_path)
     config = Configuration(github_user="someone", github_token="some-token")
@@ -143,12 +145,11 @@ async def test_pr_update(tmp_path: Path, mock_push: Mock) -> None:
             "https://api.github.com/repos/foo/bar/pulls/1234",
             callback=check_pr_update,
         )
-        async with aiohttp.ClientSession() as session:
-            repository = Repository(tmp_path)
-            repository.switch_branch()
-            update.apply()
-            pr = PullRequester(tmp_path, config, session)
-            await pr.make_pull_request([update])
+        repository = Repository(tmp_path)
+        repository.switch_branch()
+        update.apply()
+        pr = PullRequester(tmp_path, config, session)
+        await pr.make_pull_request([update])
 
     assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
     assert not repo.is_dirty()
@@ -156,43 +157,43 @@ async def test_pr_update(tmp_path: Path, mock_push: Mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_authenticated_remote(tmp_path: Path) -> None:
+async def test_get_authenticated_remote(
+    tmp_path: Path, session: ClientSession
+) -> None:
     repo = Repo.init(str(tmp_path))
 
     config = Configuration(github_user="test", github_token="some-token")
-    async with aiohttp.ClientSession() as session:
-        pr = PullRequester(tmp_path, config, session)
+    pr = PullRequester(tmp_path, config, session)
 
-        remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com/foo/bar"
+    remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com/foo/bar"
 
-        remote.set_url("https://foo@github.com:8080/foo/bar")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com:8080/foo/bar"
+    remote.set_url("https://foo@github.com:8080/foo/bar")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com:8080/foo/bar"
 
-        remote.set_url("git@github.com:bar/foo")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com/bar/foo"
+    remote.set_url("git@github.com:bar/foo")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com/bar/foo"
 
-        remote.set_url("ssh://git:blahblah@github.com/baz/stuff")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com/baz/stuff"
+    remote.set_url("ssh://git:blahblah@github.com/baz/stuff")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com/baz/stuff"
 
 
 @pytest.mark.asyncio
-async def test_get_github_repo(tmp_path: Path) -> None:
+async def test_get_github_repo(tmp_path: Path, session: ClientSession) -> None:
     repo = Repo.init(str(tmp_path))
 
     config = Configuration(github_user="test", github_token="some-token")
-    async with aiohttp.ClientSession() as session:
-        pr = PullRequester(tmp_path, config, session)
+    pr = PullRequester(tmp_path, config, session)
 
-        remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
-        assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
+    assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
 
-        remote.set_url("https://github.com/foo/bar.git")
-        assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    remote.set_url("https://github.com/foo/bar.git")
+    assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
 
-        remote.set_url("ssh://git@github.com/foo/bar")
-        assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    remote.set_url("ssh://git@github.com/foo/bar")
+    assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")

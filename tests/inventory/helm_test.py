@@ -5,14 +5,17 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import ANY
 
-import aiohttp
 import pytest
 from aioresponses import aioresponses
 from ruamel.yaml import YAML
 
 from neophile.inventory.helm import CachedHelmInventory, HelmInventory
+
+if TYPE_CHECKING:
+    from aiohttp import ClientSession
 
 EXPECTED = {
     "cadc-tap": "0.1.9",
@@ -33,7 +36,7 @@ EXPECTED = {
 
 
 @pytest.mark.asyncio
-async def test_inventory() -> None:
+async def test_inventory(session: ClientSession) -> None:
     index_path = (
         Path(__file__).parent.parent
         / "data"
@@ -46,14 +49,15 @@ async def test_inventory() -> None:
         mock.get(
             "https://example.com/charts/index.yaml", body=index, repeat=True
         )
-        async with aiohttp.ClientSession() as session:
-            inventory = HelmInventory(session)
-            results = await inventory.inventory("https://example.com/charts/")
-            assert results == EXPECTED
+        inventory = HelmInventory(session)
+        results = await inventory.inventory("https://example.com/charts/")
+        assert results == EXPECTED
 
 
 @pytest.mark.asyncio
-async def test_cached_inventory(cache_path: Path) -> None:
+async def test_cached_inventory(
+    cache_path: Path, session: ClientSession
+) -> None:
     url = "https://example.com/charts"
     index_path = (
         Path(__file__).parent.parent
@@ -66,9 +70,8 @@ async def test_cached_inventory(cache_path: Path) -> None:
 
     with aioresponses() as mock:
         mock.get(url + "/index.yaml", body=index)
-        async with aiohttp.ClientSession() as session:
-            inventory = CachedHelmInventory(session)
-            results = await inventory.inventory(url)
+        inventory = CachedHelmInventory(session)
+        results = await inventory.inventory(url)
     assert results == EXPECTED
 
     # Check the cache contains the same data and a correct timestamp.
@@ -92,9 +95,8 @@ async def test_cached_inventory(cache_path: Path) -> None:
     # retrieved from the cache.
     with aioresponses() as mock:
         mock.get(url + "/index.yaml", body=index)
-        async with aiohttp.ClientSession() as session:
-            inventory = CachedHelmInventory(session)
-            results = await inventory.inventory(url)
+        inventory = CachedHelmInventory(session)
+        results = await inventory.inventory(url)
 
     # Change the cache timestamp to be older than the cache age.
     cache_timestamp = now - timedelta(seconds=CachedHelmInventory._LIFETIME)
@@ -105,7 +107,6 @@ async def test_cached_inventory(cache_path: Path) -> None:
     # Now the inventory will return entirely different results.
     with aioresponses() as mock:
         mock.get(url + "/index.yaml", body=index)
-        async with aiohttp.ClientSession() as session:
-            inventory = CachedHelmInventory(session)
-            results = await inventory.inventory(url)
+        inventory = CachedHelmInventory(session)
+        results = await inventory.inventory(url)
     assert results == {"gafaelfawr": "1.4.0"}

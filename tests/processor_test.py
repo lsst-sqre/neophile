@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import call, patch
 
-import aiohttp
 import pytest
 from aioresponses import CallbackResult, aioresponses
 from git import Actor, PushInfo, Remote, Repo
@@ -19,6 +18,7 @@ from neophile.factory import Factory
 from tests.util import register_mock_github_tags, setup_python_repo
 
 if TYPE_CHECKING:
+    from aiohttp import ClientSession
     from typing import Any, Callable, Iterator
 
 
@@ -69,7 +69,7 @@ def patch_clone_from(owner: str, repo: str, path: Path) -> Iterator[None]:
 
 
 @pytest.mark.asyncio
-async def test_processor(tmp_path: Path) -> None:
+async def test_processor(tmp_path: Path, session: ClientSession) -> None:
     tmp_repo = setup_python_repo(tmp_path / "tmp")
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
@@ -99,13 +99,12 @@ async def test_processor(tmp_path: Path) -> None:
 
         # Unfortunately, the mock_push fixture can't be used here because we
         # want to use git.Remote.push in create_upstream_git_repository.
-        async with aiohttp.ClientSession() as session:
-            factory = Factory(config, session)
-            processor = factory.create_processor()
-            with patch_clone_from("foo", "bar", upstream_path):
-                with patch.object(Remote, "push") as mock_push:
-                    mock_push.return_value = push_result
-                    await processor.process()
+        factory = Factory(config, session)
+        processor = factory.create_processor()
+        with patch_clone_from("foo", "bar", upstream_path):
+            with patch.object(Remote, "push") as mock_push:
+                mock_push.return_value = push_result
+                await processor.process()
 
     assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
     assert created_pr
@@ -117,7 +116,7 @@ async def test_processor(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_no_updates(tmp_path: Path) -> None:
+async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     data_path = Path(__file__).parent / "data" / "kubernetes" / "sqrbot-jr"
     tmp_repo_path = tmp_path / "tmp"
     tmp_repo_path.mkdir()
@@ -136,12 +135,11 @@ async def test_no_updates(tmp_path: Path) -> None:
     # Don't register any GitHub tag lists, so we shouldn't see any updates.
     with aioresponses() as mock:
         mock.get("https://api.github.com/user", payload=user)
-        async with aiohttp.ClientSession() as session:
-            factory = Factory(config, session)
-            processor = factory.create_processor()
-            with patch_clone_from("foo", "bar", upstream_path):
-                with patch.object(Remote, "push") as mock_push:
-                    await processor.process()
+        factory = Factory(config, session)
+        processor = factory.create_processor()
+        with patch_clone_from("foo", "bar", upstream_path):
+            with patch.object(Remote, "push") as mock_push:
+                await processor.process()
 
     assert mock_push.call_count == 0
     repo = Repo(str(tmp_path / "work" / "bar"))

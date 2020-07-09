@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import aiohttp
 import pytest
 from git import Actor
 
@@ -15,16 +15,18 @@ from neophile.factory import Factory
 from neophile.update.python import PythonFrozenUpdate
 from tests.util import setup_python_repo
 
+if TYPE_CHECKING:
+    from aiohttp import ClientSession
+
 
 @pytest.mark.asyncio
-async def test_analyzer(tmp_path: Path) -> None:
+async def test_analyzer(tmp_path: Path, session: ClientSession) -> None:
     repo = setup_python_repo(tmp_path)
     actor = Actor("Someone", "someone@example.com")
 
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(tmp_path)
-        results = await analyzer.analyze()
+    factory = Factory(Configuration(), session)
+    analyzer = factory.create_python_analyzer(tmp_path)
+    results = await analyzer.analyze()
 
     assert results == [
         PythonFrozenUpdate(path=tmp_path / "requirements", applied=False)
@@ -36,31 +38,28 @@ async def test_analyzer(tmp_path: Path) -> None:
     # If the repo is dirty, analysis will fail.
     subprocess.run(["make", "update-deps"], cwd=str(tmp_path), check=True)
     assert repo.is_dirty()
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(tmp_path)
-        with pytest.raises(UncommittedChangesError):
-            results = await analyzer.analyze()
+    factory = Factory(Configuration(), session)
+    analyzer = factory.create_python_analyzer(tmp_path)
+    with pytest.raises(UncommittedChangesError):
+        results = await analyzer.analyze()
 
     # Commit the changed dependencies and remove the pre-commit configuration
     # file.  Analysis should now return no changes.
     repo.index.add(str(tmp_path / "requirements"))
     repo.index.commit("Update dependencies", author=actor, committer=actor)
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(tmp_path)
-        results = await analyzer.analyze()
+    factory = Factory(Configuration(), session)
+    analyzer = factory.create_python_analyzer(tmp_path)
+    results = await analyzer.analyze()
     assert results == []
 
 
 @pytest.mark.asyncio
-async def test_analyzer_update(tmp_path: Path) -> None:
+async def test_analyzer_update(tmp_path: Path, session: ClientSession) -> None:
     repo = setup_python_repo(tmp_path)
 
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(Configuration(), session)
-        analyzer = factory.create_python_analyzer(tmp_path)
-        results = await analyzer.update()
+    factory = Factory(Configuration(), session)
+    analyzer = factory.create_python_analyzer(tmp_path)
+    results = await analyzer.update()
 
     assert results == [
         PythonFrozenUpdate(path=tmp_path / "requirements", applied=True)
