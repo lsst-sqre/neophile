@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: events
+
+nameSuffix: "-jr"
+
+commonLabels:
+  app: sqrbot-jr
+
+resources:
+  - resources/sealedsecret.yaml
+  - github.com/lsst-sqre/sqrbot-jr.git//manifests/base?ref=0.6.0
+  - github.com/lsst-sqre/sqrbot//manifests/base?ref=0.7.0
+  - github.com/foo/bar//no/ref/parameter
+
+patches:
+  - patches/configmap.yaml
+  - patches/deployment.yaml

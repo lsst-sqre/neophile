@@ -5,9 +5,15 @@
 # After editing, update requirements/dev.txt by running:
 #     make update-deps
 
+aioresponses
 coverage[toml]
+documenteer>=0.5,<0.6
 flake8
+lsst-sphinx-bootstrap-theme<0.3
 mypy
 pre-commit
 pytest
+pytest-asyncio
 pytest-sugar
+sphinx-automodapi==0.12
+sphinx-prompt

@@ -1,0 +1,13 @@
+dependencies:
+- name: elasticsearch
+  version: "v1.26.2"
+  repository: https://kubernetes-charts.storage.googleapis.com/
+- name: kibana
+  version: ">=3.0.0"
+  repository: https://kubernetes-charts.storage.googleapis.com/
+- name: fluentd-elasticsearch
+  version: ">=3.0.0"
+  repository: https://kiwigrid.github.io
+- name: unknown
+  version: "1.5.0"
+  repository: https://kiwigrid.github.io

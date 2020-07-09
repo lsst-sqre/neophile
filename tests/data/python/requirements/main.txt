@@ -1,0 +1,7 @@
+# Dummy output file for requirements.  This doesn't contain real hashes.
+# It's just updated to a fixed value by the Makefile to simulate a real
+# pip-compile invocation.
+
+dummy==0.0.1 \
+    --hash=sha256:1e984191d1ec186881ffaed4581092ba04f7c61582a177b187d3a2f07ed9719e \
+    # via -r requirements/main.in
