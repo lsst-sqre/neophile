@@ -179,7 +179,7 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
 
 @pytest.mark.asyncio
 async def test_allow_expressions(
-    tmp_path: Path, session: ClientSession
+    tmp_path: Path, session: ClientSession, cache_path: Path
 ) -> None:
     tmp_repo = setup_kubernetes_repo(tmp_path / "tmp")
     upstream_path = tmp_path / "upstream"
