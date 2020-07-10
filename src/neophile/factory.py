@@ -42,19 +42,13 @@ class Factory:
         self._config = config
         self._session = session
 
-    def create_all_analyzers(
-        self, path: Path, *, allow_expressions: bool = False
-    ) -> List[BaseAnalyzer]:
+    def create_all_analyzers(self, path: Path) -> List[BaseAnalyzer]:
         """Create all analyzers.
 
         Parameters
         ----------
         path : `pathlib.Path`
             Path to the Git repository.
-        allow_expressions : `bool`, optional
-            If set, allow dependencies to be expressed as expressions, and
-            only report a needed update if the latest version is outside the
-            range of the expression.  Defaults to false.
 
         Returns
         -------
@@ -70,9 +64,7 @@ class Factory:
         """
         return [
             self.create_python_analyzer(path),
-            self.create_helm_analyzer(
-                path, allow_expressions=allow_expressions
-            ),
+            self.create_helm_analyzer(path),
             self.create_kustomize_analyzer(path),
             self.create_pre_commit_analyzer(path),
         ]
@@ -96,19 +88,13 @@ class Factory:
             PreCommitScanner(path),
         ]
 
-    def create_helm_analyzer(
-        self, path: Path, *, allow_expressions: bool = False
-    ) -> HelmAnalyzer:
+    def create_helm_analyzer(self, path: Path) -> HelmAnalyzer:
         """Create a new Helm analyzer.
 
         Parameters
         ----------
         path : `pathlib.Path`
             Path to the Git repository.
-        allow_expressions : `bool`, optional
-            If set, allow dependencies to be expressed as expressions, and
-            only report a needed update if the latest version is outside the
-            range of the expression.  Defaults to false.
 
         Returns
         -------
@@ -117,7 +103,11 @@ class Factory:
         """
         scanner = HelmScanner(path)
         inventory = CachedHelmInventory(self._session)
-        return HelmAnalyzer(scanner, inventory)
+        return HelmAnalyzer(
+            scanner,
+            inventory,
+            allow_expressions=self._config.allow_expressions,
+        )
 
     def create_kustomize_analyzer(self, path: Path) -> KustomizeAnalyzer:
         """Create a new Helm analyzer.

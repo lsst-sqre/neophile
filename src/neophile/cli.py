@@ -107,6 +107,7 @@ async def analyze(
 ) -> None:
     """Analyze the current directory for pending upgrades."""
     config = ctx.obj["config"]
+    config.allow_expressions = allow_expressions
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)

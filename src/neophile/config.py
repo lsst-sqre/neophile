@@ -24,6 +24,11 @@ class GitHubRepository(BaseModel):
 class Configuration(BaseSettings):
     """Configuration for neophile."""
 
+    allow_expressions: bool = Field(
+        False,
+        description="Whether to allow version expressions in dependencies",
+    )
+
     github_user: str = Field(
         "", description="GitHub user for creating pull requests"
     )

@@ -12,7 +12,31 @@ from ruamel.yaml import YAML
 
 if TYPE_CHECKING:
     from aioresponses import aioresponses
-    from typing import Any, Dict, Sequence
+    from typing import Any, Mapping, Sequence
+
+
+def register_mock_helm_repository(
+    mock: aioresponses, url: str, versions: Mapping[str, Sequence[str]]
+) -> None:
+    """Register a list of versions for a Helm repository.
+
+    Parameters
+    ----------
+    mock : `aioresponses.aioresponses`
+        The mock object for aiohttp requests.
+    url : `str`
+        The URL of the repository index.
+    versions : Mapping[`str`, Sequence[`str`]]
+        A mapping of Helm chart names to lists of version numbers that should
+        appear in the index for that chart.
+    """
+    data = {
+        "entries": {
+            chart: [{"version": ver} for ver in vers]
+            for chart, vers in versions.items()
+        }
+    }
+    mock.get(url, body=yaml_to_string(data))
 
 
 def register_mock_github_tags(
@@ -35,6 +59,30 @@ def register_mock_github_tags(
         payload=data,
         repeat=True,
     )
+
+
+def setup_kubernetes_repo(tmp_path: Path) -> Repo:
+    """Set up a test repository with the Kubernetes test files.
+
+    Parameters
+    ----------
+    tmp_path : `pathlib.Path`
+        The directory in which to create the repository.
+
+    Returns
+    -------
+    repo : `git.Repo`
+        The repository object.
+    """
+    data_path = Path(__file__).parent / "data" / "kubernetes"
+    shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
+    repo = Repo.init(str(tmp_path))
+    for path in tmp_path.iterdir():
+        if not path.name.startswith("."):
+            repo.index.add(str(path))
+    actor = Actor("Someone", "someone@example.com")
+    repo.index.commit("Initial commit", author=actor, committer=actor)
+    return repo
 
 
 def setup_python_repo(tmp_path: Path) -> Repo:
@@ -65,12 +113,12 @@ def setup_python_repo(tmp_path: Path) -> Repo:
     return repo
 
 
-def yaml_to_string(data: Dict[str, Any]) -> str:
-    """Convert any dict to YAML serialized as a string.
+def yaml_to_string(data: Mapping[str, Any]) -> str:
+    """Convert any mapping to YAML serialized as a string.
 
     Parameters
     ----------
-    data : Dict[`str`, Any]
+    data : Mapping[`str`, Any]
         The data.
 
     Returns

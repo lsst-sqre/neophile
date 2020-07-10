@@ -46,21 +46,46 @@ def test_help() -> None:
 
 def test_analyze(cache_path: Path) -> None:
     runner = CliRunner()
-
-    yaml = YAML()
-    output = StringIO()
-    yaml.dump({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}}, output)
-    sqre = output.getvalue()
+    sqre = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
     root = Path(__file__).parent / "data" / "kubernetes" / "gafaelfawr"
+
     with aioresponses() as mock:
         mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
         result = runner.invoke(main, ["analyze", "--path", str(root)])
 
     assert result.exit_code == 0
+    yaml = YAML()
     data = yaml.load(result.output)
     assert data["helm"][0]["name"] == "gafaelfawr"
     assert data["helm"][0]["current"] == "1.3.1"
     assert data["helm"][0]["latest"] == "1.4.0"
+
+
+def test_analyze_allow_expressions(cache_path: Path) -> None:
+    runner = CliRunner()
+    google = yaml_to_string({"entries": {"kibana": [{"version": "3.0.1"}]}})
+    kiwigrid = yaml_to_string(
+        {"entries": {"fluentd-elasticsearch": [{"version": "2.0.0"}]}}
+    )
+    root = Path(__file__).parent / "data" / "kubernetes" / "logging"
+
+    with aioresponses() as mock:
+        mock.get(
+            "https://kubernetes-charts.storage.googleapis.com/index.yaml",
+            body=google,
+        )
+        mock.get("https://kiwigrid.github.io/index.yaml", body=kiwigrid)
+        result = runner.invoke(
+            main, ["analyze", "--path", str(root), "--allow-expressions"]
+        )
+
+    assert result.exit_code == 0
+    yaml = YAML()
+    data = yaml.load(result.output)
+    assert len(data["helm"]) == 1
+    assert data["helm"][0]["name"] == "fluentd-elasticsearch"
+    assert data["helm"][0]["current"] == ">=3.0.0"
+    assert data["helm"][0]["latest"] == "2.0.0"
 
 
 def test_analyze_update(tmp_path: Path, cache_path: Path) -> None:

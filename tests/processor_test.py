@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from contextlib import contextmanager
@@ -12,10 +13,16 @@ from unittest.mock import call, patch
 import pytest
 from aioresponses import CallbackResult, aioresponses
 from git import Actor, PushInfo, Remote, Repo
+from ruamel.yaml import YAML
 
 from neophile.config import Configuration, GitHubRepository
 from neophile.factory import Factory
-from tests.util import register_mock_github_tags, setup_python_repo
+from tests.util import (
+    register_mock_github_tags,
+    register_mock_helm_repository,
+    setup_kubernetes_repo,
+    setup_python_repo,
+)
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -82,7 +89,30 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
     created_pr = False
 
     def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
-        assert kwargs["data"]
+        changes = [
+            "Update frozen Python dependencies",
+            "Update ambv/black pre-commit hook from 19.10b0 to 20.0.0",
+        ]
+        body = "- " + "\n- ".join(changes) + "\n"
+        assert json.loads(kwargs["data"]) == {
+            "title": "Update dependencies",
+            "body": body,
+            "head": "u/neophile",
+            "base": "master",
+            "maintainer_can_modify": True,
+            "draft": False,
+        }
+
+        repo = Repo(str(tmp_path / "work" / "bar"))
+        assert repo.head.ref.name == "u/neophile"
+        yaml = YAML()
+        data = yaml.load(tmp_path / "work" / "bar" / ".pre-commit-config.yaml")
+        assert data["repos"][2]["rev"] == "20.0.0"
+        commit = repo.head.commit
+        assert commit.author.name == "Someone"
+        assert commit.author.email == "someone@example.com"
+        assert commit.message == f"Update dependencies\n\n{body}"
+
         nonlocal created_pr
         created_pr = True
         return CallbackResult(status=201)
@@ -145,3 +175,69 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     repo = Repo(str(tmp_path / "work" / "bar"))
     assert not repo.is_dirty()
     assert repo.head.ref.name == "master"
+
+
+@pytest.mark.asyncio
+async def test_allow_expressions(
+    tmp_path: Path, session: ClientSession
+) -> None:
+    tmp_repo = setup_kubernetes_repo(tmp_path / "tmp")
+    upstream_path = tmp_path / "upstream"
+    create_upstream_git_repository(tmp_repo, upstream_path)
+    config = Configuration(
+        allow_expressions=True,
+        repositories=[GitHubRepository(owner="foo", repo="bar")],
+        work_area=tmp_path / "work",
+    )
+    user = {"name": "Someone", "email": "someone@example.com"}
+    push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
+    created_pr = False
+
+    def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
+        assert json.loads(kwargs["data"]) == {
+            "title": "Update dependencies",
+            "body": "- Update gafaelfawr Helm chart from 1.3.1 to v1.4.0\n",
+            "head": "u/neophile",
+            "base": "master",
+            "maintainer_can_modify": True,
+            "draft": False,
+        }
+
+        nonlocal created_pr
+        created_pr = True
+        return CallbackResult(status=201)
+
+    with aioresponses() as mock:
+        register_mock_helm_repository(
+            mock,
+            "https://kubernetes-charts.storage.googleapis.com/index.yaml",
+            {"elasticsearch": ["1.26.2"], "kibana": ["3.0.1"]},
+        )
+        register_mock_helm_repository(
+            mock,
+            "https://kiwigrid.github.io/index.yaml",
+            {"fluentd-elasticsearch": ["3.0.0"]},
+        )
+        register_mock_helm_repository(
+            mock,
+            "https://lsst-sqre.github.io/charts/index.yaml",
+            {"gafaelfawr": ["1.3.1", "v1.4.0"]},
+        )
+        mock.get("https://api.github.com/user", payload=user)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock.get(pattern, payload=[])
+        mock.post(
+            "https://api.github.com/repos/foo/bar/pulls",
+            callback=check_pr_post,
+        )
+
+        # Unfortunately, the mock_push fixture can't be used here because we
+        # want to use git.Remote.push in create_upstream_git_repository.
+        factory = Factory(config, session)
+        processor = factory.create_processor()
+        with patch_clone_from("foo", "bar", upstream_path):
+            with patch.object(Remote, "push") as mock_push:
+                mock_push.return_value = push_result
+                await processor.process()
+
+    assert created_pr
