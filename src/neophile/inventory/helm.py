@@ -36,6 +36,25 @@ class HelmInventory:
         self._session = session
         self._yaml = YAML()
 
+    def canonicalize_url(self, url: str) -> str:
+        """Canonicalize the URL for a Helm repository.
+
+        Parameters
+        ----------
+        url : `str`
+            The URL for a Helm repository.
+
+        Returns
+        -------
+        canonical_url : `str`
+            The canonical URL for the index.yaml file of the repository.
+        """
+        if url.endswith("/index.yaml"):
+            return url
+        if not url.endswith("/"):
+            url += "/"
+        return urljoin(url, "index.yaml")
+
     async def inventory(self, url: str) -> Dict[str, str]:
         """Inventory the available versions of Helm charts.
 
@@ -59,11 +78,9 @@ class HelmInventory:
         yaml.YAMLError
             The index file for the repository doesn't parse as YAML.
         """
+        url = self.canonicalize_url(url)
         logging.info("Inventorying %s", url)
-        if not url.endswith("/"):
-            url += "/"
-        index_url = urljoin(url, "index.yaml")
-        r = await self._session.get(index_url, raise_for_status=True)
+        r = await self._session.get(url, raise_for_status=True)
         index = self._yaml.load(await r.text())
 
         results = {}
@@ -130,6 +147,7 @@ class CachedHelmInventory(HelmInventory):
         This makes a copy of the contents of the cache to prevent the caller
         from mutating the cache unexpectedly.
         """
+        url = self.canonicalize_url(url)
         now = datetime.now(tz=timezone.utc).timestamp()
         if url in self._cache:
             age = self._cache[url]["timestamp"]

@@ -59,6 +59,7 @@ async def test_cached_inventory(
     tmp_path: Path, session: ClientSession
 ) -> None:
     url = "https://example.com/charts"
+    full_url = url + "/index.yaml"
     index_path = (
         Path(__file__).parent.parent
         / "data"
@@ -70,7 +71,7 @@ async def test_cached_inventory(
     assert not cache_path.exists()
 
     with aioresponses() as mock:
-        mock.get(url + "/index.yaml", body=index)
+        mock.get(full_url, body=index)
         inventory = CachedHelmInventory(session, cache_path)
         results = await inventory.inventory(url)
     assert results == EXPECTED
@@ -78,9 +79,9 @@ async def test_cached_inventory(
     # Check the cache contains the same data and a correct timestamp.
     yaml = YAML()
     cache = yaml.load(cache_path)
-    assert cache == {url: {"timestamp": ANY, "versions": EXPECTED}}
+    assert cache == {full_url: {"timestamp": ANY, "versions": EXPECTED}}
     now = datetime.now(tz=timezone.utc)
-    timestamp = cache[url]["timestamp"]
+    timestamp = cache[full_url]["timestamp"]
     assert (now - timedelta(seconds=5)).timestamp() < timestamp
     assert timestamp < now.timestamp()
 
@@ -90,18 +91,18 @@ async def test_cached_inventory(
     # Doing another inventory will return the same results since it will be
     # retrieved from the cache.
     with aioresponses() as mock:
-        mock.get(url + "/index.yaml", body=index)
+        mock.get(full_url, body=index)
         inventory = CachedHelmInventory(session, cache_path)
         results = await inventory.inventory(url)
 
     # Change the cache timestamp to be older than the cache age.
     cache_timestamp = now - timedelta(seconds=CachedHelmInventory._LIFETIME)
-    cache[url]["timestamp"] = cache_timestamp.timestamp()
+    cache[full_url]["timestamp"] = cache_timestamp.timestamp()
     yaml.dump(cache, cache_path)
 
     # Now the inventory will return entirely different results.
     with aioresponses() as mock:
-        mock.get(url + "/index.yaml", body=index)
+        mock.get(full_url, body=index)
         inventory = CachedHelmInventory(session, cache_path)
         results = await inventory.inventory(url)
     assert results == {"gafaelfawr": "1.4.0"}

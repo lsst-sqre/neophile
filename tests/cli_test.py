@@ -220,8 +220,8 @@ def test_helm_inventory(tmp_path: Path) -> None:
     yaml = YAML()
     data = yaml.load(result.output)
     assert data["gafaelfawr"] == "1.3.1"
-    cache = yaml.load(tmp_path / "helm.yaml")
-    assert cache["https://example.com/"]["versions"]["gafaelfawr"] == "1.3.1"
+    cache = yaml.load(tmp_path / "helm.yaml")["https://example.com/index.yaml"]
+    assert cache["versions"]["gafaelfawr"] == "1.3.1"
 
 
 def test_process(tmp_path: Path) -> None:
