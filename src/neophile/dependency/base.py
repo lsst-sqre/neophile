@@ -24,7 +24,8 @@ class Dependency:
 
         Notes
         -----
-        Required because :py:mod:`yaml` cannot serialize `~pathlib.Path`.
+        Required because :py:mod:`ruamel.yaml` cannot serialize
+        `~pathlib.Path`.
         """
         result = asdict(self)
         result["path"] = str(result["path"])

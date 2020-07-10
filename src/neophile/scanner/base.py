@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from neophile.dependency.base import Dependency
     from typing import Sequence
 
+__all__ = ["BaseScanner"]
+
 
 class BaseScanner(ABC):
     """Base class for dependency scanners."""

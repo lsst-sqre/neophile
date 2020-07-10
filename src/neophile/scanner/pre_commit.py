@@ -38,7 +38,7 @@ class PreCommitScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`PreCommitDependency`]
+        results : List[`neophile.dependency.pre_commit.PreCommitDependency`]
             A list of all discovered pre-commit dependencies.
         """
         path = self._root / ".pre-commit-config.yaml"

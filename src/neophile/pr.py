@@ -20,7 +20,10 @@ if TYPE_CHECKING:
     from typing import ClassVar, List, Optional, Sequence
     from urllib.parse import ParseResult
 
-__all__ = ["PullRequester"]
+__all__ = [
+    "CommitMessage",
+    "PullRequester",
+]
 
 
 @dataclass(frozen=True)

@@ -39,7 +39,7 @@ class HelmScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`HelmDependency`]
+        results : List[`neophile.dependency.helm.HelmDependency`]
             A list of all discovered dependencies.
         """
         wanted_files = {"Chart.yaml", "requirements.yaml"}

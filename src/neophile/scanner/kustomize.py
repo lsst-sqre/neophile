@@ -50,7 +50,7 @@ class KustomizeScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`KustomizeDependency`]
+        results : List[`neophile.dependency.kustomize.KustomizeDependency`]
             A list of all discovered dependencies.
         """
         dependency_paths = find_files(self._root, {"kustomization.yaml"})
@@ -76,7 +76,7 @@ class KustomizeScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`KustomizeDependency`]
+        results : List[`neophile.dependency.kustomize.KustomizeDependency`]
             A list of all discovered Helm chart dependencies.
         """
         results = []

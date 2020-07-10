@@ -23,9 +23,9 @@ class HelmAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    scanner : `neophile.scanner.HelmScanner`
+    scanner : `neophile.scanner.helm.HelmScanner`
         Scanner for Helm dependencies.
-    inventory : `neophile.inventory.HelmInventory`
+    inventory : `neophile.inventory.helm.HelmInventory`
         Inventory for Helm repositories.
     allow_expressions : `bool`, optional
         If set, allow dependencies to be expressed as expressions, and only

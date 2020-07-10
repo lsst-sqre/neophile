@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Dict, List
 
+__all__ = ["Processor"]
+
 
 class Processor:
     """Process a set of repositories for updates.

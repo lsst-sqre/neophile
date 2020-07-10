@@ -21,9 +21,9 @@ class KustomizeAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    scanner : `neophile.scanner.KustomizeScanner`
+    scanner : `neophile.scanner.kustomize.KustomizeScanner`
         Scanner for Kustomize dependencies.
-    inventory : `neophile.inventory.GitHubInventory`
+    inventory : `neophile.inventory.github.GitHubInventory`
         Inventory for GitHub tags.
     """
 

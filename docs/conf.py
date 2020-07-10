@@ -62,6 +62,7 @@ intersphinx_mapping = {
     "aiohttp": ("https://docs.aiohttp.org/en/stable/", None),
     "packaging": ("https://packaging.pypa.io/en/latest/", None),
     "python": ("https://docs.python.org/3/", None),
+    "semver": ("https://python-semver.readthedocs.io/en/latest/", None),
     "yaml": ("https://yaml.readthedocs.io/en/latest/", None),
 }
 

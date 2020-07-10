@@ -52,7 +52,7 @@ class GitHubInventory:
         semantic : `bool`, optional
             If set to true, only semantic versions will be considered and the
             latest version will be determined by semantic version sorting
-            instead of :py:mod:`packaging.version`.
+            instead of `packaging.version.Version`.
 
         Returns
         -------

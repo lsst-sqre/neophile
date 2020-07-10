@@ -9,6 +9,8 @@ from git import Repo
 if TYPE_CHECKING:
     from pathlib import Path
 
+__all__ = ["Repository"]
+
 
 class Repository:
     """Wrapper around a Git repository to add some convenience functions.

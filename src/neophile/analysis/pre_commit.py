@@ -21,9 +21,9 @@ class PreCommitAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    scanner : `neophile.scanner.PreCommitScanner`
+    scanner : `neophile.scanner.pre_commit.PreCommitScanner`
         Scanner for pre-commit hook dependencies.
-    inventory : `neophile.inventory.GitHubInventory`
+    inventory : `neophile.inventory.github.GitHubInventory`
         Inventory for GitHub tags.
     """
 
