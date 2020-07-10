@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from neophile.dependency.base import BaseDependency
+    from neophile.dependency.base import Dependency
     from typing import Sequence
 
 
@@ -25,7 +25,7 @@ class BaseScanner(ABC):
         """
 
     @abstractmethod
-    def scan(self) -> Sequence[BaseDependency]:
+    def scan(self) -> Sequence[Dependency]:
         """Scan a source tree for dependencies.
 
         Returns

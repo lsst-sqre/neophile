@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from neophile.dependency.base import BaseDependency
+from neophile.dependency.base import Dependency
 
 __all__ = ["KustomizeDependency"]
 
 
 @dataclass(frozen=True, order=True)
-class KustomizeDependency(BaseDependency):
+class KustomizeDependency(Dependency):
     """Represents a single Kustomize dependency."""
 
     url: str

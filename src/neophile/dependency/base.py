@@ -9,11 +9,11 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Dict
 
-__all__ = ["BaseDependency"]
+__all__ = ["Dependency"]
 
 
 @dataclass(frozen=True, order=True)
-class BaseDependency:
+class Dependency:
     """Base class for a dependency returned by a scanner."""
 
     path: Path
@@ -24,8 +24,7 @@ class BaseDependency:
 
         Notes
         -----
-        Required because :py:mod:`ruamel.yaml` cannot serialize
-        `~pathlib.Path`.
+        Required because :py:mod:`yaml` cannot serialize `~pathlib.Path`.
         """
         result = asdict(self)
         result["path"] = str(result["path"])

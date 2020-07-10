@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from neophile.dependency.base import BaseDependency
+from neophile.dependency.base import Dependency
 
 __all__ = ["PreCommitDependency"]
 
 
 @dataclass(frozen=True, order=True)
-class PreCommitDependency(BaseDependency):
+class PreCommitDependency(Dependency):
     """Represents a single pre-commit dependency."""
 
     repository: str
