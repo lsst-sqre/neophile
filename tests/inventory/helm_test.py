@@ -12,7 +12,7 @@ from aioresponses import aioresponses
 from ruamel.yaml import YAML
 
 from neophile.inventory.helm import CachedHelmInventory, HelmInventory
-from tests.util import yaml_to_string
+from tests.util import dict_to_yaml
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -85,7 +85,7 @@ async def test_cached_inventory(
     assert timestamp < now.timestamp()
 
     # Now, change the data provided to the inventory function.
-    index = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
+    index = dict_to_yaml({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
 
     # Doing another inventory will return the same results since it will be
     # retrieved from the cache.

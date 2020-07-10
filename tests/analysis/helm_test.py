@@ -12,7 +12,7 @@ from neophile.analysis.helm import HelmAnalyzer
 from neophile.inventory.helm import HelmInventory
 from neophile.scanner.helm import HelmScanner
 from neophile.update.helm import HelmUpdate
-from tests.util import yaml_to_string
+from tests.util import dict_to_yaml
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -47,7 +47,7 @@ async def test_analyzer(session: ClientSession) -> None:
     # further mocking that's not done in this test.
     with aioresponses() as mock:
         for url, index in MOCK_REPOSITORIES.items():
-            mock.get(url, body=yaml_to_string(index), repeat=True)
+            mock.get(url, body=dict_to_yaml(index), repeat=True)
         scanner = HelmScanner(data_path)
         inventory = HelmInventory(session)
         analyzer = HelmAnalyzer(scanner, inventory)

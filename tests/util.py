@@ -15,6 +15,25 @@ if TYPE_CHECKING:
     from typing import Any, Mapping, Sequence
 
 
+def dict_to_yaml(data: Mapping[str, Any]) -> str:
+    """Convert any mapping to YAML serialized as a string.
+
+    Parameters
+    ----------
+    data : Mapping[`str`, Any]
+        The data.
+
+    Returns
+    -------
+    yaml : `str`
+        The data serialized as YAML.
+    """
+    yaml = YAML()
+    output = StringIO()
+    yaml.dump(data, output)
+    return output.getvalue()
+
+
 def register_mock_helm_repository(
     mock: aioresponses, url: str, versions: Mapping[str, Sequence[str]]
 ) -> None:
@@ -36,7 +55,7 @@ def register_mock_helm_repository(
             for chart, vers in versions.items()
         }
     }
-    mock.get(url, body=yaml_to_string(data))
+    mock.get(url, body=dict_to_yaml(data))
 
 
 def register_mock_github_tags(
@@ -111,22 +130,3 @@ def setup_python_repo(tmp_path: Path) -> Repo:
     actor = Actor("Someone", "someone@example.com")
     repo.index.commit("Initial commit", author=actor, committer=actor)
     return repo
-
-
-def yaml_to_string(data: Mapping[str, Any]) -> str:
-    """Convert any mapping to YAML serialized as a string.
-
-    Parameters
-    ----------
-    data : Mapping[`str`, Any]
-        The data.
-
-    Returns
-    -------
-    yaml : `str`
-        The data serialized as YAML.
-    """
-    yaml = YAML()
-    output = StringIO()
-    yaml.dump(data, output)
-    return output.getvalue()

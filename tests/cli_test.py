@@ -16,7 +16,7 @@ from git import Actor, Remote, Repo
 from ruamel.yaml import YAML
 
 from neophile.cli import main
-from tests.util import yaml_to_string
+from tests.util import dict_to_yaml
 
 if TYPE_CHECKING:
     from typing import Any
@@ -46,7 +46,7 @@ def test_help() -> None:
 
 def test_analyze() -> None:
     runner = CliRunner()
-    sqre = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
+    sqre = dict_to_yaml({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
     root = Path(__file__).parent / "data" / "kubernetes" / "gafaelfawr"
 
     with aioresponses() as mock:
@@ -67,8 +67,8 @@ def test_analyze() -> None:
 
 def test_analyze_allow_expressions() -> None:
     runner = CliRunner()
-    google = yaml_to_string({"entries": {"kibana": [{"version": "3.0.1"}]}})
-    kiwigrid = yaml_to_string(
+    google = dict_to_yaml({"entries": {"kibana": [{"version": "3.0.1"}]}})
+    kiwigrid = dict_to_yaml(
         {"entries": {"fluentd-elasticsearch": [{"version": "2.0.0"}]}}
     )
     root = Path(__file__).parent / "data" / "kubernetes" / "logging"
@@ -139,7 +139,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
     repo.index.add(str(dst))
     actor = Actor("Someone", "someone@example.com")
     repo.index.commit("Initial commit", author=actor, committer=actor)
-    sqre = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
+    sqre = dict_to_yaml({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
     payload = {"name": "Someone", "email": "someone@example.com"}
     created_pr = False
 
