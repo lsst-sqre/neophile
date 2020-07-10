@@ -13,9 +13,9 @@ import pytest
 from aioresponses import CallbackResult, aioresponses
 from git import Actor, PushInfo, Remote, Repo
 
-from neophile.config import Configuration
+from neophile.config import Configuration, GitHubRepository
 from neophile.exceptions import PushError
-from neophile.pr import CommitMessage, GitHubRepo, PullRequester
+from neophile.pr import CommitMessage, PullRequester
 from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
 
@@ -190,10 +190,10 @@ async def test_get_github_repo(tmp_path: Path, session: ClientSession) -> None:
     pr = PullRequester(tmp_path, config, session)
 
     remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
-    assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")
 
     remote.set_url("https://github.com/foo/bar.git")
-    assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")
 
     remote.set_url("ssh://git@github.com/foo/bar")
-    assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")

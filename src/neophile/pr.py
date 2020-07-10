@@ -9,6 +9,7 @@ from urllib.parse import urlencode, urlparse
 from gidgethub.aiohttp import GitHubAPI
 from git import Actor, PushInfo, Remote, Repo
 
+from neophile.config import GitHubRepository
 from neophile.exceptions import PushError
 
 if TYPE_CHECKING:
@@ -39,17 +40,6 @@ class CommitMessage:
     def body(self) -> str:
         """The body of the commit message."""
         return "- " + "\n- ".join(self.changes) + "\n"
-
-
-@dataclass(frozen=True)
-class GitHubRepo:
-    """Path information for a GitHub repository."""
-
-    owner: str
-    """The owner of the repository."""
-
-    repo: str
-    """The name of the repository."""
 
 
 class PullRequester:
@@ -142,13 +132,13 @@ class PullRequester:
         return message
 
     async def _create_pr(
-        self, github_repo: GitHubRepo, message: CommitMessage
+        self, github_repo: GitHubRepository, message: CommitMessage
     ) -> None:
         """Create a new PR for the current branch.
 
         Parameters
         ----------
-        github_repo : `GitHubRepo`
+        github_repo : `neophile.config.GitHubRepository`
             GitHub repository in which to create the pull request.
         message : `CommitMessage`
             The commit message to use for the pull request.
@@ -201,23 +191,23 @@ class PullRequester:
         response = await self._github.getitem("/user")
         return Actor(response["name"], response["email"])
 
-    def _get_github_repo(self) -> GitHubRepo:
+    def _get_github_repo(self) -> GitHubRepository:
         """Get the GitHub repository.
 
         Done by parsing the URL of the origin remote.
 
         Returns
         -------
-        repo : `GitHubRepo`
+        repo : `neophile.config.GitHubRepository`
             GitHub repository information.
         """
         url = self._get_remote_url()
         _, owner, repo = url.path.split("/")
         if repo.endswith(".git"):
             repo = repo[: -len(".git")]
-        return GitHubRepo(owner=owner, repo=repo)
+        return GitHubRepository(owner=owner, repo=repo)
 
-    async def _get_pr(self, github_repo: GitHubRepo) -> Optional[str]:
+    async def _get_pr(self, github_repo: GitHubRepository) -> Optional[str]:
         """Get the pull request number of an existing neophile PR.
 
         Returns
@@ -284,13 +274,16 @@ class PullRequester:
             Remote.remove(self._repo, "tmp-neophile")
 
     async def _update_pr(
-        self, github_repo: GitHubRepo, pull_number: str, message: CommitMessage
+        self,
+        github_repo: GitHubRepository,
+        pull_number: str,
+        message: CommitMessage,
     ) -> None:
         """Update an existing PR with a new commit message.
 
         Parameters
         ----------
-        github_repo : `GitHubRepo`
+        github_repo : `neophile.config.GitHubRepository`
             GitHub repository in which to create the pull request.
         pull_number : `str`
             The number of the pull request to update.
