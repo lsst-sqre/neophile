@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from neophile.config import Configuration
     from neophile.update.base import Update
     from pathlib import Path
-    from typing import List, Optional, Sequence
+    from typing import ClassVar, List, Optional, Sequence
     from urllib.parse import ParseResult
 
 __all__ = ["PullRequester"]
@@ -26,11 +26,11 @@ __all__ = ["PullRequester"]
 class CommitMessage:
     """A Git commit message."""
 
-    title: str
-    """The title of the message."""
-
     changes: List[str]
     """The changes represented by this commit."""
+
+    title: ClassVar[str] = "[neophile] Update dependencies"
+    """The title of the commit message, currently fixed for all commits."""
 
     def __str__(self) -> str:
         return f"{self.title}\n\n{self.body}"
@@ -115,7 +115,7 @@ class PullRequester:
             The corresponding commit message.
         """
         descriptions = [change.description() for change in changes]
-        return CommitMessage(title="Update dependencies", changes=descriptions)
+        return CommitMessage(changes=descriptions)
 
     async def _commit_changes(
         self, changes: Sequence[Update]

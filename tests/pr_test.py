@@ -15,7 +15,7 @@ from git import Actor, PushInfo, Remote, Repo
 
 from neophile.config import Configuration
 from neophile.exceptions import PushError
-from neophile.pr import GitHubRepo, PullRequester
+from neophile.pr import CommitMessage, GitHubRepo, PullRequester
 from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
 
@@ -78,7 +78,7 @@ async def test_pr(
     assert commit.committer.name == "Someone"
     assert commit.committer.email == "someone@example.com"
     change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
-    assert commit.message == f"Update dependencies\n\n- {change}\n"
+    assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
     assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
@@ -129,7 +129,7 @@ async def test_pr_update(
     def check_pr_update(url: str, **kwargs: Any) -> CallbackResult:
         change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
         assert json.loads(kwargs["data"]) == {
-            "title": "Update dependencies",
+            "title": CommitMessage.title,
             "body": f"- {change}\n",
         }
 

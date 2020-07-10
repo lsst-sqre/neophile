@@ -17,6 +17,7 @@ from ruamel.yaml import YAML
 
 from neophile.config import Configuration, GitHubRepository
 from neophile.factory import Factory
+from neophile.pr import CommitMessage
 from tests.util import (
     register_mock_github_tags,
     register_mock_helm_repository,
@@ -95,7 +96,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
         ]
         body = "- " + "\n- ".join(changes) + "\n"
         assert json.loads(kwargs["data"]) == {
-            "title": "Update dependencies",
+            "title": CommitMessage.title,
             "body": body,
             "head": "u/neophile",
             "base": "master",
@@ -111,7 +112,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
         commit = repo.head.commit
         assert commit.author.name == "Someone"
         assert commit.author.email == "someone@example.com"
-        assert commit.message == f"Update dependencies\n\n{body}"
+        assert commit.message == f"{CommitMessage.title}\n\n{body}"
 
         nonlocal created_pr
         created_pr = True
@@ -196,7 +197,7 @@ async def test_allow_expressions(
 
     def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
         assert json.loads(kwargs["data"]) == {
-            "title": "Update dependencies",
+            "title": CommitMessage.title,
             "body": "- Update gafaelfawr Helm chart from 1.3.1 to v1.4.0\n",
             "head": "u/neophile",
             "base": "master",

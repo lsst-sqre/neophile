@@ -16,6 +16,7 @@ from git import Actor, Remote, Repo
 from ruamel.yaml import YAML
 
 from neophile.cli import main
+from neophile.pr import CommitMessage
 from tests.util import dict_to_yaml
 
 if TYPE_CHECKING:
@@ -146,7 +147,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
     def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
         change = "Update gafaelfawr Helm chart from 1.3.1 to 1.4.0"
         assert json.loads(kwargs["data"]) == {
-            "title": "Update dependencies",
+            "title": CommitMessage.title,
             "body": f"- {change}\n",
             "head": "u/neophile",
             "base": "master",
@@ -161,7 +162,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
         commit = repo.head.commit
         assert commit.author.name == "Someone"
         assert commit.author.email == "someone@example.com"
-        assert commit.message == f"Update dependencies\n\n- {change}\n"
+        assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
 
         nonlocal created_pr
         created_pr = True
