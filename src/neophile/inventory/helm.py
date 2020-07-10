@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
 from ruamel.yaml import YAML
-from xdg import XDG_CACHE_HOME
 
 from neophile.inventory.version import SemanticVersion
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
+    from pathlib import Path
     from typing import Any, Dict
 
 __all__ = [
@@ -93,15 +93,13 @@ class CachedHelmInventory(HelmInventory):
         index files.
     """
 
-    _CACHE_PATH = XDG_CACHE_HOME / "neophile" / "helm.yaml"
-    """Path to the cache file."""
-
     _LIFETIME = 24 * 60 * 60
     """Lifetime of a version cache in seconds (one day)."""
 
-    def __init__(self, session: ClientSession) -> None:
+    def __init__(self, session: ClientSession, cache_path: Path) -> None:
         super().__init__(session)
         self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache_path = cache_path
         self._load_cache()
 
     async def inventory(self, url: str) -> Dict[str, str]:
@@ -145,12 +143,10 @@ class CachedHelmInventory(HelmInventory):
 
     def _load_cache(self) -> None:
         """Load the version cache from disk."""
-        if self._CACHE_PATH.is_file():
-            with self._CACHE_PATH.open() as f:
-                self._cache = self._yaml.load(f)
+        if self._cache_path.is_file():
+            self._cache = self._yaml.load(self._cache_path)
 
     def _save_cache(self) -> None:
         """Save the cache to disk."""
-        self._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with self._CACHE_PATH.open("w") as f:
-            self._yaml.dump(self._cache, f)
+        self._cache_path.parent.mkdir(parents=True, exist_ok=True)
+        self._yaml.dump(self._cache, self._cache_path)

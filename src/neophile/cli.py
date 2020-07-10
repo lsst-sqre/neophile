@@ -17,7 +17,6 @@ from xdg import XDG_CONFIG_HOME
 from neophile.config import Configuration
 from neophile.factory import Factory
 from neophile.inventory.github import GitHubInventory
-from neophile.inventory.helm import CachedHelmInventory
 
 if TYPE_CHECKING:
     from typing import Any, Awaitable, Callable, Optional, TypeVar
@@ -144,8 +143,11 @@ async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
 @click.pass_context
 async def helm_inventory(ctx: click.Context, repository: str) -> None:
     """Inventory available Helm chart versions."""
+    config = ctx.obj["config"]
+
     async with aiohttp.ClientSession() as session:
-        inventory = CachedHelmInventory(session)
+        factory = Factory(config, session)
+        inventory = factory.create_helm_inventory()
         results = await inventory.inventory(repository)
     print_yaml(results)
 

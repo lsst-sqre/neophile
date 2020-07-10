@@ -9,7 +9,7 @@ from neophile.analysis.kustomize import KustomizeAnalyzer
 from neophile.analysis.pre_commit import PreCommitAnalyzer
 from neophile.analysis.python import PythonAnalyzer
 from neophile.inventory.github import GitHubInventory
-from neophile.inventory.helm import CachedHelmInventory
+from neophile.inventory.helm import CachedHelmInventory, HelmInventory
 from neophile.pr import PullRequester
 from neophile.processor import Processor
 from neophile.scanner.helm import HelmScanner
@@ -102,12 +102,29 @@ class Factory:
             New analyzer.
         """
         scanner = HelmScanner(path)
-        inventory = CachedHelmInventory(self._session)
+        inventory = self.create_helm_inventory()
         return HelmAnalyzer(
             scanner,
             inventory,
             allow_expressions=self._config.allow_expressions,
         )
+
+    def create_helm_inventory(self) -> HelmInventory:
+        """Create a new Helm inventory.
+
+        Uses the configuration to determine whether this should be a cached
+        inventory and, if so, where to put the cache.
+
+        Returns
+        -------
+        inventory : `neophile.inventory.helm.HelmInventory`
+            New inventory.
+        """
+        if not self._config.cache_enabled:
+            return HelmInventory(self._session)
+        else:
+            cache_path = self._config.cache_path / "helm.yaml"
+            return CachedHelmInventory(self._session, cache_path)
 
     def create_kustomize_analyzer(self, path: Path) -> KustomizeAnalyzer:
         """Create a new Helm analyzer.

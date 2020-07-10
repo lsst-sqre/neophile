@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import ANY
@@ -13,6 +12,7 @@ from aioresponses import aioresponses
 from ruamel.yaml import YAML
 
 from neophile.inventory.helm import CachedHelmInventory, HelmInventory
+from tests.util import yaml_to_string
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -56,7 +56,7 @@ async def test_inventory(session: ClientSession) -> None:
 
 @pytest.mark.asyncio
 async def test_cached_inventory(
-    cache_path: Path, session: ClientSession
+    tmp_path: Path, session: ClientSession
 ) -> None:
     url = "https://example.com/charts"
     index_path = (
@@ -65,19 +65,19 @@ async def test_cached_inventory(
         / "kubernetes"
         / "sample-index.yaml"
     )
-    index = index_path.read_bytes()
+    index = index_path.read_text()
+    cache_path = tmp_path / "helm.yaml"
     assert not cache_path.exists()
 
     with aioresponses() as mock:
         mock.get(url + "/index.yaml", body=index)
-        inventory = CachedHelmInventory(session)
+        inventory = CachedHelmInventory(session, cache_path)
         results = await inventory.inventory(url)
     assert results == EXPECTED
 
     # Check the cache contains the same data and a correct timestamp.
     yaml = YAML()
-    with cache_path.open() as f:
-        cache = yaml.load(f)
+    cache = yaml.load(cache_path)
     assert cache == {url: {"timestamp": ANY, "versions": EXPECTED}}
     now = datetime.now(tz=timezone.utc)
     timestamp = cache[url]["timestamp"]
@@ -85,28 +85,23 @@ async def test_cached_inventory(
     assert timestamp < now.timestamp()
 
     # Now, change the data provided to the inventory function.
-    yaml = YAML()
-    yaml_data = {"entries": {"gafaelfawr": [{"version": "1.4.0"}]}}
-    index_output = BytesIO()
-    yaml.dump(yaml_data, index_output)
-    index = index_output.getvalue()
+    index = yaml_to_string({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
 
     # Doing another inventory will return the same results since it will be
     # retrieved from the cache.
     with aioresponses() as mock:
         mock.get(url + "/index.yaml", body=index)
-        inventory = CachedHelmInventory(session)
+        inventory = CachedHelmInventory(session, cache_path)
         results = await inventory.inventory(url)
 
     # Change the cache timestamp to be older than the cache age.
     cache_timestamp = now - timedelta(seconds=CachedHelmInventory._LIFETIME)
     cache[url]["timestamp"] = cache_timestamp.timestamp()
-    with cache_path.open("w") as f:
-        yaml.dump(cache, f)
+    yaml.dump(cache, cache_path)
 
     # Now the inventory will return entirely different results.
     with aioresponses() as mock:
         mock.get(url + "/index.yaml", body=index)
-        inventory = CachedHelmInventory(session)
+        inventory = CachedHelmInventory(session, cache_path)
         results = await inventory.inventory(url)
     assert results == {"gafaelfawr": "1.4.0"}

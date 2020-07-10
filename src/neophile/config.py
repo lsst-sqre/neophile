@@ -7,6 +7,7 @@ from typing import List
 
 from pydantic import BaseModel, BaseSettings, Field, SecretStr
 from ruamel.yaml import YAML
+from xdg import XDG_CACHE_HOME
 
 __all__ = ["Configuration"]
 
@@ -27,6 +28,14 @@ class Configuration(BaseSettings):
     allow_expressions: bool = Field(
         False,
         description="Whether to allow version expressions in dependencies",
+    )
+
+    cache_enabled: bool = Field(
+        True, description="Whether to cache inventory information"
+    )
+
+    cache_path: Path = Field(
+        XDG_CACHE_HOME / "neophile", description="Path to the cache directory"
     )
 
     github_user: str = Field(

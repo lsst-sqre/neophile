@@ -179,13 +179,14 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
 
 @pytest.mark.asyncio
 async def test_allow_expressions(
-    tmp_path: Path, session: ClientSession, cache_path: Path
+    tmp_path: Path, session: ClientSession
 ) -> None:
     tmp_repo = setup_kubernetes_repo(tmp_path / "tmp")
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
     config = Configuration(
         allow_expressions=True,
+        cache_enabled=False,
         repositories=[GitHubRepository(owner="foo", repo="bar")],
         work_area=tmp_path / "work",
     )
