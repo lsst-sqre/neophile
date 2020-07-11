@@ -73,3 +73,26 @@ jobs:
         run: |
           docker push lsstsqre/neophile:deps-${{steps.vars.outputs.tag}}
           docker push lsstsqre/neophile:${{steps.vars.outputs.tag}}
+
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2.0.1
+        with:
+          python-version: 3.8
+
+      - name: Install tox and LTD Conveyor
+        run: pip install tox ltd-conveyor
+
+      - name: Run tox
+        run: tox -e docs
+
+      - name: Upload to LSST the Docs
+        env:
+          LTD_USERNAME: ${{ secrets.LTD_USERNAME }}
+          LTD_PASSWORD: ${{ secrets.LTD_PASSWORD }}
+        run: ltd upload --product neophile --gh --dir docs/_build/html
