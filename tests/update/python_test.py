@@ -4,9 +4,14 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
+import pytest
+
 from neophile.update.python import PythonFrozenUpdate
+from neophile.virtualenv import VirtualEnv
+from tests.util import setup_python_repo
 
 
 def test_python_update(tmp_path: Path) -> None:
@@ -36,3 +41,26 @@ def test_python_update_applied(tmp_path: Path) -> None:
     update = PythonFrozenUpdate(path=tmp_path / "requirements", applied=True)
     update.apply()
     assert main_data == main_path.read_text()
+
+
+def test_virtualenv(tmp_path: Path) -> None:
+    setup_python_repo(tmp_path / "python", require_venv=True)
+    requirements_path = tmp_path / "python" / "requirements"
+
+    update = PythonFrozenUpdate(path=requirements_path, applied=False)
+    with pytest.raises(subprocess.CalledProcessError):
+        update.apply()
+    update = PythonFrozenUpdate(
+        path=requirements_path,
+        applied=False,
+        virtualenv=VirtualEnv(tmp_path / "venv"),
+    )
+    update.apply()
+
+    with (tmp_path / "python" / "Makefile").open() as f:
+        for line in f:
+            match = re.match("NEW = (.*)", line)
+            if match:
+                new_hash = match.group(1)
+    main_path = requirements_path / "main.txt"
+    assert new_hash in main_path.read_text()

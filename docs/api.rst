@@ -62,3 +62,5 @@ API reference
 .. automodapi:: neophile.update.pre_commit
 
 .. automodapi:: neophile.update.python
+
+.. automodapi:: neophile.virtualenv

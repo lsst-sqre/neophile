@@ -78,7 +78,7 @@ def patch_clone_from(owner: str, repo: str, path: Path) -> Iterator[None]:
 
 @pytest.mark.asyncio
 async def test_processor(tmp_path: Path, session: ClientSession) -> None:
-    tmp_repo = setup_python_repo(tmp_path / "tmp")
+    tmp_repo = setup_python_repo(tmp_path / "tmp", require_venv=True)
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
     config = Configuration(

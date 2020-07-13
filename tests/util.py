@@ -104,13 +104,15 @@ def setup_kubernetes_repo(tmp_path: Path) -> Repo:
     return repo
 
 
-def setup_python_repo(tmp_path: Path) -> Repo:
+def setup_python_repo(tmp_path: Path, require_venv: bool = False) -> Repo:
     """Set up a test repository with the Python test files.
 
     Parameters
     ----------
     tmp_path : `pathlib.Path`
         The directory in which to create the repository.
+    require_venv : `bool`, optional
+        Whether ``make update-deps`` should fail if no virtualenv is in use.
 
     Returns
     -------
@@ -119,6 +121,10 @@ def setup_python_repo(tmp_path: Path) -> Repo:
     """
     data_path = Path(__file__).parent / "data" / "python"
     shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
+    if require_venv:
+        (tmp_path / "Makefile-venv").rename(tmp_path / "Makefile")
+    else:
+        (tmp_path / "Makefile-venv").unlink()
     repo = Repo.init(str(tmp_path))
     repo.index.add(
         [

@@ -44,7 +44,7 @@ class Processor:
         updates : Dict[`str`, List[`neophile.update.base.Update`]]
             Any updates found, sorted by the analyzer that found the update.
         """
-        analyzers = self._factory.create_all_analyzers(path)
+        analyzers = self._factory.create_all_analyzers(path, use_venv=True)
         return {a.name(): await a.analyze() for a in analyzers}
 
     async def process(self) -> None:
@@ -84,7 +84,7 @@ class Processor:
         updates : List[`neophile.update.base.Update`]
             All the updates that were applied.
         """
-        analyzers = self._factory.create_all_analyzers(path)
+        analyzers = self._factory.create_all_analyzers(path, use_venv=True)
 
         all_updates = []
         for analyzer in analyzers:

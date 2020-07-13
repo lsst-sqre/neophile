@@ -15,6 +15,7 @@ from neophile.processor import Processor
 from neophile.scanner.helm import HelmScanner
 from neophile.scanner.kustomize import KustomizeScanner
 from neophile.scanner.pre_commit import PreCommitScanner
+from neophile.virtualenv import VirtualEnv
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -42,13 +43,18 @@ class Factory:
         self._config = config
         self._session = session
 
-    def create_all_analyzers(self, path: Path) -> List[BaseAnalyzer]:
+    def create_all_analyzers(
+        self, path: Path, *, use_venv: bool = False
+    ) -> List[BaseAnalyzer]:
         """Create all analyzers.
 
         Parameters
         ----------
         path : `pathlib.Path`
             Path to the Git repository.
+        use_venv : `bool`, optional
+            Whether to use a virtualenv to isolate analysis.  Default is
+            false.
 
         Returns
         -------
@@ -63,7 +69,7 @@ class Factory:
         to the working tree).
         """
         return [
-            self.create_python_analyzer(path),
+            self.create_python_analyzer(path, use_venv=use_venv),
             self.create_helm_analyzer(path),
             self.create_kustomize_analyzer(path),
             self.create_pre_commit_analyzer(path),
@@ -160,20 +166,29 @@ class Factory:
         inventory = GitHubInventory(self._config, self._session)
         return PreCommitAnalyzer(scanner, inventory)
 
-    def create_python_analyzer(self, path: Path) -> PythonAnalyzer:
+    def create_python_analyzer(
+        self, path: Path, *, use_venv: bool = False
+    ) -> PythonAnalyzer:
         """Create a new Python frozen dependency analyzer.
 
         Parameters
         ----------
         path : `pathlib.Path`
             Path to the Git repository.
+        use_venv : `bool`, optional
+            Whether to use a virtualenv to isolate analysis.  Default is
+            false.
 
         Returns
         -------
         analyzer : `neophile.analysis.python.PythonAnalyzer`
             New analyzer.
         """
-        return PythonAnalyzer(path)
+        if use_venv:
+            virtualenv = VirtualEnv(self._config.work_area / "venv")
+            return PythonAnalyzer(path, virtualenv)
+        else:
+            return PythonAnalyzer(path)
 
     def create_processor(self) -> Processor:
         """Create a new repository processor."""

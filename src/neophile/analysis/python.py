@@ -13,8 +13,9 @@ from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
     from neophile.update.base import Update
+    from neophile.virtualenv import VirtualEnv
     from pathlib import Path
-    from typing import List
+    from typing import List, Optional
 
 __all__ = ["PythonAnalyzer"]
 
@@ -26,10 +27,15 @@ class PythonAnalyzer(BaseAnalyzer):
     ----------
     root : `pathlib.Path`
         Root of the directory tree to analyze.
+    virtualenv : `neophile.virtualenv.VirtualEnv`, optional
+        Virtual environment manager.
     """
 
-    def __init__(self, root: Path) -> None:
+    def __init__(
+        self, root: Path, virtualenv: Optional[VirtualEnv] = None
+    ) -> None:
         self._root = root
+        self._virtualenv = virtualenv
 
     async def analyze(self, update: bool = False) -> List[Update]:
         """Analyze a tree and return needed Python frozen dependency updates.
@@ -64,12 +70,20 @@ class PythonAnalyzer(BaseAnalyzer):
             msg = "Working tree contains uncommitted changes"
             raise UncommittedChangesError(msg)
 
-        subprocess.run(
-            ["make", "update-deps"],
-            cwd=str(self._root),
-            check=True,
-            capture_output=True,
-        )
+        if self._virtualenv:
+            self._virtualenv.run(
+                ["make", "update-deps"],
+                cwd=str(self._root),
+                check=True,
+                capture_output=True,
+            )
+        else:
+            subprocess.run(
+                ["make", "update-deps"],
+                cwd=str(self._root),
+                check=True,
+                capture_output=True,
+            )
 
         if not repo.is_dirty():
             return []
@@ -78,7 +92,9 @@ class PythonAnalyzer(BaseAnalyzer):
             repo.git.restore(".")
         return [
             PythonFrozenUpdate(
-                path=self._root / "requirements", applied=update,
+                path=self._root / "requirements",
+                applied=update,
+                virtualenv=self._virtualenv,
             )
         ]
 
