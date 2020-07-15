@@ -23,8 +23,9 @@ apt-get update
 # Install security updates:
 apt-get -y upgrade
 
-# git is required by setuptools-scm.
-apt-get -y install --no-install-recommends git
+# git is required by setuptools-scm.  make is required to run make update-deps
+# for Python packages.
+apt-get -y install --no-install-recommends git make
 
 # Delete cached files we don't need anymore:
 apt-get clean
