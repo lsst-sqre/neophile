@@ -235,7 +235,7 @@ class PullRequester:
             url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
         )
         async for pr in prs:
-            return pr["number"]
+            return str(pr["number"])
         return None
 
     def _get_remote_url(self) -> ParseResult:

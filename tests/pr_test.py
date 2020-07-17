@@ -142,7 +142,7 @@ async def test_pr_update(
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=user)
         pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
-        mock_responses.get(pattern, payload=[{"number": "1234"}])
+        mock_responses.get(pattern, payload=[{"number": 1234}])
         mock_responses.patch(
             "https://api.github.com/repos/foo/bar/pulls/1234",
             callback=check_pr_update,
