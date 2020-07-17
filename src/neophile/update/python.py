@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import subprocess
 from dataclasses import InitVar, dataclass
 from typing import TYPE_CHECKING
@@ -36,20 +37,24 @@ class PythonFrozenUpdate(Update):
             return
         rootdir = self.path.parent
 
-        if self._virtualenv:
-            self._virtualenv.run(
-                ["make", "update-deps"],
-                cwd=str(rootdir),
-                check=True,
-                capture_output=True,
-            )
-        else:
-            subprocess.run(
-                ["make", "update-deps"],
-                cwd=str(rootdir),
-                check=True,
-                capture_output=True,
-            )
+        try:
+            if self._virtualenv:
+                self._virtualenv.run(
+                    ["make", "update-deps"],
+                    cwd=str(rootdir),
+                    check=True,
+                    capture_output=True,
+                )
+            else:
+                subprocess.run(
+                    ["make", "update-deps"],
+                    cwd=str(rootdir),
+                    check=True,
+                    capture_output=True,
+                )
+        except subprocess.CalledProcessError as e:
+            logging.error("make update-deps failed: %s%s", e.stdout, e.stderr)
+            return
 
         self.applied = True
 

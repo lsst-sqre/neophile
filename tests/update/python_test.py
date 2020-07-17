@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import re
 import shutil
-import subprocess
 from pathlib import Path
-
-import pytest
+from typing import TYPE_CHECKING
 
 from neophile.update.python import PythonFrozenUpdate
 from neophile.virtualenv import VirtualEnv
 from tests.util import setup_python_repo
+
+if TYPE_CHECKING:
+    from _pytest.logging import LogCaptureFixture
 
 
 def test_python_update(tmp_path: Path) -> None:
@@ -43,13 +44,15 @@ def test_python_update_applied(tmp_path: Path) -> None:
     assert main_data == main_path.read_text()
 
 
-def test_virtualenv(tmp_path: Path) -> None:
+def test_virtualenv(tmp_path: Path, caplog: LogCaptureFixture) -> None:
     setup_python_repo(tmp_path / "python", require_venv=True)
     requirements_path = tmp_path / "python" / "requirements"
 
     update = PythonFrozenUpdate(path=requirements_path, applied=False)
-    with pytest.raises(subprocess.CalledProcessError):
-        update.apply()
+    update.apply()
+    assert not update.applied
+    assert "make update-deps failed" in caplog.records[0].msg
+
     update = PythonFrozenUpdate(
         path=requirements_path,
         applied=False,

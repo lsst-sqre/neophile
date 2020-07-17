@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -70,20 +71,24 @@ class PythonAnalyzer(BaseAnalyzer):
             msg = "Working tree contains uncommitted changes"
             raise UncommittedChangesError(msg)
 
-        if self._virtualenv:
-            self._virtualenv.run(
-                ["make", "update-deps"],
-                cwd=str(self._root),
-                check=True,
-                capture_output=True,
-            )
-        else:
-            subprocess.run(
-                ["make", "update-deps"],
-                cwd=str(self._root),
-                check=True,
-                capture_output=True,
-            )
+        try:
+            if self._virtualenv:
+                self._virtualenv.run(
+                    ["make", "update-deps"],
+                    cwd=str(self._root),
+                    check=True,
+                    capture_output=True,
+                )
+            else:
+                subprocess.run(
+                    ["make", "update-deps"],
+                    cwd=str(self._root),
+                    check=True,
+                    capture_output=True,
+                )
+        except subprocess.CalledProcessError as e:
+            logging.error("make update-deps failed: %s%s", e.stdout, e.stderr)
+            return []
 
         if not repo.is_dirty():
             return []

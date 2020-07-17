@@ -16,6 +16,7 @@ from neophile.update.python import PythonFrozenUpdate
 from tests.util import setup_python_repo
 
 if TYPE_CHECKING:
+    from _pytest.logging import LogCaptureFixture
     from aiohttp import ClientSession
 
 
@@ -65,3 +66,15 @@ async def test_analyzer_update(tmp_path: Path, session: ClientSession) -> None:
         PythonFrozenUpdate(path=tmp_path / "requirements", applied=True)
     ]
     assert repo.is_dirty()
+
+
+@pytest.mark.asyncio
+async def test_virtualenv(
+    tmp_path: Path, session: ClientSession, caplog: LogCaptureFixture
+) -> None:
+    setup_python_repo(tmp_path, require_venv=True)
+
+    factory = Factory(Configuration(), session)
+    analyzer = factory.create_python_analyzer(tmp_path)
+    assert await analyzer.analyze() == []
+    assert "make update-deps failed" in caplog.records[0].msg
