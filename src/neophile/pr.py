@@ -268,7 +268,7 @@ class PullRequester:
         remote_url = self._get_authenticated_remote()
         remote = Remote.add(self._repo, "tmp-neophile", remote_url)
         try:
-            push_info = remote.push(f"{branch}:{branch}")
+            push_info = remote.push(f"{branch}:{branch}", force=True)
             for result in push_info:
                 if result.flags & PushInfo.ERROR:
                     msg = f"Pushing {branch} failed: {result.summary}"

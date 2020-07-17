@@ -69,7 +69,9 @@ async def test_pr(
         pr = PullRequester(tmp_path, config, session)
         await pr.make_pull_request([update])
 
-    assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
+    assert mock_push.call_args_list == [
+        call("u/neophile:u/neophile", force=True)
+    ]
     assert not repo.is_dirty()
     assert repo.head.ref.name == "u/neophile"
     commit = repo.head.commit
@@ -151,7 +153,9 @@ async def test_pr_update(
         pr = PullRequester(tmp_path, config, session)
         await pr.make_pull_request([update])
 
-    assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
+    assert mock_push.call_args_list == [
+        call("u/neophile:u/neophile", force=True)
+    ]
     assert not repo.is_dirty()
     assert repo.head.ref.name == "u/neophile"
 

@@ -137,7 +137,9 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
                 mock_push.return_value = push_result
                 await processor.process()
 
-    assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
+    assert mock_push.call_args_list == [
+        call("u/neophile:u/neophile", force=True)
+    ]
     assert created_pr
     repo = Repo(str(tmp_path / "work" / "bar"))
     assert not repo.is_dirty()

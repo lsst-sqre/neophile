@@ -185,7 +185,9 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
 
     assert created_pr
     assert result.exit_code == 0
-    assert mock_push.call_args_list == [call("u/neophile:u/neophile")]
+    assert mock_push.call_args_list == [
+        call("u/neophile:u/neophile", force=True)
+    ]
     assert repo.head.ref.name == "master"
 
 
