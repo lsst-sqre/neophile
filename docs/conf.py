@@ -1,6 +1,7 @@
 import os
 
 import lsst_sphinx_bootstrap_theme
+
 import neophile
 
 # Common links and substitutions =============================================

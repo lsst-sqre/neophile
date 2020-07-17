@@ -13,12 +13,14 @@ from neophile.config import GitHubRepository
 from neophile.exceptions import PushError
 
 if TYPE_CHECKING:
-    from aiohttp import ClientSession
-    from neophile.config import Configuration
-    from neophile.update.base import Update
     from pathlib import Path
     from typing import ClassVar, List, Optional, Sequence
     from urllib.parse import ParseResult
+
+    from aiohttp import ClientSession
+
+    from neophile.config import Configuration
+    from neophile.update.base import Update
 
 __all__ = [
     "CommitMessage",

@@ -18,12 +18,14 @@ from neophile.scanner.pre_commit import PreCommitScanner
 from neophile.virtualenv import VirtualEnv
 
 if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import List
+
     from aiohttp import ClientSession
+
     from neophile.analysis.base import BaseAnalyzer
     from neophile.config import Configuration
     from neophile.scanner.base import BaseScanner
-    from pathlib import Path
-    from typing import List
 
 __all__ = ["Factory"]
 

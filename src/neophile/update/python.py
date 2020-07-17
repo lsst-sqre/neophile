@@ -10,8 +10,9 @@ from typing import TYPE_CHECKING
 from neophile.update.base import Update
 
 if TYPE_CHECKING:
-    from neophile.virtualenv import VirtualEnv
     from typing import Optional
+
+    from neophile.virtualenv import VirtualEnv
 
 __all__ = ["PythonFrozenUpdate"]
 

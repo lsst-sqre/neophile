@@ -11,9 +11,11 @@ from gidgethub.aiohttp import GitHubAPI
 from neophile.inventory.version import PackagingVersion, SemanticVersion
 
 if TYPE_CHECKING:
-    from aiohttp import ClientSession
-    from neophile.config import Configuration
     from typing import Optional
+
+    from aiohttp import ClientSession
+
+    from neophile.config import Configuration
 
 __all__ = [
     "GitHubInventory",

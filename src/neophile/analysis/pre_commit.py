@@ -8,10 +8,11 @@ from neophile.analysis.base import BaseAnalyzer
 from neophile.update.pre_commit import PreCommitUpdate
 
 if TYPE_CHECKING:
+    from typing import List
+
     from neophile.inventory.github import GitHubInventory
     from neophile.scanner.pre_commit import PreCommitScanner
     from neophile.update.base import Update
-    from typing import List
 
 __all__ = ["PreCommitAnalyzer"]
 

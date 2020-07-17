@@ -6,8 +6,9 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from neophile.dependency.base import Dependency
     from typing import Sequence
+
+    from neophile.dependency.base import Dependency
 
 __all__ = ["BaseScanner"]
 

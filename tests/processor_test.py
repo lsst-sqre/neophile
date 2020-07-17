@@ -26,8 +26,9 @@ from tests.util import (
 )
 
 if TYPE_CHECKING:
-    from aiohttp import ClientSession
     from typing import Any, Callable, Iterator
+
+    from aiohttp import ClientSession
 
 
 def create_upstream_git_repository(repo: Repo, upstream_path: Path) -> None:

@@ -13,10 +13,11 @@ from neophile.exceptions import UncommittedChangesError
 from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
-    from neophile.update.base import Update
-    from neophile.virtualenv import VirtualEnv
     from pathlib import Path
     from typing import List, Optional
+
+    from neophile.update.base import Update
+    from neophile.virtualenv import VirtualEnv
 
 __all__ = ["PythonAnalyzer"]
 

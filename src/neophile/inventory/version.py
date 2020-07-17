@@ -10,8 +10,9 @@ from packaging import version
 from semver import VersionInfo
 
 if TYPE_CHECKING:
-    from packaging.version import LegacyVersion, Version
     from typing import Union
+
+    from packaging.version import LegacyVersion, Version
 
 __all__ = [
     "PackagingVersion",

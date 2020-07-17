@@ -11,8 +11,9 @@ from git import Actor, Repo
 from ruamel.yaml import YAML
 
 if TYPE_CHECKING:
-    from aioresponses import aioresponses
     from typing import Any, Mapping, Sequence
+
+    from aioresponses import aioresponses
 
 
 def dict_to_yaml(data: Mapping[str, Any]) -> str:

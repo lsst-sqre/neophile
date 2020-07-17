@@ -10,10 +10,11 @@ from neophile.inventory.version import SemanticVersion
 from neophile.update.helm import HelmUpdate
 
 if TYPE_CHECKING:
+    from typing import List
+
     from neophile.inventory.helm import HelmInventory
     from neophile.scanner.helm import HelmScanner
     from neophile.update.base import Update
-    from typing import List
 
 __all__ = ["HelmAnalyzer"]
 

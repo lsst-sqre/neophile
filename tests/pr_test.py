@@ -20,9 +20,10 @@ from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
 
 if TYPE_CHECKING:
-    from aiohttp import ClientSession
     from typing import Any
     from unittest.mock import Mock
+
+    from aiohttp import ClientSession
 
 
 def setup_repo(tmp_path: Path) -> Repo:

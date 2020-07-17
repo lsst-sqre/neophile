@@ -12,9 +12,10 @@ from ruamel.yaml import YAML
 from neophile.inventory.version import SemanticVersion
 
 if TYPE_CHECKING:
-    from aiohttp import ClientSession
     from pathlib import Path
     from typing import Any, Dict
+
+    from aiohttp import ClientSession
 
 __all__ = [
     "CachedHelmInventory",

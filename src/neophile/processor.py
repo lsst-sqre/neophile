@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING
 from neophile.repository import Repository
 
 if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import Dict, List
+
     from neophile.config import Configuration
     from neophile.factory import Factory
     from neophile.update.base import Update
-    from pathlib import Path
-    from typing import Dict, List
 
 __all__ = ["Processor"]
 
