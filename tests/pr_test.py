@@ -117,7 +117,11 @@ async def test_pr_update(
 ) -> None:
     """Test updating an existing PR."""
     repo = setup_repo(tmp_path)
-    config = Configuration(github_user="someone", github_token="some-token")
+    config = Configuration(
+        github_email="otheremail@example.com",
+        github_token="some-token",
+        github_user="someone",
+    )
     update = HelmUpdate(
         path=tmp_path / "Chart.yaml",
         applied=False,
@@ -158,6 +162,11 @@ async def test_pr_update(
     ]
     assert not repo.is_dirty()
     assert repo.head.ref.name == "u/neophile"
+    commit = repo.head.commit
+    assert commit.author.name == "Someone"
+    assert commit.author.email == "otheremail@example.com"
+    assert commit.committer.name == "Someone"
+    assert commit.committer.email == "otheremail@example.com"
 
 
 @pytest.mark.asyncio

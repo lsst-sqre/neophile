@@ -192,7 +192,10 @@ class PullRequester:
             The actor to use for commits.
         """
         response = await self._github.getitem("/user")
-        return Actor(response["name"], response["email"])
+        if self._config.github_email:
+            return Actor(response["name"], self._config.github_email)
+        else:
+            return Actor(response["name"], response["email"])
 
     def _get_github_repo(self) -> GitHubRepository:
         """Get the GitHub repository.

@@ -23,6 +23,10 @@ Helm deployment
 The is Helm chart for neophile is available from the `Rubin Observatory charts repository <https://lsst-sqre.github.io/charts/>`__.
 To use that chart, you will need to set the following parameters (either on the Helm command line or in a ``values.yaml`` file):
 
+``github_email``
+    The email address to use for commit messages.
+    If not set, the public email address of the configured GitHub user will be used.
+
 ``github_user``
     The user corresponding to the GitHub token in the secret.
 

@@ -69,15 +69,19 @@ At least ``github_user`` and ``github_token`` must be set.
     A directory in which to write inventory cache files if ``cache_enabled`` is set to true.
     The default is ``$XDG_CACHE_HOME/neophile`` (which normally expands to ``$HOME/.cache/neophile``).
 
-``github_user`` (env: ``NEOPHILE_GITHUB_USER``)
-    The GitHub user to use for pull requests and for other queries, such as looking up the tags on a repository.
-    Must be the user corresponding to the token set in ``github_token``.
+``github_email`` (env: ``NEOPHILE_GITHUB_EMAIL``)
+    The email address to use for commits when pushing to GitHub.
+    If not set, the default is the public email address of the configured GitHub user.
 
 ``github_token`` (env: ``NEOPHILE_GITHUB_TOKEN``)
     A GitHub token.
     This must at least have ``public_repo`` access scope.
     neophile has only been tested with a `personal access token`_.
     It should also work with a GitHub App token, but that has not yet been tested.
+
+``github_user`` (env: ``NEOPHILE_GITHUB_USER``)
+    The GitHub user to use for pull requests and for other queries, such as looking up the tags on a repository.
+    Must be the user corresponding to the token set in ``github_token``.
 
 ``repositories``
     The list of GitHub repositories to process with ``neophile process``.

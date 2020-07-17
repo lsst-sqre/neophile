@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, BaseSettings, Field, SecretStr
 from ruamel.yaml import YAML
@@ -38,12 +38,16 @@ class Configuration(BaseSettings):
         XDG_CACHE_HOME / "neophile", description="Path to the cache directory"
     )
 
-    github_user: str = Field(
-        "", description="GitHub user for creating pull requests"
+    github_email: Optional[str] = Field(
+        None, description="Email address to use for GitHub commits"
     )
 
     github_token: SecretStr = Field(
         "", description="GitHub token for creating pull requests"
+    )
+
+    github_user: str = Field(
+        "", description="GitHub user for creating pull requests"
     )
 
     repositories: List[GitHubRepository] = Field(
