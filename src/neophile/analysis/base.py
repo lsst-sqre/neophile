@@ -6,8 +6,9 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from neophile.update.base import Update
     from typing import List
+
+    from neophile.update.base import Update
 
 __all__ = ["BaseAnalyzer"]
 

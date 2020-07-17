@@ -11,7 +11,12 @@ Python type system.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import Dict, Union
 
 __all__ = [
     "MethodMixin",
@@ -48,11 +53,23 @@ class MethodMixin(ABC):
 class UpdateMixin:
     """Add the base data elements for `Update`."""
 
-    path: str
+    path: Path
     """The file that contains the dependency."""
 
     applied: bool
     """Whether the update has already been applied."""
+
+    def to_dict(self) -> Dict[str, Union[str, bool]]:
+        """Convert the object to a dict.
+
+        Notes
+        -----
+        Required because :py:mod:`ruamel.yaml` cannot serialize
+        `~pathlib.Path`.
+        """
+        result = asdict(self)
+        result["path"] = str(result["path"])
+        return result
 
 
 class Update(UpdateMixin, MethodMixin):

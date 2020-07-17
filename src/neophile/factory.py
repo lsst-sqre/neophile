@@ -8,19 +8,24 @@ from neophile.analysis.helm import HelmAnalyzer
 from neophile.analysis.kustomize import KustomizeAnalyzer
 from neophile.analysis.pre_commit import PreCommitAnalyzer
 from neophile.analysis.python import PythonAnalyzer
-from neophile.config import Configuration
 from neophile.inventory.github import GitHubInventory
-from neophile.inventory.helm import CachedHelmInventory
+from neophile.inventory.helm import CachedHelmInventory, HelmInventory
 from neophile.pr import PullRequester
-from neophile.repository import Repository
+from neophile.processor import Processor
 from neophile.scanner.helm import HelmScanner
 from neophile.scanner.kustomize import KustomizeScanner
 from neophile.scanner.pre_commit import PreCommitScanner
+from neophile.virtualenv import VirtualEnv
 
 if TYPE_CHECKING:
-    from aiohttp import ClientSession
-    from neophile.analysis.base import BaseAnalyzer
+    from pathlib import Path
     from typing import List
+
+    from aiohttp import ClientSession
+
+    from neophile.analysis.base import BaseAnalyzer
+    from neophile.config import Configuration
+    from neophile.scanner.base import BaseScanner
 
 __all__ = ["Factory"]
 
@@ -36,51 +41,68 @@ class Factory:
         The client session to use for requests.
     """
 
-    def __init__(self, session: ClientSession) -> None:
-        self._config = Configuration()
+    def __init__(self, config: Configuration, session: ClientSession) -> None:
+        self._config = config
         self._session = session
 
     def create_all_analyzers(
-        self, path: str, *, allow_expressions: bool = False
+        self, path: Path, *, use_venv: bool = False
     ) -> List[BaseAnalyzer]:
-        """Create a new Helm analyzer.
+        """Create all analyzers.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
-        allow_expressions : `bool`, optional
-            If set, allow dependencies to be expressed as expressions, and
-            only report a needed update if the latest version is outside the
-            range of the expression.  Defaults to false.
+        use_venv : `bool`, optional
+            Whether to use a virtualenv to isolate analysis.  Default is
+            false.
 
         Returns
         -------
         analyzers : List[`neophile.analysis.base.BaseAnalyzer`]
             List of all available analyzers.
+
+        Notes
+        -----
+        The Python analyzer requires a clean Git tree in order to determine if
+        any changes were necessary, and therefore must run first if the
+        analyzers are run in update mode (which means they will make changes
+        to the working tree).
         """
         return [
-            self.create_helm_analyzer(
-                path, allow_expressions=allow_expressions
-            ),
+            self.create_python_analyzer(path, use_venv=use_venv),
+            self.create_helm_analyzer(path),
             self.create_kustomize_analyzer(path),
             self.create_pre_commit_analyzer(path),
-            self.create_python_analyzer(path),
         ]
 
-    def create_helm_analyzer(
-        self, path: str, *, allow_expressions: bool = False
-    ) -> HelmAnalyzer:
+    def create_all_scanners(self, path: Path) -> List[BaseScanner]:
+        """Create all scanners.
+
+        Parameters
+        ----------
+        path : `pathlib.Path`
+            Path to the Git repository to scan.
+
+        Returns
+        -------
+        scanners : List[`neophile.scanner.base.BaseScanner`]
+            List of all available scanners.
+        """
+        return [
+            HelmScanner(path),
+            KustomizeScanner(path),
+            PreCommitScanner(path),
+        ]
+
+    def create_helm_analyzer(self, path: Path) -> HelmAnalyzer:
         """Create a new Helm analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
-        allow_expressions : `bool`, optional
-            If set, allow dependencies to be expressed as expressions, and
-            only report a needed update if the latest version is outside the
-            range of the expression.  Defaults to false.
 
         Returns
         -------
@@ -88,15 +110,36 @@ class Factory:
             New analyzer.
         """
         scanner = HelmScanner(path)
-        inventory = CachedHelmInventory(self._session)
-        return HelmAnalyzer(path, scanner, inventory)
+        inventory = self.create_helm_inventory()
+        return HelmAnalyzer(
+            scanner,
+            inventory,
+            allow_expressions=self._config.allow_expressions,
+        )
 
-    def create_kustomize_analyzer(self, path: str) -> KustomizeAnalyzer:
+    def create_helm_inventory(self) -> HelmInventory:
+        """Create a new Helm inventory.
+
+        Uses the configuration to determine whether this should be a cached
+        inventory and, if so, where to put the cache.
+
+        Returns
+        -------
+        inventory : `neophile.inventory.helm.HelmInventory`
+            New inventory.
+        """
+        if not self._config.cache_enabled:
+            return HelmInventory(self._session)
+        else:
+            cache_path = self._config.cache_path / "helm.yaml"
+            return CachedHelmInventory(self._session, cache_path)
+
+    def create_kustomize_analyzer(self, path: Path) -> KustomizeAnalyzer:
         """Create a new Helm analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns
@@ -106,14 +149,14 @@ class Factory:
         """
         scanner = KustomizeScanner(path)
         inventory = GitHubInventory(self._config, self._session)
-        return KustomizeAnalyzer(path, scanner, inventory)
+        return KustomizeAnalyzer(scanner, inventory)
 
-    def create_pre_commit_analyzer(self, path: str) -> PreCommitAnalyzer:
+    def create_pre_commit_analyzer(self, path: Path) -> PreCommitAnalyzer:
         """Create a new pre-commit hook analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns
@@ -123,29 +166,42 @@ class Factory:
         """
         scanner = PreCommitScanner(path)
         inventory = GitHubInventory(self._config, self._session)
-        return PreCommitAnalyzer(path, scanner, inventory)
+        return PreCommitAnalyzer(scanner, inventory)
 
-    def create_python_analyzer(self, path: str) -> PythonAnalyzer:
+    def create_python_analyzer(
+        self, path: Path, *, use_venv: bool = False
+    ) -> PythonAnalyzer:
         """Create a new Python frozen dependency analyzer.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
+        use_venv : `bool`, optional
+            Whether to use a virtualenv to isolate analysis.  Default is
+            false.
 
         Returns
         -------
         analyzer : `neophile.analysis.python.PythonAnalyzer`
             New analyzer.
         """
-        return PythonAnalyzer(path)
+        if use_venv:
+            virtualenv = VirtualEnv(self._config.work_area / "venv")
+            return PythonAnalyzer(path, virtualenv)
+        else:
+            return PythonAnalyzer(path)
 
-    def create_pull_requester(self, path: str) -> PullRequester:
+    def create_processor(self) -> Processor:
+        """Create a new repository processor."""
+        return Processor(self._config, self)
+
+    def create_pull_requester(self, path: Path) -> PullRequester:
         """Create a new pull requester.
 
         Parameters
         ----------
-        path : `str`
+        path : `pathlib.Path`
             Path to the Git repository.
 
         Returns
@@ -154,18 +210,3 @@ class Factory:
             New pull requester.
         """
         return PullRequester(path, self._config, self._session)
-
-    def create_repository(self, path: str) -> Repository:
-        """Create a new repository wrapper.
-
-        Parameters
-        ----------
-        path : `str`
-            Path to the Git repository.
-
-        Returns
-        -------
-        repository : `neophile.repository.Repository`
-            New repository wrapper.
-        """
-        return Repository(path)

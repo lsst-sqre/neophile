@@ -5,21 +5,18 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
-from dataclasses import asdict
 from functools import wraps
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiohttp
 import click
 from ruamel.yaml import YAML
+from xdg import XDG_CONFIG_HOME
 
 from neophile.config import Configuration
 from neophile.factory import Factory
 from neophile.inventory.github import GitHubInventory
-from neophile.inventory.helm import CachedHelmInventory
-from neophile.scanner.helm import HelmScanner
-from neophile.scanner.kustomize import KustomizeScanner
-from neophile.scanner.pre_commit import PreCommitScanner
 
 if TYPE_CHECKING:
     from typing import Any, Awaitable, Callable, Optional, TypeVar
@@ -45,10 +42,24 @@ def print_yaml(results: Any) -> None:
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.option(
+    "-c",
+    "--config-path",
+    type=str,
+    metavar="PATH",
+    default=str(XDG_CONFIG_HOME / "neophile.yaml"),
+    envvar="NEOPHILE_CONFIG",
+    help="Path to configuration.",
+)
 @click.version_option(message="%(version)s")
-def main() -> None:
+@click.pass_context
+def main(ctx: click.Context, config_path: str) -> None:
     """Command-line interface for neophile."""
-    pass
+    ctx.ensure_object(dict)
+    if os.path.exists(config_path):
+        ctx.obj["config"] = Configuration.from_file(config_path)
+    else:
+        ctx.obj["config"] = Configuration()
 
 
 @main.command()
@@ -60,6 +71,7 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
     # https://www.burgundywall.com/post/having-click-help-subcommand
     if topic:
         if topic in main.commands:
+            ctx.info_name = topic
             click.echo(main.commands[topic].get_help(ctx))
         else:
             raise click.UsageError(f"Unknown help topic {topic}", ctx)
@@ -73,9 +85,9 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 @click.option(
     "--allow-expressions/--no-allow-expressions",
     default=False,
-    help="Allow version match expressions",
+    help="Allow version match expressions.",
 )
-@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze")
+@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze.")
 @click.option(
     "--pr/--no-pr", default=False, help="Generate a pull request of changes."
 )
@@ -84,41 +96,41 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
     default=False,
     help="Update out-of-date dependencies",
 )
+@click.pass_context
 async def analyze(
-    allow_expressions: bool, path: str, pr: bool, update: bool
+    ctx: click.Context,
+    allow_expressions: bool,
+    path: str,
+    pr: bool,
+    update: bool,
 ) -> None:
     """Analyze the current directory for pending upgrades."""
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(session)
-        analyzers = factory.create_all_analyzers(
-            path, allow_expressions=allow_expressions
-        )
+    config = ctx.obj["config"]
+    config.allow_expressions = allow_expressions
 
+    async with aiohttp.ClientSession() as session:
+        factory = Factory(config, session)
+        processor = factory.create_processor()
         if pr:
-            repo = factory.create_repository(path)
-            repo.switch_branch()
-            all_updates = []
-            for analyzer in analyzers:
-                updates = await analyzer.update()
-                all_updates.extend(updates)
-            pull_requester = factory.create_pull_requester(path)
-            await pull_requester.make_pull_request(all_updates)
-            repo.restore_branch()
+            await processor.process_checkout(Path(path))
         elif update:
-            for analyzer in analyzers:
-                await analyzer.update()
+            await processor.update_checkout(Path(path))
         else:
-            results = {a.name(): await a.analyze() for a in analyzers}
-            print_yaml({k: [asdict(u) for u in v] for k, v in results.items()})
+            results = await processor.analyze_checkout(Path(path))
+            print_yaml(
+                {k: [u.to_dict() for u in v] for k, v in results.items()}
+            )
 
 
 @main.command()
 @coroutine
 @click.argument("owner", required=True)
 @click.argument("repo", required=True)
-async def github_inventory(owner: str, repo: str) -> None:
+@click.pass_context
+async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
     """Inventory available GitHub tags."""
-    config = Configuration()
+    config = ctx.obj["config"]
+
     async with aiohttp.ClientSession() as session:
         inventory = GitHubInventory(config, session)
         result = await inventory.inventory(owner, repo)
@@ -128,28 +140,39 @@ async def github_inventory(owner: str, repo: str) -> None:
 @main.command()
 @coroutine
 @click.argument("repository", required=True)
-async def helm_inventory(repository: str) -> None:
+@click.pass_context
+async def helm_inventory(ctx: click.Context, repository: str) -> None:
     """Inventory available Helm chart versions."""
+    config = ctx.obj["config"]
+
     async with aiohttp.ClientSession() as session:
-        inventory = CachedHelmInventory(session)
+        factory = Factory(config, session)
+        inventory = factory.create_helm_inventory()
         results = await inventory.inventory(repository)
     print_yaml(results)
 
 
 @main.command()
-@click.option("--path", default=os.getcwd(), type=str, help="Path to scan")
-def scan(path: str) -> None:
-    """Scan the current directory for versions."""
-    helm_scanner = HelmScanner(root=path)
-    helm_results = helm_scanner.scan()
-    kustomize_scanner = KustomizeScanner(root=path)
-    kustomize_results = kustomize_scanner.scan()
-    pre_commit_scanner = PreCommitScanner(root=path)
-    pre_commit_results = pre_commit_scanner.scan()
+@coroutine
+@click.pass_context
+async def process(ctx: click.Context) -> None:
+    """Process all configured repositories."""
+    config = ctx.obj["config"]
+    async with aiohttp.ClientSession() as session:
+        factory = Factory(config, session)
+        processor = factory.create_processor()
+        await processor.process()
 
-    results = {
-        "helm": [asdict(d) for d in helm_results],
-        "pre-commit": [asdict(d) for d in pre_commit_results],
-        "kustomize": [asdict(d) for d in kustomize_results],
-    }
-    print_yaml(results)
+
+@main.command()
+@coroutine
+@click.option("--path", default=os.getcwd(), type=str, help="Path to scan.")
+@click.pass_context
+async def scan(ctx: click.Context, path: str) -> None:
+    """Scan a path for versions."""
+    config = ctx.obj["config"]
+    async with aiohttp.ClientSession() as session:
+        factory = Factory(config, session)
+        scanners = factory.create_all_scanners(Path(path))
+        results = {s.name(): s.scan() for s in scanners}
+        print_yaml({k: [u.to_dict() for u in v] for k, v in results.items()})

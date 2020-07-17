@@ -2,20 +2,28 @@
 
 from __future__ import annotations
 
+import json
+import re
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import call, patch
 
-import aiohttp
 import pytest
-from aioresponses import aioresponses
+from aioresponses import CallbackResult, aioresponses
 from git import Actor, PushInfo, Remote, Repo
 
-from neophile.config import Configuration
+from neophile.config import Configuration, GitHubRepository
 from neophile.exceptions import PushError
-from neophile.pr import GitHubRepo, PullRequester
+from neophile.pr import CommitMessage, PullRequester
 from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
+
+if TYPE_CHECKING:
+    from typing import Any
+    from unittest.mock import Mock
+
+    from aiohttp import ClientSession
 
 
 def setup_repo(tmp_path: Path) -> Repo:
@@ -33,116 +41,173 @@ def setup_repo(tmp_path: Path) -> Repo:
 
 
 @pytest.mark.asyncio
-async def test_pr(tmp_path: Path) -> None:
+async def test_pr(
+    tmp_path: Path, session: ClientSession, mock_push: Mock
+) -> None:
     repo = setup_repo(tmp_path)
     config = Configuration(github_user="someone", github_token="some-token")
-
     update = HelmUpdate(
-        path=str(tmp_path / "Chart.yaml"),
+        path=tmp_path / "Chart.yaml",
         applied=False,
         name="gafaelfawr",
         current="1.0.0",
         latest="2.0.0",
     )
     payload = {"name": "Someone", "email": "someone@example.com"}
+
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=payload)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(pattern, payload=[])
         mock_responses.post(
             "https://api.github.com/repos/foo/bar/pulls",
             payload={},
             status=201,
         )
-        async with aiohttp.ClientSession() as session:
-            repository = Repository(str(tmp_path))
-            repository.switch_branch()
-            pr = PullRequester(str(tmp_path), config, session)
-            with patch.object(Remote, "push") as mock:
-                mock.return_value = [
-                    PushInfo(PushInfo.NEW_HEAD, None, "", None)
-                ]
-                await pr.make_pull_request([update])
-                assert mock.call_args_list == [call("u/neophile:u/neophile")]
-            repository.restore_branch()
+        repository = Repository(tmp_path)
+        repository.switch_branch()
+        update.apply()
+        pr = PullRequester(tmp_path, config, session)
+        await pr.make_pull_request([update])
 
+    assert mock_push.call_args_list == [
+        call("u/neophile:u/neophile", force=True)
+    ]
     assert not repo.is_dirty()
-    assert repo.head.ref.name == "master"
-    repo.heads["u/neophile"].checkout()
+    assert repo.head.ref.name == "u/neophile"
     commit = repo.head.commit
     assert commit.author.name == "Someone"
     assert commit.author.email == "someone@example.com"
     assert commit.committer.name == "Someone"
     assert commit.committer.email == "someone@example.com"
     change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
-    assert commit.message == f"Update dependencies\n\n- {change}\n"
+    assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
     assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
 @pytest.mark.asyncio
-async def test_pr_push_failure(tmp_path: Path) -> None:
+async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
     setup_repo(tmp_path)
     config = Configuration(github_user="someone", github_token="some-token")
-
     update = HelmUpdate(
-        path=str(tmp_path / "Chart.yaml"),
+        path=tmp_path / "Chart.yaml",
         applied=False,
         name="gafaelfawr",
         current="1.0.0",
         latest="2.0.0",
     )
-    payload = {"name": "Someone", "email": "someone@example.com"}
+    push_error = PushInfo(PushInfo.ERROR, None, "", None, summary="Some error")
+    user = {"name": "Someone", "email": "someone@example.com"}
+
     with aioresponses() as mock_responses:
-        mock_responses.get("https://api.github.com/user", payload=payload)
-        async with aiohttp.ClientSession() as session:
-            pr = PullRequester(str(tmp_path), config, session)
-            with patch.object(Remote, "push") as mock:
-                mock.return_value = [
-                    PushInfo(
-                        PushInfo.ERROR, None, "", None, summary="Some error"
-                    )
-                ]
-                with pytest.raises(PushError) as excinfo:
-                    await pr.make_pull_request([update])
-                assert "Some error" in str(excinfo.value)
+        mock_responses.get("https://api.github.com/user", payload=user)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(pattern, payload=[])
+        pr = PullRequester(tmp_path, config, session)
+        with patch.object(Remote, "push") as mock:
+            mock.return_value = [push_error]
+            with pytest.raises(PushError) as excinfo:
+                await pr.make_pull_request([update])
+
+    assert "Some error" in str(excinfo.value)
 
 
 @pytest.mark.asyncio
-async def test_get_authenticated_remote(tmp_path: Path) -> None:
-    repo = Repo.init(str(tmp_path))
+async def test_pr_update(
+    tmp_path: Path, session: ClientSession, mock_push: Mock
+) -> None:
+    """Test updating an existing PR."""
+    repo = setup_repo(tmp_path)
+    config = Configuration(
+        github_email="otheremail@example.com",
+        github_token="some-token",
+        github_user="someone",
+    )
+    update = HelmUpdate(
+        path=tmp_path / "Chart.yaml",
+        applied=False,
+        name="gafaelfawr",
+        current="1.0.0",
+        latest="2.0.0",
+    )
+    user = {"name": "Someone", "email": "someone@example.com"}
+    updated_pr = False
 
-    config = Configuration(github_user="test", github_token="some-token")
-    async with aiohttp.ClientSession() as session:
-        pr = PullRequester(str(tmp_path), config, session)
+    def check_pr_update(url: str, **kwargs: Any) -> CallbackResult:
+        change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
+        assert json.loads(kwargs["data"]) == {
+            "title": CommitMessage.title,
+            "body": f"- {change}\n",
+        }
 
-        remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com/foo/bar"
+        nonlocal updated_pr
+        updated_pr = True
+        return CallbackResult(status=200)
 
-        remote.set_url("https://foo@github.com:8080/foo/bar")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com:8080/foo/bar"
+    with aioresponses() as mock_responses:
+        mock_responses.get("https://api.github.com/user", payload=user)
+        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(pattern, payload=[{"number": 1234}])
+        mock_responses.patch(
+            "https://api.github.com/repos/foo/bar/pulls/1234",
+            callback=check_pr_update,
+        )
+        repository = Repository(tmp_path)
+        repository.switch_branch()
+        update.apply()
+        pr = PullRequester(tmp_path, config, session)
+        await pr.make_pull_request([update])
 
-        remote.set_url("git@github.com:bar/foo")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com/bar/foo"
-
-        remote.set_url("ssh://git:blahblah@github.com/baz/stuff")
-        url = pr._get_authenticated_remote()
-        assert url == "https://test:some-token@github.com/baz/stuff"
+    assert mock_push.call_args_list == [
+        call("u/neophile:u/neophile", force=True)
+    ]
+    assert not repo.is_dirty()
+    assert repo.head.ref.name == "u/neophile"
+    commit = repo.head.commit
+    assert commit.author.name == "Someone"
+    assert commit.author.email == "otheremail@example.com"
+    assert commit.committer.name == "Someone"
+    assert commit.committer.email == "otheremail@example.com"
 
 
 @pytest.mark.asyncio
-async def test_get_github_repo(tmp_path: Path) -> None:
+async def test_get_authenticated_remote(
+    tmp_path: Path, session: ClientSession
+) -> None:
     repo = Repo.init(str(tmp_path))
 
     config = Configuration(github_user="test", github_token="some-token")
-    async with aiohttp.ClientSession() as session:
-        pr = PullRequester(str(tmp_path), config, session)
+    pr = PullRequester(tmp_path, config, session)
 
-        remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
-        assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com/foo/bar"
 
-        remote.set_url("https://github.com/foo/bar.git")
-        assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    remote.set_url("https://foo@github.com:8080/foo/bar")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com:8080/foo/bar"
 
-        remote.set_url("ssh://git@github.com/foo/bar")
-        assert pr._get_github_repo() == GitHubRepo(owner="foo", repo="bar")
+    remote.set_url("git@github.com:bar/foo")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com/bar/foo"
+
+    remote.set_url("ssh://git:blahblah@github.com/baz/stuff")
+    url = pr._get_authenticated_remote()
+    assert url == "https://test:some-token@github.com/baz/stuff"
+
+
+@pytest.mark.asyncio
+async def test_get_github_repo(tmp_path: Path, session: ClientSession) -> None:
+    repo = Repo.init(str(tmp_path))
+
+    config = Configuration(github_user="test", github_token="some-token")
+    pr = PullRequester(tmp_path, config, session)
+
+    remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
+    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")
+
+    remote.set_url("https://github.com/foo/bar.git")
+    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")
+
+    remote.set_url("ssh://git@github.com/foo/bar")
+    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")

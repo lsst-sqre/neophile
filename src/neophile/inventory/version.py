@@ -10,11 +10,13 @@ from packaging import version
 from semver import VersionInfo
 
 if TYPE_CHECKING:
-    from packaging.version import LegacyVersion, Version
     from typing import Union
+
+    from packaging.version import LegacyVersion, Version
 
 __all__ = [
     "PackagingVersion",
+    "ParsedVersion",
     "SemanticVersion",
 ]
 
@@ -23,7 +25,7 @@ class ParsedVersion(ABC):
     """Abstract base class for versions.
 
     We use two separate version implementations, one based on
-    :py:mod:`packaging.version` and one based on `semver.VersionInfo`.  This
+    `packaging.version.Version` and one based on `semver.VersionInfo`.  This
     class defines the common interface.
     """
 
@@ -39,7 +41,7 @@ class ParsedVersion(ABC):
 
         Returns
         -------
-        version : `Version`
+        version : `ParsedVersion`
             The parsed version.
         """
 
@@ -66,7 +68,7 @@ class ParsedVersion(ABC):
 
 @dataclass(frozen=True, order=True)
 class PackagingVersion(ParsedVersion):
-    """Represents a version string using :py:mod:`packaging.version`."""
+    """Represents a version string using `packaging.version.Version`."""
 
     parsed_version: Union[LegacyVersion, Version]
     """The canonicalized, parsed version, for sorting.
@@ -92,7 +94,7 @@ class PackagingVersion(ParsedVersion):
 
         Returns
         -------
-        version : `packaging.version.Version`
+        version : `PackagingVersion`
             The parsed version.
         """
         parsed_version = version.parse(string)

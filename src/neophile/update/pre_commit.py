@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from urllib.parse import urlparse
 
 from ruamel.yaml import YAML
@@ -38,10 +37,9 @@ class PreCommitUpdate(Update):
         if self.applied:
             return
 
-        config_path = Path(self.path)
         yaml = YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
-        data = yaml.load(config_path)
+        data = yaml.load(self.path)
 
         found = False
         for hook in data.get("repos", []):
@@ -53,7 +51,7 @@ class PreCommitUpdate(Update):
                 f"Cannot find dependency for {self.repository} in {self.path}"
             )
 
-        with config_path.open("w") as f:
+        with self.path.open("w") as f:
             yaml.dump(data, f)
 
         self.applied = True

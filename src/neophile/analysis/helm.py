@@ -10,10 +10,11 @@ from neophile.inventory.version import SemanticVersion
 from neophile.update.helm import HelmUpdate
 
 if TYPE_CHECKING:
+    from typing import List
+
     from neophile.inventory.helm import HelmInventory
     from neophile.scanner.helm import HelmScanner
     from neophile.update.base import Update
-    from typing import List
 
 __all__ = ["HelmAnalyzer"]
 
@@ -23,11 +24,9 @@ class HelmAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `str`
-        Root of the directory tree to analyze.
-    scanner : `neophile.scanner.HelmScanner`
+    scanner : `neophile.scanner.helm.HelmScanner`
         Scanner for Helm dependencies.
-    inventory : `neophile.inventory.HelmInventory`
+    inventory : `neophile.inventory.helm.HelmInventory`
         Inventory for Helm repositories.
     allow_expressions : `bool`, optional
         If set, allow dependencies to be expressed as expressions, and only
@@ -37,13 +36,11 @@ class HelmAnalyzer(BaseAnalyzer):
 
     def __init__(
         self,
-        root: str,
         scanner: HelmScanner,
         inventory: HelmInventory,
         *,
         allow_expressions: bool = False,
     ) -> None:
-        self._root = root
         self._allow_expressions = allow_expressions
         self._scanner = scanner
         self._inventory = inventory

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import os
+import logging
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -13,8 +13,11 @@ from neophile.exceptions import UncommittedChangesError
 from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import List, Optional
+
     from neophile.update.base import Update
-    from typing import List
+    from neophile.virtualenv import VirtualEnv
 
 __all__ = ["PythonAnalyzer"]
 
@@ -24,12 +27,17 @@ class PythonAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `str`
+    root : `pathlib.Path`
         Root of the directory tree to analyze.
+    virtualenv : `neophile.virtualenv.VirtualEnv`, optional
+        Virtual environment manager.
     """
 
-    def __init__(self, root: str) -> None:
+    def __init__(
+        self, root: Path, virtualenv: Optional[VirtualEnv] = None
+    ) -> None:
         self._root = root
+        self._virtualenv = virtualenv
 
     async def analyze(self, update: bool = False) -> List[Update]:
         """Analyze a tree and return needed Python frozen dependency updates.
@@ -56,20 +64,32 @@ class PythonAnalyzer(BaseAnalyzer):
             Running ``make update-deps`` failed.
         """
         for name in ("Makefile", "requirements/main.in"):
-            if not os.path.exists(os.path.join(self._root, name)):
+            if not (self._root / name).exists():
                 return []
-        repo = Repo(self._root)
+        repo = Repo(str(self._root))
 
         if repo.is_dirty():
             msg = "Working tree contains uncommitted changes"
             raise UncommittedChangesError(msg)
 
-        subprocess.run(
-            ["make", "update-deps"],
-            cwd=self._root,
-            check=True,
-            capture_output=True,
-        )
+        try:
+            if self._virtualenv:
+                self._virtualenv.run(
+                    ["make", "update-deps"],
+                    cwd=str(self._root),
+                    check=True,
+                    capture_output=True,
+                )
+            else:
+                subprocess.run(
+                    ["make", "update-deps"],
+                    cwd=str(self._root),
+                    check=True,
+                    capture_output=True,
+                )
+        except subprocess.CalledProcessError as e:
+            logging.error("make update-deps failed: %s%s", e.stdout, e.stderr)
+            return []
 
         if not repo.is_dirty():
             return []
@@ -78,7 +98,9 @@ class PythonAnalyzer(BaseAnalyzer):
             repo.git.restore(".")
         return [
             PythonFrozenUpdate(
-                path=os.path.join(self._root, "requirements"), applied=update,
+                path=self._root / "requirements",
+                applied=update,
+                virtualenv=self._virtualenv,
             )
         ]
 

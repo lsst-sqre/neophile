@@ -8,10 +8,11 @@ from neophile.analysis.base import BaseAnalyzer
 from neophile.update.pre_commit import PreCommitUpdate
 
 if TYPE_CHECKING:
+    from typing import List
+
     from neophile.inventory.github import GitHubInventory
     from neophile.scanner.pre_commit import PreCommitScanner
     from neophile.update.base import Update
-    from typing import List
 
 __all__ = ["PreCommitAnalyzer"]
 
@@ -21,18 +22,15 @@ class PreCommitAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `str`
-        Root of the directory tree to analyze.
-    scanner : `neophile.scanner.PreCommitScanner`
+    scanner : `neophile.scanner.pre_commit.PreCommitScanner`
         Scanner for pre-commit hook dependencies.
-    inventory : `neophile.inventory.GitHubInventory`
+    inventory : `neophile.inventory.github.GitHubInventory`
         Inventory for GitHub tags.
     """
 
     def __init__(
-        self, root: str, scanner: PreCommitScanner, inventory: GitHubInventory,
+        self, scanner: PreCommitScanner, inventory: GitHubInventory
     ) -> None:
-        self._root = root
         self._scanner = scanner
         self._inventory = inventory
 
@@ -56,7 +54,7 @@ class PreCommitAnalyzer(BaseAnalyzer):
             latest = await self._inventory.inventory(
                 dependency.owner, dependency.repo
             )
-            if latest != dependency.version:
+            if latest is not None and latest != dependency.version:
                 pre_commit_update = PreCommitUpdate(
                     path=dependency.path,
                     applied=False,

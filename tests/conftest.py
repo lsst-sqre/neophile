@@ -2,20 +2,32 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-
-from neophile.inventory.helm import CachedHelmInventory
+from aiohttp import ClientSession
+from git import PushInfo, Remote
 
 if TYPE_CHECKING:
-    from typing import Iterator
+    from typing import AsyncIterator, Iterator
+    from unittest.mock import Mock
 
 
 @pytest.yield_fixture
-def cache_path(tmp_path: Path) -> Iterator[Path]:
-    path = tmp_path / ".cache" / "helm.yaml"
-    with patch.object(CachedHelmInventory, "_CACHE_PATH", path):
-        yield path
+def mock_push() -> Iterator[Mock]:
+    """Mock out `git.Remote.push`.
+
+    The mock will always return success with a status indicating that a new
+    remote head was created.
+    """
+    with patch.object(Remote, "push") as mock:
+        mock.return_value = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
+        yield mock
+
+
+@pytest.fixture
+async def session() -> AsyncIterator[ClientSession]:
+    """Return an `aiohttp.ClientSession` for testing."""
+    async with ClientSession() as session:
+        yield session

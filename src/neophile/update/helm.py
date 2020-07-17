@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 
 from ruamel.yaml import YAML
 
@@ -37,10 +36,9 @@ class HelmUpdate(Update):
         if self.applied:
             return
 
-        dependency_file = Path(self.path)
         yaml = YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
-        data = yaml.load(dependency_file)
+        data = yaml.load(self.path)
 
         found = False
         for dependency in data.get("dependencies", []):
@@ -51,7 +49,7 @@ class HelmUpdate(Update):
             msg = f"Cannot find dependency for {self.name} in {self.path}"
             raise DependencyNotFoundError(msg)
 
-        with dependency_file.open("w") as f:
+        with self.path.open("w") as f:
             yaml.dump(data, f)
 
         self.applied = True
