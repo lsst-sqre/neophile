@@ -22,6 +22,7 @@ User guide
    :maxdepth: 1
 
    usage
+   config
    install
    changelog
 
