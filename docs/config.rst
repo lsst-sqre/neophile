@@ -1,6 +1,6 @@
-##############################
-Configuring dependency updates
-##############################
+###########################################
+Using neophile with Dependabot and Renovate
+###########################################
 
 As documented in `SQR-042 <https://sqr-042.lsst.io>`__, none of Dependabot, WhiteSource Renovate, or neophile can handle all types of dependencies with the desired feature set.
 All three should therefore be used in different situations.
@@ -60,15 +60,21 @@ No further repository configuration is required.
 neophile
 ========
 
-neophile handles Python frozen dependencies, pre-commit hooks, and Kustomize references.
+neophile is a locally-written service to fill gaps left by Dependabot and Renovate.
+Use it for:
+
+#. Python frozen dependencies
+#. pre-commit hooks
+#. Kustomize references
+
 It also scans Helm chart references, but we prefer WhiteSource Renovate for those because the feature support is better.
 neophile should be configured for all Python packages using pre-commit, but is particularly useful for Python applications using dependencies frozen with ``pip-compile``.
 
 To enable neophile scanning of a repository, the GitHub ``sqrbot`` user must be added as a collaborator on the repository with ``Write`` permissions.
 This will already be done automatically if ``sqrbot`` created the repository.
 Otherwise, it must be done by a repository or organization admin.
-Do this in the GitHub web interface by going to the repository, going to Settings, and then going to Manage access.
-Then use Invite teams or people to add ``sqrbot`` with the ``Write`` role.
+Do this in the GitHub web interface by going to the repository, going to **Settings**, and then going to **Manage access**.
+Then use **Invite teams or people** to add ``sqrbot`` with the ``Write`` role.
 
 Then, enable neophile by editing `its configuration in Roundtable <https://github.com/lsst-sqre/roundtable/blob/master/deployments/neophile/values.yaml>`__.
 Add the repository to the ``repositories`` key.
@@ -96,8 +102,8 @@ Use it for:
 
 Renovate generates a lot of spam and pull requests if enabled for an entire organization, so we selectively enable it only for the repositories where we want to use it.
 To enable it for a repository, go to the GitHub page for the organization that owns that repository (`lsst-sqre <https://github.com/lsst-sqre>`__, for example).
-Then go to Settings, and then Installed GitHub Apps.
-Select Configure for Renovate.
+Then go to **Settings**, and then **Installed GitHub Apps**.
+Select **Configure** for Renovate.
 Scroll down to the bottom, and add the additional repository that you want it to scan.
 
 Renovate will then perform an initial scan of that repository and generate a pull request containing a trivial ``renovate.json`` file.
