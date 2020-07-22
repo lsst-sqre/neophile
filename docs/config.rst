@@ -116,12 +116,13 @@ For Argo CD and Helm chart repositories, change the configuration to:
 
    {
      "extends": [
-       "config:base"
+       "config:base",
+       "schedule:weekly"
      ],
      "versioning": "docker"
    }
 
-This fixes the version comparison algorithm to not strip qualifiers from the end of the Docker image version.
+This fixes the version comparison algorithm to not strip qualifiers from the end of the Docker image version and changes the frequency of PRs for new versions to weekly (instead of immediate).
 
 For repositories that construct a test environment using ``docker-compose``, change the configuration to:
 
@@ -133,7 +134,8 @@ For repositories that construct a test environment using ``docker-compose``, cha
        "kustomize"
      ],
      "extends": [
-       "config:base"
+       "config:base",
+       "schedule:weekly"
      ],
      "packageRules": [
        {
