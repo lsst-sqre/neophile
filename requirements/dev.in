@@ -16,4 +16,5 @@ pytest
 pytest-asyncio
 pytest-sugar
 sphinx-automodapi==0.12
+sphinx-click
 sphinx-prompt
