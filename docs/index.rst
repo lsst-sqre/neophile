@@ -19,18 +19,26 @@ User guide
 ==========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    usage
    config
    install
+   cli
+
+Changes
+=======
+
+.. toctree::
+   :maxdepth: 1
+
    changelog
 
 Development guide
 =================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    dev/development
    dev/release
