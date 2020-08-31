@@ -29,7 +29,7 @@ class KustomizeAnalyzer(BaseAnalyzer):
     """
 
     def __init__(
-        self, scanner: KustomizeScanner, inventory: GitHubInventory,
+        self, scanner: KustomizeScanner, inventory: GitHubInventory
     ) -> None:
         self._scanner = scanner
         self._inventory = inventory
