@@ -20,6 +20,12 @@ class KustomizeUpdate(Update):
     url: str
     """Original URL of the resource to update."""
 
+    owner: str
+    """The owner of the referenced GitHub repository."""
+
+    repo: str
+    """The name of the referenced GitHub repository."""
+
     current: str
     """The current version."""
 
@@ -68,10 +74,7 @@ class KustomizeUpdate(Update):
         description : `str`
             Short text description of the update.
         """
-        match = re.match("github.com/([^/]+/[^/.]+)", self.url)
-        assert match
-        name = match.group(1)
         return (
-            f"Update {name} Kustomize resource from {self.current} to"
-            f" {self.latest}"
+            f"Update {self.owner}/{self.repo} Kustomize resource from"
+            f" {self.current} to {self.latest}"
         )

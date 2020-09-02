@@ -2,6 +2,11 @@
 Change log
 ##########
 
+0.1.1 (unreleased)
+==================
+
+- Add support for full GitHub URLs in Kustomize external references.
+
 0.1.0 (2020-07-17)
 ==================
 
