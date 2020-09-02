@@ -21,7 +21,7 @@ def test_scanner() -> None:
             path=data_path / "sqrbot-jr" / "kustomization.yaml",
         ),
         KustomizeDependency(
-            url="github.com/lsst-sqre/sqrbot//manifests/base?ref=0.7.0",
+            url="https://github.com/lsst-sqre/sqrbot/manifests/base?ref=0.7.0",
             owner="lsst-sqre",
             repo="sqrbot",
             version="0.7.0",

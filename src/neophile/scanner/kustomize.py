@@ -21,9 +21,10 @@ __all__ = ["KustomizeScanner"]
 class KustomizeScanner(BaseScanner):
     """Scan a source tree for Kustomize version references.
 
-    This recognizes external resources in the format::
+    This recognizes external resources in the formats::
 
        github.com/<owner>/<repo>(.git)?//<path>?ref=<version>
+       https://github.com/<owner>/<repo>/<path>?ref=<version>
 
     Parameters
     ----------
@@ -31,8 +32,11 @@ class KustomizeScanner(BaseScanner):
         The root of the source tree.
     """
 
-    _RESOURCE_REGEX = re.compile("github.com/([^/]+)/([^/.]+).*?ref=(.*)")
-    """The regex to match external resources and extract data from them.
+    RESOURCE_REGEXES = [
+        re.compile(r"github\.com/([^/]+)/([^/.]+).*?ref=(.*)"),
+        re.compile(r"https://github\.com/([^/]+)/([^/.]+).*?ref=(.*)"),
+    ]
+    """The regexes to match external resources and extract data from them.
 
     The first match group will be the repository owner, the second match group
     will be the repository name, and the third match group will be the tag.
@@ -84,7 +88,10 @@ class KustomizeScanner(BaseScanner):
         with path.open() as f:
             kustomization = self._yaml.load(f)
         for resource in kustomization.get("resources", []):
-            match = self._RESOURCE_REGEX.match(resource)
+            for regex in self.RESOURCE_REGEXES:
+                match = regex.match(resource)
+                if match:
+                    break
             if not match:
                 continue
             dependency = KustomizeDependency(

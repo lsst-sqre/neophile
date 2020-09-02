@@ -122,9 +122,9 @@ gitpython==3.1.7 \
     --hash=sha256:2db287d71a284e22e5c2846042d0602465c7434d910406990d5b74df4afb0858 \
     --hash=sha256:fa3b92da728a457dd75d62bb5f3eb2816d99a7fe6c67398e260637a40e3fafb5 \
     # via documenteer
-identify==1.4.29 \
-    --hash=sha256:9f5fcf22b665eaece583bd395b103c2769772a0f646ffabb5b1f155901b07de2 \
-    --hash=sha256:b1aa2e05863dc80242610d46a7b49105e2eafe00ef0c8ff311c1828680760c76 \
+identify==1.4.30 \
+    --hash=sha256:e105a62fd3a496c701fd1bc4e24eb695455b5efb97e722816d5bd988c3344311 \
+    --hash=sha256:f9f84a4ff44e29b9cc23c4012c2c8954089860723f80ce63d760393e5f197108 \
     # via pre-commit
 idna==2.10 \
     --hash=sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6 \
@@ -235,9 +235,9 @@ packaging==20.4 \
     --hash=sha256:4357f74f47b9c12db93624a82154e9b120fa8293699949152b22065d556079f8 \
     --hash=sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181 \
     # via pytest, pytest-sugar, sphinx
-pbr==5.4.5 \
-    --hash=sha256:07f558fece33b05caf857474a366dfcc00562bca13dd8b47b2b3e22d9f9bf55c \
-    --hash=sha256:579170e23f8e0c2f24b0de612f71f648eccb79fb1322c814ae6b3c07b5ba23e8 \
+pbr==5.5.0 \
+    --hash=sha256:14bfd98f51c78a3dd22a1ef45cf194ad79eee4a19e8e1a0d5c7f8e81ffe182ea \
+    --hash=sha256:5adc0f9fc64319d8df5ca1e4e06eea674c26b80e6f00c530b18ce6a6592ead15 \
     # via sphinx-click
 pluggy==0.13.1 \
     --hash=sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0 \
@@ -399,7 +399,7 @@ yarl==1.5.1 \
     # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==50.0.0 \
-    --hash=sha256:1e842b6dc37a1282f95a05551efe2c4bd09ddca8dd506ed3aa635a9fb6d15309 \
-    --hash=sha256:def90e944d33e5c9a9f1ba69bf627b6e06d97463b2bae6b1ec7fc71d3fb29f55 \
+setuptools==50.0.3 \
+    --hash=sha256:7c2c9f9cc12bb73cd8dc1bc0f356dc7cd6d8c597c42e58f7d459791ba52647f8 \
+    --hash=sha256:bb3522bc8120a0eaeb209677c0a001df2c9b95054c4ea945710655a07a3bba9f \
     # via sphinx

@@ -29,6 +29,8 @@ def test_update(tmp_path: Path) -> None:
         path=update_path,
         applied=False,
         url=current,
+        owner="lsst-sqre",
+        repo="sqrbot-jr",
         current="0.6.0",
         latest="1.0.0",
     )
@@ -62,6 +64,8 @@ def test_update_not_found() -> None:
         path=kustomization_path,
         applied=False,
         url="github.com/lsst-sqre/sqrbot//manifests/base?ref=0.7.1",
+        owner="lsst-sqre",
+        repo="sqrbot",
         current="0.7.0",
         latest="0.8.0",
     )

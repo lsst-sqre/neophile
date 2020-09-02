@@ -59,6 +59,8 @@ class KustomizeAnalyzer(BaseAnalyzer):
                     path=dependency.path,
                     applied=False,
                     url=dependency.url,
+                    owner=dependency.owner,
+                    repo=dependency.repo,
                     current=dependency.version,
                     latest=latest,
                 )
