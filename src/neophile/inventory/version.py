@@ -1,4 +1,12 @@
-"""Version representation for inventories."""
+"""Version representation for inventories.
+
+Notes
+-----
+This is a bit more complicated than it should have to be to work around
+https://github.com/python/mypy/issues/5374.  The mixins avoid the conflict
+between an abstract base class and a dataclass in mypy's understanding of the
+Python type system.
+"""
 
 from __future__ import annotations
 
@@ -15,19 +23,16 @@ if TYPE_CHECKING:
     from packaging.version import LegacyVersion, Version
 
 __all__ = [
+    "MethodMixin",
     "PackagingVersion",
     "ParsedVersion",
     "SemanticVersion",
+    "VersionMixin",
 ]
 
 
-class ParsedVersion(ABC):
-    """Abstract base class for versions.
-
-    We use two separate version implementations, one based on
-    `packaging.version.Version` and one based on `semver.VersionInfo`.  This
-    class defines the common interface.
-    """
+class MethodMixin(ABC):
+    """Abstract methods for versions."""
 
     @classmethod
     @abstractmethod
@@ -64,6 +69,20 @@ class ParsedVersion(ABC):
     @abstractmethod
     def __str__(self) -> str:
         """Return the original form of the version."""
+
+
+@dataclass(order=True)
+class VersionMixin:
+    """Abstract dataclass for versions."""
+
+
+class ParsedVersion(MethodMixin, VersionMixin):
+    """Abstract base class for versions.
+
+    We use two separate version implementations, one based on
+    `packaging.version.Version` and one based on `semver.VersionInfo`.  This
+    class defines the common interface.
+    """
 
 
 @dataclass(frozen=True, order=True)
