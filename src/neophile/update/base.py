@@ -49,7 +49,7 @@ class MethodMixin(ABC):
         """
 
 
-@dataclass(eq=True)
+@dataclass(order=True)
 class UpdateMixin:
     """Add the base data elements for `Update`."""
 
