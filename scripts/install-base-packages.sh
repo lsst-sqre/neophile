@@ -24,8 +24,9 @@ apt-get update
 apt-get -y upgrade
 
 # git is required by setuptools-scm.  build-essential is required to run make
-# update-deps for Python packages.
-apt-get -y install --no-install-recommends build-essential git
+# update-deps for Python packages.  libpq-dev is required to build psycopg2,
+# which in turn is needed by one of the packages we update dependencies for.
+apt-get -y install --no-install-recommends build-essential git libpq-dev
 
 # Delete cached files we don't need anymore:
 apt-get clean
