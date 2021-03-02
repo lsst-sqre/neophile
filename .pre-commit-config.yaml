@@ -15,12 +15,6 @@ repos:
         name: Check rST
         files: (README\.rst)|(CHANGELOG\.rst)
 
-  - repo: https://github.com/asottile/seed-isort-config
-    rev: v2.2.0
-    hooks:
-      - id: seed-isort-config
-        args: [--exclude=docs/.*\.py, --application-directories=src]
-
   - repo: https://github.com/timothycrosley/isort
     rev: 5.7.0
     hooks:
