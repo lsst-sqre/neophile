@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from unittest.mock import Mock
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def mock_push() -> Iterator[Mock]:
     """Mock out `git.Remote.push`.
 
