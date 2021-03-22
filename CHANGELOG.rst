@@ -6,6 +6,7 @@ Change log
 ==================
 
 - Support either ``main`` or ``master`` as the main repository branch.
+- Update pinned dependencies.
 
 0.2.1 (2021-03-02)
 ==================
