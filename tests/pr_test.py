@@ -57,7 +57,14 @@ async def test_pr(
 
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=payload)
-        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(
+            "https://api.github.com/repos/foo/bar/branches",
+            payload=[{"name": "main"}],
+            repeat=True,
+        )
+        pattern = re.compile(
+            r"https://api.github.com/repos/foo/bar/pulls\?.*base=main.*"
+        )
         mock_responses.get(pattern, payload=[])
         mock_responses.post(
             "https://api.github.com/repos/foo/bar/pulls",
@@ -101,7 +108,13 @@ async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
 
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=user)
-        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(
+            "https://api.github.com/repos/foo/bar/branches",
+            payload=[{"name": "master"}],
+        )
+        pattern = re.compile(
+            r"https://api.github.com/repos/foo/bar/pulls\?.*base=master.*"
+        )
         mock_responses.get(pattern, payload=[])
         pr = PullRequester(tmp_path, config, session)
         with patch.object(Remote, "push") as mock:
@@ -146,7 +159,12 @@ async def test_pr_update(
 
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=user)
-        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
+        mock_responses.get(
+            "https://api.github.com/repos/foo/bar/branches", payload=[]
+        )
+        pattern = re.compile(
+            r"https://api.github.com/repos/foo/bar/pulls\?.*base=master.*"
+        )
         mock_responses.get(pattern, payload=[{"number": 1234}])
         mock_responses.patch(
             "https://api.github.com/repos/foo/bar/pulls/1234",

@@ -2,6 +2,11 @@
 Change log
 ##########
 
+0.2.2 (unreleased)
+==================
+
+- Support either ``main`` or ``master`` as the main repository branch.
+
 0.2.1 (2021-03-02)
 ==================
 

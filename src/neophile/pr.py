@@ -153,7 +153,7 @@ class PullRequester:
             "title": message.title,
             "body": message.body,
             "head": branch,
-            "base": "master",
+            "base": await self._get_github_main_branch(github_repo),
             "maintainer_can_modify": True,
             "draft": False,
         }
@@ -199,6 +199,32 @@ class PullRequester:
         else:
             return Actor(response["name"], response["email"])
 
+    async def _get_github_main_branch(
+        self, github_repo: GitHubRepository
+    ) -> str:
+        """Get the main branch of the repository.
+
+        Uses ``main`` if that branch exists, else ``master``.
+
+        Parameters
+        ----------
+        github_repo : `neophile.config.GitHubRepository`
+            GitHub repository in which to create the pull request.
+
+        Returns
+        -------
+        branch : `str`
+            The name of the main branch.
+        """
+        branches = self._github.getiter(
+            "/repos{/owner}{/repo}/branches",
+            url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
+        )
+        async for branch in branches:
+            if branch["name"] == "main":
+                return "main"
+        return "master"
+
     def _get_github_repo(self) -> GitHubRepository:
         """Get the GitHub repository.
 
@@ -232,7 +258,7 @@ class PullRequester:
         query = {
             "state": "open",
             "head": f"{github_repo.owner}:u/neophile",
-            "base": "master",
+            "base": await self._get_github_main_branch(github_repo),
         }
 
         prs = self._github.getiter(
