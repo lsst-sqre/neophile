@@ -2,7 +2,7 @@
 Change log
 ##########
 
-0.2.2 (unreleased)
+0.2.2 (2021-03-22)
 ==================
 
 - Use the repository default branch to construct and query for PRs.
