@@ -2,6 +2,13 @@
 Change log
 ##########
 
+0.2.2 (2021-03-22)
+==================
+
+- Use the repository default branch to construct and query for PRs.
+  This works properly with newer or converted GitHub repositories that use ``main`` instead of ``master`` as the default branch.
+- Update pinned dependencies.
+
 0.2.1 (2021-03-02)
 ==================
 

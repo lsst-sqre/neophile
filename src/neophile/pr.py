@@ -85,14 +85,15 @@ class PullRequester:
             Pushing the branch to GitHub failed.
         """
         github_repo = self._get_github_repo()
-        pull_number = await self._get_pr(github_repo)
+        default_branch = await self._get_github_default_branch(github_repo)
+        pull_number = await self._get_pr(github_repo, default_branch)
 
         message = await self._commit_changes(changes)
         self._push_branch()
         if pull_number is not None:
             await self._update_pr(github_repo, pull_number, message)
         else:
-            await self._create_pr(github_repo, message)
+            await self._create_pr(github_repo, default_branch, message)
 
     def _build_commit_message(
         self, changes: Sequence[Update]
@@ -137,7 +138,10 @@ class PullRequester:
         return message
 
     async def _create_pr(
-        self, github_repo: GitHubRepository, message: CommitMessage
+        self,
+        github_repo: GitHubRepository,
+        base_branch: str,
+        message: CommitMessage,
     ) -> None:
         """Create a new PR for the current branch.
 
@@ -145,6 +149,8 @@ class PullRequester:
         ----------
         github_repo : `neophile.config.GitHubRepository`
             GitHub repository in which to create the pull request.
+        base_branch : `str`
+            The branch of the repository to use as the base for the PR.
         message : `CommitMessage`
             The commit message to use for the pull request.
         """
@@ -153,7 +159,7 @@ class PullRequester:
             "title": message.title,
             "body": message.body,
             "head": branch,
-            "base": "master",
+            "base": base_branch,
             "maintainer_can_modify": True,
             "draft": False,
         }
@@ -199,6 +205,29 @@ class PullRequester:
         else:
             return Actor(response["name"], response["email"])
 
+    async def _get_github_default_branch(
+        self, github_repo: GitHubRepository
+    ) -> str:
+        """Get the main branch of the repository.
+
+        Uses ``main`` if that branch exists, else ``master``.
+
+        Parameters
+        ----------
+        github_repo : `neophile.config.GitHubRepository`
+            GitHub repository in which to create the pull request.
+
+        Returns
+        -------
+        branch : `str`
+            The name of the main branch.
+        """
+        repo = await self._github.getitem(
+            "/repos{/owner}{/repo}",
+            url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
+        )
+        return repo.get("default_branch", "master")
+
     def _get_github_repo(self) -> GitHubRepository:
         """Get the GitHub repository.
 
@@ -215,8 +244,17 @@ class PullRequester:
             repo = repo[: -len(".git")]
         return GitHubRepository(owner=owner, repo=repo)
 
-    async def _get_pr(self, github_repo: GitHubRepository) -> Optional[str]:
+    async def _get_pr(
+        self, github_repo: GitHubRepository, base_branch: str
+    ) -> Optional[str]:
         """Get the pull request number of an existing neophile PR.
+
+        Parameters
+        ----------
+        github_repo : `neophile.config.GitHubRepository`
+            GitHub repository in which to search for a pull request.
+        bsae_branch : `str`
+            The base repository branch used to limit the search.
 
         Returns
         -------
@@ -232,7 +270,7 @@ class PullRequester:
         query = {
             "state": "open",
             "head": f"{github_repo.owner}:u/neophile",
-            "base": "master",
+            "base": base_branch,
         }
 
         prs = self._github.getiter(
