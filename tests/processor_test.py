@@ -100,7 +100,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
             "title": CommitMessage.title,
             "body": body,
             "head": "u/neophile",
-            "base": "master",
+            "base": "main",
             "maintainer_can_modify": True,
             "draft": False,
         }
@@ -123,9 +123,8 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
         mock.get("https://api.github.com/user", payload=user)
         mock.get(
-            "https://api.github.com/repos/foo/bar/branches",
-            payload=[],
-            repeat=True,
+            "https://api.github.com/repos/foo/bar",
+            payload={"default_branch": "main"},
         )
         pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
         mock.get(pattern, payload=[])
@@ -208,7 +207,7 @@ async def test_allow_expressions(
             "title": CommitMessage.title,
             "body": "- Update gafaelfawr Helm chart from 1.3.1 to v1.4.0\n",
             "head": "u/neophile",
-            "base": "master",
+            "base": "main",
             "maintainer_can_modify": True,
             "draft": False,
         }
@@ -235,9 +234,8 @@ async def test_allow_expressions(
         )
         mock.get("https://api.github.com/user", payload=user)
         mock.get(
-            "https://api.github.com/repos/foo/bar/branches",
-            payload=[],
-            repeat=True,
+            "https://api.github.com/repos/foo/bar",
+            payload={"default_branch": "main"},
         )
         pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
         mock.get(pattern, payload=[])

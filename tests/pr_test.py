@@ -58,9 +58,8 @@ async def test_pr(
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=payload)
         mock_responses.get(
-            "https://api.github.com/repos/foo/bar/branches",
-            payload=[{"name": "main"}],
-            repeat=True,
+            "https://api.github.com/repos/foo/bar",
+            payload={"default_branch": "main"},
         )
         pattern = re.compile(
             r"https://api.github.com/repos/foo/bar/pulls\?.*base=main.*"
@@ -109,8 +108,8 @@ async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=user)
         mock_responses.get(
-            "https://api.github.com/repos/foo/bar/branches",
-            payload=[{"name": "master"}],
+            "https://api.github.com/repos/foo/bar",
+            payload={"default_branch": "master"},
         )
         pattern = re.compile(
             r"https://api.github.com/repos/foo/bar/pulls\?.*base=master.*"
@@ -159,9 +158,7 @@ async def test_pr_update(
 
     with aioresponses() as mock_responses:
         mock_responses.get("https://api.github.com/user", payload=user)
-        mock_responses.get(
-            "https://api.github.com/repos/foo/bar/branches", payload=[]
-        )
+        mock_responses.get("https://api.github.com/repos/foo/bar", payload={})
         pattern = re.compile(
             r"https://api.github.com/repos/foo/bar/pulls\?.*base=master.*"
         )

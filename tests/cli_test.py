@@ -172,9 +172,8 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
         mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
         mock.get("https://api.github.com/user", payload=payload)
         mock.get(
-            "https://api.github.com/repos/foo/bar/branches",
-            payload=[],
-            repeat=True,
+            "https://api.github.com/repos/foo/bar",
+            payload={"default_branch": "master"},
         )
         pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
         mock.get(pattern, payload=[])
