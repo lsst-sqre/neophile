@@ -71,7 +71,7 @@ class MethodMixin(ABC):
         """Return the original form of the version."""
 
 
-@dataclass(order=True)
+@dataclass(frozen=True, order=True)
 class VersionMixin:
     """Abstract dataclass for versions."""
 
