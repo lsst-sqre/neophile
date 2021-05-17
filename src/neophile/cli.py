@@ -56,6 +56,7 @@ def print_yaml(results: Any) -> None:
 def main(ctx: click.Context, config_path: str) -> None:
     """Command-line interface for neophile."""
     ctx.ensure_object(dict)
+    assert isinstance(ctx.obj, dict)
     if os.path.exists(config_path):
         ctx.obj["config"] = Configuration.from_file(config_path)
     else:
@@ -105,6 +106,7 @@ async def analyze(
     update: bool,
 ) -> None:
     """Analyze the current directory for pending upgrades."""
+    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
     config.allow_expressions = allow_expressions
 
@@ -129,6 +131,7 @@ async def analyze(
 @click.pass_context
 async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
     """Inventory available GitHub tags."""
+    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
 
     async with aiohttp.ClientSession() as session:
@@ -143,6 +146,7 @@ async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
 @click.pass_context
 async def helm_inventory(ctx: click.Context, repository: str) -> None:
     """Inventory available Helm chart versions."""
+    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
 
     async with aiohttp.ClientSession() as session:
@@ -157,6 +161,7 @@ async def helm_inventory(ctx: click.Context, repository: str) -> None:
 @click.pass_context
 async def process(ctx: click.Context) -> None:
     """Process all configured repositories."""
+    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
@@ -170,6 +175,7 @@ async def process(ctx: click.Context) -> None:
 @click.pass_context
 async def scan(ctx: click.Context, path: str) -> None:
     """Scan a path for versions."""
+    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
