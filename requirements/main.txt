@@ -281,9 +281,9 @@ urllib3==1.26.6 \
     --hash=sha256:39fb8672126159acb139a7718dd10806104dec1e2f0f6c88aab05d17df10c8d4 \
     --hash=sha256:f57b4c16c62fa2760b7e3d97c35b255512fb6b59a259730f36ba32ce9f8e342f
     # via requests
-xdg==5.1.0 \
-    --hash=sha256:3949564ca3c204e7a7fa72d85f55fb436c0e6108506e3eb61f3f4cf5be35deca \
-    --hash=sha256:eb021156d2e1897e3cfe16bc0cd7aee6dd8157c8015a4cfbf4b495ed730226e6
+xdg==5.1.1 \
+    --hash=sha256:865a7b56ed1d4cd2fce2ead1eddf97360843619757f473cd90b75f1817ca541d \
+    --hash=sha256:aa619f26ccec6088b2a6018721d4ee86e602099b24644a90a8d3308a25acd06c
     # via -r requirements/main.in
 yarl==1.6.3 \
     --hash=sha256:00d7ad91b6583602eb9c1d085a2cf281ada267e9a197e8b7cae487dadbfa293e \
