@@ -8,7 +8,7 @@ import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import call, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 from aioresponses import CallbackResult, aioresponses
@@ -87,7 +87,8 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
         work_area=tmp_path / "work",
     )
     user = {"name": "Someone", "email": "someone@example.com"}
-    push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
+    remote = Mock(spec=Remote)
+    push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", remote)]
     created_pr = False
 
     def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
@@ -199,7 +200,8 @@ async def test_allow_expressions(
         work_area=tmp_path / "work",
     )
     user = {"name": "Someone", "email": "someone@example.com"}
-    push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
+    remote = Mock(spec=Remote)
+    push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", remote)]
     created_pr = False
 
     def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:

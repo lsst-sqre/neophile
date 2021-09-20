@@ -7,7 +7,7 @@ import re
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import call, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 from aioresponses import CallbackResult, aioresponses
@@ -21,7 +21,6 @@ from neophile.update.helm import HelmUpdate
 
 if TYPE_CHECKING:
     from typing import Any
-    from unittest.mock import Mock
 
     from aiohttp import ClientSession
 
@@ -102,7 +101,10 @@ async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
         current="1.0.0",
         latest="2.0.0",
     )
-    push_error = PushInfo(PushInfo.ERROR, None, "", None, summary="Some error")
+    remote = Mock(spec=Remote)
+    push_error = PushInfo(
+        PushInfo.ERROR, None, "", remote, summary="Some error"
+    )
     user = {"name": "Someone", "email": "someone@example.com"}
 
     with aioresponses() as mock_responses:

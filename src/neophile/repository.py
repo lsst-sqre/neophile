@@ -55,7 +55,7 @@ class Repository:
         Also deletes the neophile branch to clean up.
         """
         self._branch.checkout()
-        self._repo.delete_head("u/neophile", force=True)
+        self._repo.delete_head("u/neophile", force=True)  # type: ignore
 
     def switch_branch(self) -> None:
         """Switch to the neophile working branch.
@@ -73,6 +73,6 @@ class Repository:
         """Update an existing checkout to its current upstream."""
         self._repo.heads["master"].checkout()
         if "u/neophile" in (h.name for h in self._repo.heads):
-            self._repo.delete_head("u/neophile", force=True)
+            self._repo.delete_head("u/neophile", force=True)  # type: ignore
         self._repo.git.restore(".")
         self._repo.remotes.origin.pull(ff_only=True)
