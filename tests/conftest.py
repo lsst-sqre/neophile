@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from aiohttp import ClientSession
@@ -11,7 +11,6 @@ from git import PushInfo, Remote
 
 if TYPE_CHECKING:
     from typing import AsyncIterator, Iterator
-    from unittest.mock import Mock
 
 
 @pytest.fixture
@@ -22,7 +21,8 @@ def mock_push() -> Iterator[Mock]:
     remote head was created.
     """
     with patch.object(Remote, "push") as mock:
-        mock.return_value = [PushInfo(PushInfo.NEW_HEAD, None, "", None)]
+        remote = Mock(spec=Remote)
+        mock.return_value = [PushInfo(PushInfo.NEW_HEAD, None, "", remote)]
         yield mock
 
 
