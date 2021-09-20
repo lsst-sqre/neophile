@@ -2,6 +2,12 @@
 Change log
 ##########
 
+0.2.3 (unreleased)
+==================
+
+- Catch ``BadRequest`` errors from a GitHub repository inventory request.
+- Update pinned dependencies.
+
 0.2.2 (2021-03-22)
 ==================
 

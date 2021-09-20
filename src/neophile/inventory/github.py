@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from aiohttp import ClientError
+from gidgethub import BadRequest
 from gidgethub.aiohttp import GitHubAPI
 
 from neophile.inventory.version import PackagingVersion, SemanticVersion
@@ -78,7 +79,7 @@ class GitHubInventory:
                 async for tag in tags
                 if cls.is_valid(tag["name"])
             ]
-        except ClientError as e:
+        except (BadRequest, ClientError) as e:
             logging.warning(
                 "Unable to inventory GitHub repo %s/%s: %s",
                 owner,
