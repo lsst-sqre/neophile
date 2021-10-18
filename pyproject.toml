@@ -95,3 +95,9 @@ include_trailing_comma = true
 multi_line_output = 3
 known_first_party = ["neophile", "tests"]
 skip = ["docs/conf.py"]
+
+[tool.pytest.ini_options]
+python_files = [
+    "tests/*.py",
+    "tests/*/*.py"
+]
