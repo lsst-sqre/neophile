@@ -5,6 +5,7 @@ Change log
 0.2.3 (unreleased)
 ==================
 
+- Support updating pull requests for the ``main`` branch instead of ``master`` if it is present.
 - Catch ``BadRequest`` errors from a GitHub repository inventory request.
 - Update pinned dependencies.
 

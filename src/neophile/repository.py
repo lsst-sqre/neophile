@@ -71,7 +71,10 @@ class Repository:
 
     def update(self) -> None:
         """Update an existing checkout to its current upstream."""
-        self._repo.heads["master"].checkout()
+        if "main" in self._repo.heads:
+            self._repo.heads["main"].checkout()
+        else:
+            self._repo.heads["master"].checkout()
         if "u/neophile" in (h.name for h in self._repo.heads):
             self._repo.delete_head("u/neophile", force=True)  # type: ignore
         self._repo.git.restore(".")
