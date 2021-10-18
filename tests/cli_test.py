@@ -17,7 +17,7 @@ from ruamel.yaml import YAML
 
 from neophile.cli import main
 from neophile.pr import CommitMessage
-from tests.util import dict_to_yaml
+from tests.util import dict_to_yaml, mock_enable_auto_merge
 
 if TYPE_CHECKING:
     from typing import Any
@@ -166,7 +166,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201)
+        return CallbackResult(status=201, payload={"id": 42})
 
     with aioresponses() as mock:
         mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
@@ -181,6 +181,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
             "https://api.github.com/repos/foo/bar/pulls",
             callback=check_pr_post,
         )
+        mock_enable_auto_merge(mock, "foo", "bar", "42")
         result = runner.invoke(
             main,
             ["analyze", "--path", str(tmp_path), "--pr"],

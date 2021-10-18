@@ -18,6 +18,7 @@ from neophile.exceptions import PushError
 from neophile.pr import CommitMessage, PullRequester
 from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
+from tests.util import mock_enable_auto_merge
 
 if TYPE_CHECKING:
     from typing import Any
@@ -66,9 +67,10 @@ async def test_pr(
         mock_responses.get(pattern, payload=[])
         mock_responses.post(
             "https://api.github.com/repos/foo/bar/pulls",
-            payload={},
+            payload={"id": 1},
             status=201,
         )
+        mock_enable_auto_merge(mock_responses, "foo", "bar", "1")
         repository = Repository(tmp_path)
         repository.switch_branch()
         update.apply()
@@ -169,6 +171,8 @@ async def test_pr_update(
             "https://api.github.com/repos/foo/bar/pulls/1234",
             callback=check_pr_update,
         )
+        mock_enable_auto_merge(mock_responses, "foo", "bar", "1234")
+
         repository = Repository(tmp_path)
         repository.switch_branch()
         update.apply()

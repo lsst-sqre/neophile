@@ -19,6 +19,7 @@ from neophile.config import Configuration, GitHubRepository
 from neophile.factory import Factory
 from neophile.pr import CommitMessage
 from tests.util import (
+    mock_enable_auto_merge,
     register_mock_github_tags,
     register_mock_helm_repository,
     setup_kubernetes_repo,
@@ -118,7 +119,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201)
+        return CallbackResult(status=201, payload={"id": 42})
 
     with aioresponses() as mock:
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
@@ -133,6 +134,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
             "https://api.github.com/repos/foo/bar/pulls",
             callback=check_pr_post,
         )
+        mock_enable_auto_merge(mock, "foo", "bar", "42")
 
         # Unfortunately, the mock_push fixture can't be used here because we
         # want to use git.Remote.push in create_upstream_git_repository.
@@ -216,7 +218,7 @@ async def test_allow_expressions(
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201)
+        return CallbackResult(status=201, payload={"id": 42})
 
     with aioresponses() as mock:
         register_mock_helm_repository(
@@ -245,6 +247,7 @@ async def test_allow_expressions(
             "https://api.github.com/repos/foo/bar/pulls",
             callback=check_pr_post,
         )
+        mock_enable_auto_merge(mock, "foo", "bar", "42")
 
         # Unfortunately, the mock_push fixture can't be used here because we
         # want to use git.Remote.push in create_upstream_git_repository.
