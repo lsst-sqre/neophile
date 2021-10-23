@@ -28,23 +28,23 @@ __all__ = [
 ]
 
 _GRAPHQL_PR_ID = """
-query FindPrId {{
-  repository(owner:"{owner}", name:"{repo}") {{
-    pullRequest(number:{pr_number}) {{
+query FindPrId($owner:String!, $repo:String!, $pr_number:Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr_number) {
       id
-    }}
-  }}
-}}
+    }
+  }
+}
 """
 
 _GRAPHQL_ENABLE_AUTO_MERGE = """
-mutation EnableAutoMerge {{
-  enablePullRequestAutoMerge(input:{{pullRequestId:"{pr_id}"}}) {{
-    actor {{
+mutation EnableAutoMerge($pr_id:String) {
+  enablePullRequestAutoMerge(input: {pullRequestId: $pr_id}) {
+    actor {
       login
-    }}
-  }}
-}}
+    }
+  }
+}
 """
 
 
@@ -205,14 +205,15 @@ class PullRequester:
         # Enabling auto-merge is only available via the GraphQL API with a
         # mutation.  To use that, we have to retrieve the GraphQL ID of the PR
         # we just created, and then send the mutation.
-        query = _GRAPHQL_PR_ID.format(
-            owner=github_repo.owner, repo=github_repo.repo, pr_number=pr_number
+        response = await self._github.graphql(
+            _GRAPHQL_PR_ID,
+            owner=github_repo.owner,
+            repo=github_repo.repo,
+            pr_number=int(pr_number),
         )
-        response = await self._github.post("/graphql", data={"query": query})
-        pr_id = response["data"]["repository"]["pullRequest"]["id"]
-        mutation = _GRAPHQL_ENABLE_AUTO_MERGE.format(pr_id=pr_id)
-        response = await self._github.post(
-            "/graphql", data={"query": mutation}
+        pr_id = response["repository"]["pullRequest"]["id"]
+        response = await self._github.graphql(
+            _GRAPHQL_ENABLE_AUTO_MERGE, pr_id=pr_id
         )
 
     def _get_authenticated_remote(self) -> str:

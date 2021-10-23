@@ -58,10 +58,17 @@ def mock_enable_auto_merge(
 
     def graphql_1(url: str, **kwargs: Any) -> CallbackResult:
         assert str(url) == "https://api.github.com/graphql"
-        query = _GRAPHQL_PR_ID.format(
-            owner=owner, repo=repo, pr_number=pr_number
-        )
-        assert kwargs["data"] == json.dumps({"query": query}).encode()
+        expected = json.dumps(
+            {
+                "query": _GRAPHQL_PR_ID,
+                "variables": {
+                    "owner": owner,
+                    "repo": repo,
+                    "pr_number": int(pr_number),
+                },
+            }
+        ).encode()
+        assert kwargs["data"] == expected
         return CallbackResult(
             status=200,
             payload={
@@ -71,9 +78,16 @@ def mock_enable_auto_merge(
 
     def graphql_2(url: str, **kwargs: Any) -> CallbackResult:
         assert str(url) == "https://api.github.com/graphql"
-        query = _GRAPHQL_ENABLE_AUTO_MERGE.format(pr_id="some-id")
-        assert kwargs["data"] == json.dumps({"query": query}).encode()
-        return CallbackResult(status=200)
+        expected = json.dumps(
+            {
+                "query": _GRAPHQL_ENABLE_AUTO_MERGE,
+                "variables": {"pr_id": "some-id"},
+            }
+        ).encode()
+        assert kwargs["data"] == expected
+        return CallbackResult(
+            status=200, payload={"data": {"actor": {"login": "some-user"}}}
+        )
 
     mock.post("https://api.github.com/graphql", callback=graphql_1)
     mock.post("https://api.github.com/graphql", callback=graphql_2)
