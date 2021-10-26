@@ -2,7 +2,7 @@
 Change log
 ##########
 
-0.3.0 (unreleased)
+0.3.0 (2021-10-25)
 ==================
 
 - Attempt to set auto-merge on pull requests after they're created.
