@@ -2,6 +2,15 @@
 Change log
 ##########
 
+0.3.0 (2021-10-25)
+==================
+
+- Attempt to set auto-merge on pull requests after they're created.
+  Failure to do so is silently ignored.
+- Support updating pull requests for the ``main`` branch instead of ``master`` if it is present.
+- Catch ``BadRequest`` errors from a GitHub repository inventory request.
+- Update pinned dependencies.
+
 0.2.2 (2021-03-22)
 ==================
 

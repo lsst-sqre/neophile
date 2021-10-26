@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from aioresponses import CallbackResult
 from git import Actor, Repo
 from ruamel.yaml import YAML
+
+from neophile.pr import _GRAPHQL_ENABLE_AUTO_MERGE, _GRAPHQL_PR_ID
 
 if TYPE_CHECKING:
     from typing import Any, Mapping, Sequence
@@ -33,6 +37,60 @@ def dict_to_yaml(data: Mapping[str, Any]) -> str:
     output = StringIO()
     yaml.dump(data, output)
     return output.getvalue()
+
+
+def mock_enable_auto_merge(
+    mock: aioresponses, owner: str, repo: str, pr_number: str
+) -> None:
+    """Set up mocks for the GitHub API call to enable auto-merge.
+
+    Parameters
+    ----------
+    mock : `aioresponses.aioresponses`
+        The mock object for aiohttp requests.
+    owner : `str`
+        Owner of the repository.
+    repo : `str`
+        Name of the repository.
+    pr_number : `str`
+        Number of the PR for which auto-merge will be set.
+    """
+
+    def graphql_1(url: str, **kwargs: Any) -> CallbackResult:
+        assert str(url) == "https://api.github.com/graphql"
+        expected = json.dumps(
+            {
+                "query": _GRAPHQL_PR_ID,
+                "variables": {
+                    "owner": owner,
+                    "repo": repo,
+                    "pr_number": int(pr_number),
+                },
+            }
+        ).encode()
+        assert kwargs["data"] == expected
+        return CallbackResult(
+            status=200,
+            payload={
+                "data": {"repository": {"pullRequest": {"id": "some-id"}}}
+            },
+        )
+
+    def graphql_2(url: str, **kwargs: Any) -> CallbackResult:
+        assert str(url) == "https://api.github.com/graphql"
+        expected = json.dumps(
+            {
+                "query": _GRAPHQL_ENABLE_AUTO_MERGE,
+                "variables": {"pr_id": "some-id"},
+            }
+        ).encode()
+        assert kwargs["data"] == expected
+        return CallbackResult(
+            status=200, payload={"data": {"actor": {"login": "some-user"}}}
+        )
+
+    mock.post("https://api.github.com/graphql", callback=graphql_1)
+    mock.post("https://api.github.com/graphql", callback=graphql_2)
 
 
 def register_mock_helm_repository(

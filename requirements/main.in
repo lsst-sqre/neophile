@@ -14,7 +14,3 @@ pydantic
 ruamel.yaml
 semver
 xdg
-
-# Temporary to prevent conflicts with requirements/dev.txt, which requires
-# requests by way of sphinx.  requests pins idna to an older version.
-requests

@@ -27,6 +27,26 @@ __all__ = [
     "PullRequester",
 ]
 
+_GRAPHQL_PR_ID = """
+query FindPrId($owner:String!, $repo:String!, $pr_number:Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr_number) {
+      id
+    }
+  }
+}
+"""
+
+_GRAPHQL_ENABLE_AUTO_MERGE = """
+mutation EnableAutoMerge($pr_id:String) {
+  enablePullRequestAutoMerge(input: {pullRequestId: $pr_id}) {
+    actor {
+      login
+    }
+  }
+}
+"""
+
 
 @dataclass(frozen=True)
 class CommitMessage:
@@ -86,12 +106,12 @@ class PullRequester:
         """
         github_repo = self._get_github_repo()
         default_branch = await self._get_github_default_branch(github_repo)
-        pull_number = await self._get_pr(github_repo, default_branch)
+        pr_number = await self._get_pr(github_repo, default_branch)
 
         message = await self._commit_changes(changes)
         self._push_branch()
-        if pull_number is not None:
-            await self._update_pr(github_repo, pull_number, message)
+        if pr_number is not None:
+            await self._update_pr(github_repo, pr_number, message)
         else:
             await self._create_pr(github_repo, default_branch, message)
 
@@ -163,10 +183,37 @@ class PullRequester:
             "maintainer_can_modify": True,
             "draft": False,
         }
-        await self._github.post(
+        response = await self._github.post(
             "/repos{/owner}{/repo}/pulls",
             url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
             data=data,
+        )
+        await self._enable_auto_merge(github_repo, str(response["id"]))
+
+    async def _enable_auto_merge(
+        self, github_repo: GitHubRepository, pr_number: str
+    ) -> None:
+        """Enable automerge for a PR.
+
+        Parameters
+        ----------
+        github_repo : `neophile.config.GitHubRepository`
+            GitHub repository in which to create the pull request.
+        pr_number : `str`
+            The number of the PR in that repository to enable auto-merge for.
+        """
+        # Enabling auto-merge is only available via the GraphQL API with a
+        # mutation.  To use that, we have to retrieve the GraphQL ID of the PR
+        # we just created, and then send the mutation.
+        response = await self._github.graphql(
+            _GRAPHQL_PR_ID,
+            owner=github_repo.owner,
+            repo=github_repo.repo,
+            pr_number=int(pr_number),
+        )
+        pr_id = response["repository"]["pullRequest"]["id"]
+        response = await self._github.graphql(
+            _GRAPHQL_ENABLE_AUTO_MERGE, pr_id=pr_id
         )
 
     def _get_authenticated_remote(self) -> str:
@@ -258,7 +305,7 @@ class PullRequester:
 
         Returns
         -------
-        pull_number : `str` or `None`
+        pr_number : `str` or `None`
             The PR number or `None` if there is no open pull request from
             neophile.
 
@@ -324,7 +371,7 @@ class PullRequester:
     async def _update_pr(
         self,
         github_repo: GitHubRepository,
-        pull_number: str,
+        pr_number: str,
         message: CommitMessage,
     ) -> None:
         """Update an existing PR with a new commit message.
@@ -333,7 +380,7 @@ class PullRequester:
         ----------
         github_repo : `neophile.config.GitHubRepository`
             GitHub repository in which to create the pull request.
-        pull_number : `str`
+        pr_number : `str`
             The number of the pull request to update.
         message : `CommitMessage`
             The commit message to use for the pull request.
@@ -347,7 +394,8 @@ class PullRequester:
             url_vars={
                 "owner": github_repo.owner,
                 "repo": github_repo.repo,
-                "pull_number": pull_number,
+                "pull_number": pr_number,
             },
             data=data,
         )
+        await self._enable_auto_merge(github_repo, pr_number)
