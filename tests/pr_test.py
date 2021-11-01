@@ -129,6 +129,58 @@ async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
 
 
 @pytest.mark.asyncio
+async def test_pr_no_automerge(
+    tmp_path: Path, session: ClientSession, mock_push: Mock
+) -> None:
+    repo = setup_repo(tmp_path)
+    config = Configuration(github_user="someone", github_token="some-token")
+    update = HelmUpdate(
+        path=tmp_path / "Chart.yaml",
+        applied=False,
+        name="gafaelfawr",
+        current="1.0.0",
+        latest="2.0.0",
+    )
+    payload = {"name": "Someone", "email": "someone@example.com"}
+
+    with aioresponses() as mock_responses:
+        mock_responses.get("https://api.github.com/user", payload=payload)
+        mock_responses.get(
+            "https://api.github.com/repos/foo/bar",
+            payload={"default_branch": "main"},
+        )
+        pattern = re.compile(
+            r"https://api.github.com/repos/foo/bar/pulls\?.*base=main.*"
+        )
+        mock_responses.get(pattern, payload=[])
+        mock_responses.post(
+            "https://api.github.com/repos/foo/bar/pulls",
+            payload={"id": 1},
+            status=201,
+        )
+        mock_enable_auto_merge(mock_responses, "foo", "bar", "1", fail=True)
+        repository = Repository(tmp_path)
+        repository.switch_branch()
+        update.apply()
+        pr = PullRequester(tmp_path, config, session)
+        await pr.make_pull_request([update])
+
+    assert mock_push.call_args_list == [
+        call("u/neophile:u/neophile", force=True)
+    ]
+    assert not repo.is_dirty()
+    assert repo.head.ref.name == "u/neophile"
+    commit = repo.head.commit
+    assert commit.author.name == "Someone"
+    assert commit.author.email == "someone@example.com"
+    assert commit.committer.name == "Someone"
+    assert commit.committer.email == "someone@example.com"
+    change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
+    assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
+    assert "tmp-neophile" not in [r.name for r in repo.remotes]
+
+
+@pytest.mark.asyncio
 async def test_pr_update(
     tmp_path: Path, session: ClientSession, mock_push: Mock
 ) -> None:

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from urllib.parse import urlencode, urlparse
 
+from gidgethub import QueryError
 from gidgethub.aiohttp import GitHubAPI
 from git import Actor, PushInfo, Remote, Repo
 
@@ -212,9 +214,16 @@ class PullRequester:
             pr_number=int(pr_number),
         )
         pr_id = response["repository"]["pullRequest"]["id"]
-        response = await self._github.graphql(
-            _GRAPHQL_ENABLE_AUTO_MERGE, pr_id=pr_id
-        )
+        try:
+            response = await self._github.graphql(
+                _GRAPHQL_ENABLE_AUTO_MERGE, pr_id=pr_id
+            )
+        except QueryError as e:
+            msg = (
+                f"cannot enable automerge for {github_repo.owner}/"
+                f"{github_repo.repo}#{pr_number}: {str(e)}"
+            )
+            logging.warning(msg)
 
     def _get_authenticated_remote(self) -> str:
         """Get the URL with authentication credentials of the origin remote.

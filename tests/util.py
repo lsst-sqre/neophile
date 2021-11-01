@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from aioresponses import CallbackResult
+from gidgethub import QueryError
 from git import Actor, Repo
 from ruamel.yaml import YAML
 
@@ -40,7 +41,12 @@ def dict_to_yaml(data: Mapping[str, Any]) -> str:
 
 
 def mock_enable_auto_merge(
-    mock: aioresponses, owner: str, repo: str, pr_number: str
+    mock: aioresponses,
+    owner: str,
+    repo: str,
+    pr_number: str,
+    *,
+    fail: bool = False,
 ) -> None:
     """Set up mocks for the GitHub API call to enable auto-merge.
 
@@ -54,6 +60,8 @@ def mock_enable_auto_merge(
         Name of the repository.
     pr_number : `str`
         Number of the PR for which auto-merge will be set.
+    fail : `bool`, optional
+        Whether to fail the request for automerge
     """
 
     def graphql_1(url: str, **kwargs: Any) -> CallbackResult:
@@ -85,6 +93,12 @@ def mock_enable_auto_merge(
             }
         ).encode()
         assert kwargs["data"] == expected
+        if fail:
+            msg = (
+                "Pull request is not in the correct state to enable auto-merge"
+            )
+            response = {"errors": [{"message": msg}]}
+            raise QueryError(response)
         return CallbackResult(
             status=200, payload={"data": {"actor": {"login": "some-user"}}}
         )
