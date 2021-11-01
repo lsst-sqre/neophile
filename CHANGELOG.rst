@@ -6,6 +6,7 @@ Change log
 ==================
 
 - Warn of errors if auto-merge could not be enabled but do not fail.
+- Update pinned dependencies.
 
 0.3.0 (2021-10-25)
 ==================
