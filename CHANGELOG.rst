@@ -2,6 +2,11 @@
 Change log
 ##########
 
+0.3.1 (2021-11-01)
+==================
+
+- Warn of errors if auto-merge could not be enabled but do not fail.
+
 0.3.0 (2021-10-25)
 ==================
 
