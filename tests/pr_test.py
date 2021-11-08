@@ -67,7 +67,7 @@ async def test_pr(
         mock_responses.get(pattern, payload=[])
         mock_responses.post(
             "https://api.github.com/repos/foo/bar/pulls",
-            payload={"id": 1},
+            payload={"number": 1},
             status=201,
         )
         mock_enable_auto_merge(mock_responses, "foo", "bar", "1")
@@ -155,7 +155,7 @@ async def test_pr_no_automerge(
         mock_responses.get(pattern, payload=[])
         mock_responses.post(
             "https://api.github.com/repos/foo/bar/pulls",
-            payload={"id": 1},
+            payload={"number": 1},
             status=201,
         )
         mock_enable_auto_merge(mock_responses, "foo", "bar", "1", fail=True)

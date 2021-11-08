@@ -119,7 +119,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201, payload={"id": 42})
+        return CallbackResult(status=201, payload={"number": 42})
 
     with aioresponses() as mock:
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
@@ -218,7 +218,7 @@ async def test_allow_expressions(
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201, payload={"id": 42})
+        return CallbackResult(status=201, payload={"number": 42})
 
     with aioresponses() as mock:
         register_mock_helm_repository(

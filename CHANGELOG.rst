@@ -2,6 +2,12 @@
 Change log
 ##########
 
+0.3.2 (2021-11-08)
+==================
+
+- Fix enabling of auto-merge after creating a new PR.
+- Update pinned dependencies.
+
 0.3.1 (2021-11-01)
 ==================
 
