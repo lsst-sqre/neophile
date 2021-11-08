@@ -190,7 +190,7 @@ class PullRequester:
             url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
             data=data,
         )
-        await self._enable_auto_merge(github_repo, str(response["id"]))
+        await self._enable_auto_merge(github_repo, str(response["number"]))
 
     async def _enable_auto_merge(
         self, github_repo: GitHubRepository, pr_number: str
@@ -207,14 +207,14 @@ class PullRequester:
         # Enabling auto-merge is only available via the GraphQL API with a
         # mutation.  To use that, we have to retrieve the GraphQL ID of the PR
         # we just created, and then send the mutation.
-        response = await self._github.graphql(
-            _GRAPHQL_PR_ID,
-            owner=github_repo.owner,
-            repo=github_repo.repo,
-            pr_number=int(pr_number),
-        )
-        pr_id = response["repository"]["pullRequest"]["id"]
         try:
+            response = await self._github.graphql(
+                _GRAPHQL_PR_ID,
+                owner=github_repo.owner,
+                repo=github_repo.repo,
+                pr_number=int(pr_number),
+            )
+            pr_id = response["repository"]["pullRequest"]["id"]
             response = await self._github.graphql(
                 _GRAPHQL_ENABLE_AUTO_MERGE, pr_id=pr_id
             )

@@ -166,7 +166,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201, payload={"id": 42})
+        return CallbackResult(status=201, payload={"number": 42})
 
     with aioresponses() as mock:
         mock.get("https://lsst-sqre.github.io/charts/index.yaml", body=sqre)
