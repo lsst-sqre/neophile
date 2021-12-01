@@ -10,12 +10,11 @@
 aioresponses
 coverage[toml]
 documenteer
-flake8
 lsst-sphinx-bootstrap-theme
 mypy
 pre-commit
 pytest
-pytest-asyncio!=0.15.0
+pytest-asyncio
 pytest-sugar
 sphinx-automodapi
 sphinx-click
