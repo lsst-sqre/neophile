@@ -365,9 +365,7 @@ class PullRequester:
         """
         branch = self._repo.head.ref.name
         remote_url = self._get_authenticated_remote()
-        remote = Remote.add(
-            self._repo, "tmp-neophile", remote_url  # type: ignore
-        )
+        remote = Remote.add(self._repo, "tmp-neophile", remote_url)
         try:
             push_info = remote.push(f"{branch}:{branch}", force=True)
             for result in push_info:
