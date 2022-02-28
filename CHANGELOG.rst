@@ -6,6 +6,7 @@ Change log
 ==================
 
 - Fix type of ``pullRequestId`` when enabling auto-merge.
+- Drop support for Python 3.9.
 - Update pinned dependencies.
 
 0.3.2 (2021-11-08)
