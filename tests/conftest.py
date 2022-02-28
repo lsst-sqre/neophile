@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
+import pytest_asyncio
 from aiohttp import ClientSession
 from git import PushInfo, Remote
 
@@ -26,7 +27,7 @@ def mock_push() -> Iterator[Mock]:
         yield mock
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def session() -> AsyncIterator[ClientSession]:
     """Return an `aiohttp.ClientSession` for testing."""
     async with ClientSession() as session:
