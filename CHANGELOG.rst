@@ -2,7 +2,7 @@
 Change log
 ##########
 
-0.3.3 (unreleased)
+0.3.3 (2022-02-28)
 ==================
 
 - Fix type of ``pullRequestId`` when enabling auto-merge.
