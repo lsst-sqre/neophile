@@ -2,6 +2,12 @@
 Change log
 ##########
 
+0.3.3 (unreleased)
+==================
+
+- Fix type of ``pullRequestId`` when enabling auto-merge.
+- Update pinned dependencies.
+
 0.3.2 (2021-11-08)
 ==================
 
