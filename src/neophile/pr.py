@@ -40,7 +40,7 @@ query FindPrId($owner:String!, $repo:String!, $pr_number:Int!) {
 """
 
 _GRAPHQL_ENABLE_AUTO_MERGE = """
-mutation EnableAutoMerge($pr_id:String) {
+mutation EnableAutoMerge($pr_id:ID) {
   enablePullRequestAutoMerge(input: {pullRequestId: $pr_id}) {
     actor {
       login
