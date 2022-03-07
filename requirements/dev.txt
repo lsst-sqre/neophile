@@ -491,9 +491,9 @@ pytest==7.0.1 \
     #   -r requirements/dev.in
     #   pytest-asyncio
     #   pytest-sugar
-pytest-asyncio==0.18.1 \
-    --hash=sha256:c43fcdfea2335dd82ffe0f2774e40285ddfea78a8e81e56118d47b6a90fbb09e \
-    --hash=sha256:c9ec48e8bbf5cc62755e18c4d8bc6907843ec9c5f4ac8f61464093baeba24a7e
+pytest-asyncio==0.18.2 \
+    --hash=sha256:20db0bdd3d7581b2e11f5858a5d9541f2db9cd8c5853786f94ad273d466c8c6d \
+    --hash=sha256:fc8e4190f33fee7797cc7f1829f46a82c213f088af5d1bb5d4e454fe87e6cdc2
     # via -r requirements/dev.in
 pytest-sugar==0.9.4 \
     --hash=sha256:b1b2186b0a72aada6859bea2a5764145e3aaa2c1cfbb23c3a19b5f7b697563d3
