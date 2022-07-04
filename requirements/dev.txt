@@ -107,21 +107,21 @@ attrs==21.4.0 \
     #   -c requirements/main.txt
     #   aiohttp
     #   pytest
-babel==2.10.1 \
-    --hash=sha256:3f349e85ad3154559ac4930c3918247d319f21910d5ce4b25d439ed8693b98d2 \
-    --hash=sha256:98aeaca086133efb3e1e2aad0396987490c8425929ddbcfe0550184fdc54cd13
+babel==2.10.3 \
+    --hash=sha256:7614553711ee97490f732126dc077f8d0ae084ebc6a96e23db1482afabdb2c51 \
+    --hash=sha256:ff56f4892c1c4bf0d814575ea23471c230d544203c7748e8c68f0089478d48eb
     # via sphinx
-certifi==2022.5.18.1 \
-    --hash=sha256:9c5705e395cd70084351dd8ad5c41e65655e08ce46f2ec9cf6c2c08390f71eb7 \
-    --hash=sha256:f1d53542ee8cbedbe2118b5686372fb33c297fcd6379b050cca0ef13a597382a
+certifi==2022.6.15 \
+    --hash=sha256:84c85a9078b11105f04f3036a9482ae10e4621616db313fe045dd24743a0820d \
+    --hash=sha256:fe86415d55e84719d75f8b69414f6438ac3547d2078ab91b67e779ef69378412
     # via requests
 cfgv==3.3.1 \
     --hash=sha256:c6a0883f3917a037485059700b9e75da2464e6c27051014ad85ba6aaa5884426 \
     --hash=sha256:f5a830efb9ce7a445376bb66ec94c638a9787422f96264c98edc6bdeed8ab736
     # via pre-commit
-charset-normalizer==2.0.12 \
-    --hash=sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597 \
-    --hash=sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df
+charset-normalizer==2.1.0 \
+    --hash=sha256:5189b6f22b01957427f35b6a08d9a0bc45b46d3788ef5a92e978433c7a35f8a5 \
+    --hash=sha256:575e708016ff3a5e3681541cb9d79312c416835686d054a23accb873b254f413
     # via
     #   -c requirements/main.txt
     #   aiohttp
@@ -283,9 +283,9 @@ idna==3.3 \
     #   -c requirements/main.txt
     #   requests
     #   yarl
-imagesize==1.3.0 \
-    --hash=sha256:1db2f82529e53c3e929e8926a1fa9235aa82d0bd0c580359c67ec31b2fddaa8c \
-    --hash=sha256:cd1750d452385ca327479d45b64d9c7729ecf0b3969a58148298c77092261f9d
+imagesize==1.4.1 \
+    --hash=sha256:0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b \
+    --hash=sha256:69150444affb9cb0d5cc5a92b3676f0b2fb7cd9ae39e947a5e11a36b4497cd4a
     # via sphinx
 iniconfig==1.1.1 \
     --hash=sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3 \
@@ -437,9 +437,9 @@ mypy-extensions==0.4.3 \
     --hash=sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d \
     --hash=sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8
     # via mypy
-nodeenv==1.6.0 \
-    --hash=sha256:3ef13ff90291ba2a4a7a4ff9a979b63ffdd00a464dbe04acf0ea6471517a4c2b \
-    --hash=sha256:621e6b7076565ddcacd2db0294c0381e01fd28945ab36bcf00f41c5daf63bef7
+nodeenv==1.7.0 \
+    --hash=sha256:27083a7b96a25f2f5e1d8cb4b6317ee8aeda3bdd121394e5ac54e498028a042e \
+    --hash=sha256:e0e7f7dfb85fc5394c6fe1e8fa98131a2473e04311a45afb6508f7cf1836fa2b
     # via pre-commit
 packaging==21.3 \
     --hash=sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb \
@@ -544,9 +544,9 @@ pyyaml==6.0 \
     #   documenteer
     #   pre-commit
     #   pybtex
-requests==2.28.0 \
-    --hash=sha256:bc7861137fbce630f17b03d3ad02ad0bf978c844f3536d0edda6499dafce2b6f \
-    --hash=sha256:d568723a7ebd25875d8d1eaf5dfa068cd2fc8194b2e483d7b1f7c81918dbec6b
+requests==2.28.1 \
+    --hash=sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983 \
+    --hash=sha256:8fefa2a1a1365bf5520aac41836fbee479da67864514bdb821f31ce07ce65349
     # via
     #   documenteer
     #   sphinx
@@ -567,9 +567,9 @@ snowballstemmer==2.2.0 \
     --hash=sha256:09b16deb8547d3412ad7b590689584cd0fe25ec8db3be37788be3810cbf19cb1 \
     --hash=sha256:c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a
     # via sphinx
-sphinx==5.0.1 \
-    --hash=sha256:36aa2a3c2f6d5230be94585bc5d74badd5f9ed8f3388b8eedc1726fe45b1ad30 \
-    --hash=sha256:f4da1187785a5bc7312cc271b0e867a93946c319d106363e102936a3d9857306
+sphinx==5.0.2 \
+    --hash=sha256:b18e978ea7565720f26019c702cd85c84376e948370f1cd43d60265010e1c7b0 \
+    --hash=sha256:d3e57663eed1d7c5c50895d191fdeda0b54ded6f44d5621b50709466c338d1e8
     # via
     #   documenteer
     #   sphinx-automodapi
@@ -580,9 +580,9 @@ sphinx-automodapi==0.14.1 \
     --hash=sha256:4238e131d7abc47226449661bb3cfa2bb1b5b190184ffa69d9b924b984a22753 \
     --hash=sha256:a2f9c0f9e2901875e6db75df6c01412875eb15f25e7db1206e1b69fedf75bbc9
     # via -r requirements/dev.in
-sphinx-click==4.1.0 \
-    --hash=sha256:60d6507bf623e20e9cbab732d19fc4890cc36a394c82ba8e2320f9f9fdc4571e \
-    --hash=sha256:fedebd39991243ec5cfa1c9e483db7ea2621b3df2012315c89c6f1f3722f192b
+sphinx-click==4.2.0 \
+    --hash=sha256:3ba8c97a40deaf09245c540accc4ac5c1d2942eaed0fa598403cdbf04a9cf95f \
+    --hash=sha256:8429705474ebb009de5603c35b6a7bfe8501dbdb12d847cbb01f18277d4b7d9a
     # via -r requirements/dev.in
 sphinx-prompt==1.5.0 \
     --hash=sha256:fa4e90d8088b5a996c76087d701fc7e31175f8b9dc4aab03a507e45051067162
@@ -629,9 +629,9 @@ tomli==2.0.1 \
     #   coverage
     #   mypy
     #   pytest
-typing-extensions==4.2.0 \
-    --hash=sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708 \
-    --hash=sha256:f1c24655a0da0d1b67f07e17a5e6b2a105894e6824b92096378bb3668ef02376
+typing-extensions==4.3.0 \
+    --hash=sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02 \
+    --hash=sha256:e6d2677a32f47fc7eb2795db1dd15c1f34eff616bcaf2cfb5e997f854fa1c4a6
     # via
     #   -c requirements/main.txt
     #   mypy
@@ -639,9 +639,9 @@ urllib3==1.26.9 \
     --hash=sha256:44ece4d53fb1706f667c9bd1c648f5469a2ec925fcf3a776667042d645472c14 \
     --hash=sha256:aabaf16477806a5e1dd19aa41f8c2b7950dd3c746362d7e3223dbe6de6ac448e
     # via requests
-virtualenv==20.14.1 \
-    --hash=sha256:e617f16e25b42eb4f6e74096b9c9e37713cf10bf30168fb4a739f3fa8f898a3a \
-    --hash=sha256:ef589a79795589aada0c1c5b319486797c03b67ac3984c48c669c0e4f50df3a5
+virtualenv==20.15.1 \
+    --hash=sha256:288171134a2ff3bfb1a2f54f119e77cd1b81c29fc1265a2356f3e8d14c7d58c4 \
+    --hash=sha256:b30aefac647e86af6d82bfc944c556f8f1a9c90427b2fb4e3bfbf338cb82becf
     # via pre-commit
 yarl==1.7.2 \
     --hash=sha256:044daf3012e43d4b3538562da94a88fb12a6490652dbc29fb19adfa02cf72eac \
@@ -719,3 +719,9 @@ yarl==1.7.2 \
     # via
     #   -c requirements/main.txt
     #   aiohttp
+
+# The following packages are considered to be unsafe in a requirements file:
+setuptools==63.1.0 \
+    --hash=sha256:16923d366ced322712c71ccb97164d07472abeecd13f3a6c283f6d5d26722793 \
+    --hash=sha256:db3b8e2f922b2a910a29804776c643ea609badb6a32c4bcc226fd4fd902cce65
+    # via nodeenv
