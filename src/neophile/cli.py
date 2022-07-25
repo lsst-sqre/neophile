@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
-from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiohttp
 import click
 from ruamel.yaml import YAML
+from safir.asyncio import run_with_asyncio
 from xdg import XDG_CONFIG_HOME
 
 from neophile.config import Configuration
@@ -19,19 +18,9 @@ from neophile.factory import Factory
 from neophile.inventory.github import GitHubInventory
 
 if TYPE_CHECKING:
-    from typing import Any, Awaitable, Callable, Optional, TypeVar
-
-    T = TypeVar("T")
+    from typing import Any, Optional
 
 __all__ = ["main"]
-
-
-def coroutine(f: Callable[..., Awaitable[T]]) -> Callable[..., T]:
-    @wraps(f)
-    def wrapper(*args: Any, **kwargs: Any) -> T:
-        return asyncio.run(f(*args, **kwargs))
-
-    return wrapper
 
 
 def print_yaml(results: Any) -> None:
@@ -82,7 +71,6 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 
 
 @main.command()
-@coroutine
 @click.option(
     "--allow-expressions/--no-allow-expressions",
     default=False,
@@ -98,6 +86,7 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
     help="Update out-of-date dependencies",
 )
 @click.pass_context
+@run_with_asyncio
 async def analyze(
     ctx: click.Context,
     allow_expressions: bool,
@@ -125,10 +114,10 @@ async def analyze(
 
 
 @main.command()
-@coroutine
 @click.argument("owner", required=True)
 @click.argument("repo", required=True)
 @click.pass_context
+@run_with_asyncio
 async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
     """Inventory available GitHub tags."""
     assert isinstance(ctx.obj, dict)
@@ -141,9 +130,9 @@ async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
 
 
 @main.command()
-@coroutine
 @click.argument("repository", required=True)
 @click.pass_context
+@run_with_asyncio
 async def helm_inventory(ctx: click.Context, repository: str) -> None:
     """Inventory available Helm chart versions."""
     assert isinstance(ctx.obj, dict)
@@ -157,8 +146,8 @@ async def helm_inventory(ctx: click.Context, repository: str) -> None:
 
 
 @main.command()
-@coroutine
 @click.pass_context
+@run_with_asyncio
 async def process(ctx: click.Context) -> None:
     """Process all configured repositories."""
     assert isinstance(ctx.obj, dict)
@@ -170,9 +159,9 @@ async def process(ctx: click.Context) -> None:
 
 
 @main.command()
-@coroutine
 @click.option("--path", default=os.getcwd(), type=str, help="Path to scan.")
 @click.pass_context
+@run_with_asyncio
 async def scan(ctx: click.Context, path: str) -> None:
     """Scan a path for versions."""
     assert isinstance(ctx.obj, dict)

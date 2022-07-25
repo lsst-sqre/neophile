@@ -12,5 +12,6 @@ gidgethub
 packaging
 pydantic
 ruamel.yaml
+safir
 semver
 xdg
