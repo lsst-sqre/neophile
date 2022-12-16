@@ -2,6 +2,11 @@
 Change log
 ##########
 
+0.4.0 (unreleased)
+==================
+
+- `packaging.version` has dropped support for arbitrary legacy version numbers, so neophile also no longer supports them.
+
 0.3.3 (2022-02-28)
 ==================
 
