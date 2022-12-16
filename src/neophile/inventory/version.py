@@ -10,7 +10,7 @@ Python type system.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -18,21 +18,23 @@ from packaging import version
 from semver import VersionInfo
 
 if TYPE_CHECKING:
-    from typing import Union
-
-    from packaging.version import LegacyVersion, Version
+    from packaging.version import Version
 
 __all__ = [
-    "MethodMixin",
     "PackagingVersion",
     "ParsedVersion",
     "SemanticVersion",
-    "VersionMixin",
 ]
 
 
-class MethodMixin(ABC):
-    """Abstract methods for versions."""
+@dataclass(frozen=True, order=True)
+class ParsedVersion(metaclass=ABCMeta):
+    """Abstract base class for versions.
+
+    We use two separate version implementations, one based on
+    `packaging.version.Version` and one based on `semver.VersionInfo`.  This
+    class defines the common interface.
+    """
 
     @classmethod
     @abstractmethod
@@ -72,24 +74,10 @@ class MethodMixin(ABC):
 
 
 @dataclass(frozen=True, order=True)
-class VersionMixin:
-    """Abstract dataclass for versions."""
-
-
-class ParsedVersion(MethodMixin, VersionMixin):
-    """Abstract base class for versions.
-
-    We use two separate version implementations, one based on
-    `packaging.version.Version` and one based on `semver.VersionInfo`.  This
-    class defines the common interface.
-    """
-
-
-@dataclass(frozen=True, order=True)
 class PackagingVersion(ParsedVersion):
     """Represents a version string using `packaging.version.Version`."""
 
-    parsed_version: Union[LegacyVersion, Version]
+    parsed_version: Version
     """The canonicalized, parsed version, for sorting.
 
     Notes
@@ -134,7 +122,11 @@ class PackagingVersion(ParsedVersion):
             All versions are valid for this implementation (some will parse to
             a legacy version).
         """
-        return True
+        try:
+            version.parse(string)
+            return True
+        except version.InvalidVersion:
+            return False
 
     def __str__(self) -> str:
         return self.version
