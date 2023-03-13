@@ -126,7 +126,7 @@ def test_analyze_update(tmp_path: Path) -> None:
 
 def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
     runner = CliRunner()
-    repo = Repo.init(str(tmp_path))
+    repo = Repo.init(str(tmp_path), initial_branch="main")
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     src = (
         Path(__file__).parent
@@ -150,7 +150,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
             "title": CommitMessage.title,
             "body": f"- {change}\n",
             "head": "u/neophile",
-            "base": "master",
+            "base": "main",
             "maintainer_can_modify": True,
             "draft": False,
         }
@@ -173,7 +173,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
         mock.get("https://api.github.com/user", payload=payload)
         mock.get(
             "https://api.github.com/repos/foo/bar",
-            payload={"default_branch": "master"},
+            payload={"default_branch": "main"},
         )
         pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
         mock.get(pattern, payload=[])
@@ -193,7 +193,7 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
     assert mock_push.call_args_list == [
         call("u/neophile:u/neophile", force=True)
     ]
-    assert repo.head.ref.name == "master"
+    assert repo.head.ref.name == "main"
 
 
 def test_github_inventory() -> None:

@@ -43,7 +43,7 @@ def create_upstream_git_repository(repo: Repo, upstream_path: Path) -> None:
         Where to put the upstream repository.
     """
     upstream_path.mkdir()
-    Repo.init(str(upstream_path), bare=True)
+    Repo.init(str(upstream_path), bare=True, initial_branch="main")
     origin = repo.create_remote("origin", str(upstream_path))
     origin.push(all=True)
 
@@ -151,7 +151,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
     assert created_pr
     repo = Repo(str(tmp_path / "work" / "bar"))
     assert not repo.is_dirty()
-    assert repo.head.ref.name == "master"
+    assert repo.head.ref.name == "main"
     assert "u/neophile" not in [h.name for h in repo.heads]
     assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
@@ -161,7 +161,7 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     data_path = Path(__file__).parent / "data" / "kubernetes" / "sqrbot-jr"
     tmp_repo_path = tmp_path / "tmp"
     tmp_repo_path.mkdir()
-    tmp_repo = Repo.init(str(tmp_repo_path))
+    tmp_repo = Repo.init(str(tmp_repo_path), initial_branch="main")
     shutil.copytree(str(data_path), str(tmp_repo_path / "sqrbot-jr"))
     actor = Actor("Someone", "someone@example.com")
     tmp_repo.index.commit("Initial commit", author=actor, committer=actor)
@@ -185,7 +185,7 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     assert mock_push.call_count == 0
     repo = Repo(str(tmp_path / "work" / "bar"))
     assert not repo.is_dirty()
-    assert repo.head.ref.name == "master"
+    assert repo.head.ref.name == "main"
 
 
 @pytest.mark.asyncio
