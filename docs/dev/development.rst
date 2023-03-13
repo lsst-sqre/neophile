@@ -108,7 +108,7 @@ Add a description of new features and fixes as list items under a section at the
 
    - Description of the feature or fix.
 
-If the next version is known (because neophile's master branch is being prepared for a new major or minor version), the section may contain that version information:
+If the next version is known (because neophile's main branch is being prepared for a new major or minor version), the section may contain that version information:
 
 .. code-block:: rst
 

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 def setup_repo(tmp_path: Path) -> Repo:
     """Set up a repository with the Gafaelfawr Helm chart."""
-    repo = Repo.init(str(tmp_path))
+    repo = Repo.init(str(tmp_path), initial_branch="main")
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     helm_path = Path(__file__).parent / "data" / "kubernetes"
     chart_path = helm_path / "gafaelfawr" / "Chart.yaml"
@@ -113,10 +113,10 @@ async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
         mock_responses.get("https://api.github.com/user", payload=user)
         mock_responses.get(
             "https://api.github.com/repos/foo/bar",
-            payload={"default_branch": "master"},
+            payload={"default_branch": "main"},
         )
         pattern = re.compile(
-            r"https://api.github.com/repos/foo/bar/pulls\?.*base=master.*"
+            r"https://api.github.com/repos/foo/bar/pulls\?.*base=main.*"
         )
         mock_responses.get(pattern, payload=[])
         pr = PullRequester(tmp_path, config, session)
@@ -216,7 +216,7 @@ async def test_pr_update(
         mock_responses.get("https://api.github.com/user", payload=user)
         mock_responses.get("https://api.github.com/repos/foo/bar", payload={})
         pattern = re.compile(
-            r"https://api.github.com/repos/foo/bar/pulls\?.*base=master.*"
+            r"https://api.github.com/repos/foo/bar/pulls\?.*base=main.*"
         )
         mock_responses.get(pattern, payload=[{"number": 1234}])
         mock_responses.patch(
@@ -247,7 +247,7 @@ async def test_pr_update(
 async def test_get_authenticated_remote(
     tmp_path: Path, session: ClientSession
 ) -> None:
-    repo = Repo.init(str(tmp_path))
+    repo = Repo.init(str(tmp_path), initial_branch="main")
 
     config = Configuration(github_user="test", github_token="some-token")
     pr = PullRequester(tmp_path, config, session)
@@ -271,7 +271,7 @@ async def test_get_authenticated_remote(
 
 @pytest.mark.asyncio
 async def test_get_github_repo(tmp_path: Path, session: ClientSession) -> None:
-    repo = Repo.init(str(tmp_path))
+    repo = Repo.init(str(tmp_path), initial_branch="main")
 
     config = Configuration(github_user="test", github_token="some-token")
     pr = PullRequester(tmp_path, config, session)

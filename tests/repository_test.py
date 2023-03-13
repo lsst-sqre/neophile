@@ -27,8 +27,8 @@ def create_repo(upstream_path: Path, checkout_path: Path) -> Repo:
     repo : `git.Repo`
         The repository for the downstream checkout.
     """
-    repo = Repo.init(str(checkout_path))
-    Repo.init(str(upstream_path), bare=True)
+    repo = Repo.init(str(checkout_path), initial_branch="main")
+    Repo.init(str(upstream_path), bare=True, initial_branch="main")
     actor = Actor("Someone", "someone@example.com")
 
     (checkout_path / "foo").write_text("initial contents\n")
@@ -36,7 +36,7 @@ def create_repo(upstream_path: Path, checkout_path: Path) -> Repo:
     repo.index.commit("Initial commit", author=actor, committer=actor)
     origin = repo.create_remote("origin", str(upstream_path))
     origin.push(all=True)
-    repo.heads.master.set_tracking_branch(origin.refs.master)
+    repo.heads.main.set_tracking_branch(origin.refs.main)
 
     return repo
 

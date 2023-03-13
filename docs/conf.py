@@ -98,8 +98,8 @@ html_context = {
     "github_user": "lsst-sqre",
     "github_repo": "neophile",
     "conf_py_path": "docs/",
-    # GITHUB_REF is available in GitHub Actions, but master is a safe default
-    "github_version": os.getenv("GITHUB_REF", default="master") + "/",
+    # GITHUB_REF is available in GitHub Actions, but main is a safe default
+    "github_version": os.getenv("GITHUB_REF", default="main") + "/",
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme

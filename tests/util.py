@@ -168,7 +168,7 @@ def setup_kubernetes_repo(tmp_path: Path) -> Repo:
     """
     data_path = Path(__file__).parent / "data" / "kubernetes"
     shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
-    repo = Repo.init(str(tmp_path))
+    repo = Repo.init(str(tmp_path), initial_branch="main")
     for path in tmp_path.iterdir():
         if not path.name.startswith("."):
             repo.index.add(str(path))
@@ -198,7 +198,7 @@ def setup_python_repo(tmp_path: Path, require_venv: bool = False) -> Repo:
         (tmp_path / "Makefile-venv").rename(tmp_path / "Makefile")
     else:
         (tmp_path / "Makefile-venv").unlink()
-    repo = Repo.init(str(tmp_path))
+    repo = Repo.init(str(tmp_path), initial_branch="main")
     repo.index.add(
         [
             str(tmp_path / ".pre-commit-config.yaml"),

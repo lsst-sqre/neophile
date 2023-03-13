@@ -96,7 +96,7 @@ At least ``github_user`` and ``github_token`` must be set.
 ``work_area``
     A directory in which ``neophile process`` should do its work.
     Clones of the repositories being checked will be kept here.
-    If this storage is persistent, neophile will take advantage of existing clones and update them to the latest upstream ``master`` branch, avoiding re-downloading the rest of the repository.
+    If this storage is persistent, neophile will take advantage of existing clones and update them to the latest upstream ``main`` branch, avoiding re-downloading the rest of the repository.
     Defaults to the current directory.
 
 .. _personal access token: https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token

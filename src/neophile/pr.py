@@ -266,7 +266,7 @@ class PullRequester:
     ) -> str:
         """Get the main branch of the repository.
 
-        Uses ``main`` if that branch exists, else ``master``.
+        Uses the default branch name if it exists, else ``main``.
 
         Parameters
         ----------
@@ -282,7 +282,7 @@ class PullRequester:
             "/repos{/owner}{/repo}",
             url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
         )
-        return repo.get("default_branch", "master")
+        return repo.get("default_branch", "main")
 
     def _get_github_repo(self) -> GitHubRepository:
         """Get the GitHub repository.
