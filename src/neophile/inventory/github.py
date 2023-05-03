@@ -9,7 +9,11 @@ from aiohttp import ClientError
 from gidgethub import BadRequest
 from gidgethub.aiohttp import GitHubAPI
 
-from neophile.inventory.version import PackagingVersion, SemanticVersion
+from neophile.inventory.version import (
+    PackagingVersion,
+    ParsedVersion,
+    SemanticVersion,
+)
 
 if TYPE_CHECKING:
     from typing import Optional
@@ -67,7 +71,10 @@ class GitHubInventory:
             `None`.
         """
         logging.info("Inventorying GitHub repo %s/%s", owner, repo)
-        cls = SemanticVersion if semantic else PackagingVersion
+        if semantic:
+            cls: type[ParsedVersion] = SemanticVersion
+        else:
+            cls = PackagingVersion
 
         try:
             tags = self._github.getiter(

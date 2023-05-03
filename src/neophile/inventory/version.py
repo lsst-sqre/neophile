@@ -12,13 +12,9 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from packaging import version
-from semver import VersionInfo
-
-if TYPE_CHECKING:
-    from packaging.version import Version
+from semver import Version
 
 __all__ = [
     "PackagingVersion",
@@ -77,7 +73,7 @@ class ParsedVersion(metaclass=ABCMeta):
 class PackagingVersion(ParsedVersion):
     """Represents a version string using `packaging.version.Version`."""
 
-    parsed_version: Version
+    parsed_version: version.Version
     """The canonicalized, parsed version, for sorting.
 
     Notes
@@ -136,7 +132,7 @@ class PackagingVersion(ParsedVersion):
 class SemanticVersion(ParsedVersion):
     """Represents a semantic version string."""
 
-    parsed_version: VersionInfo
+    parsed_version: Version
     """The parsed version of it, for sorting.
 
     Notes
@@ -164,7 +160,7 @@ class SemanticVersion(ParsedVersion):
             The parsed version.
         """
         version = string[1:] if string.startswith("v") else string
-        return cls(version=string, parsed_version=VersionInfo.parse(version))
+        return cls(version=string, parsed_version=Version.parse(version))
 
     @staticmethod
     def is_valid(string: str) -> bool:
@@ -181,7 +177,7 @@ class SemanticVersion(ParsedVersion):
             Whether the version is valid.
         """
         version = string[1:] if string.startswith("v") else string
-        return VersionInfo.isvalid(version)
+        return Version.is_valid(version)
 
     def __str__(self) -> str:
         return self.version
