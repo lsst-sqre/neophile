@@ -7,15 +7,19 @@
 
 -c main.txt
 
+# Testing
 aioresponses
 coverage[toml]
-documenteer
-lsst-sphinx-bootstrap-theme
 mypy
 pre-commit
 pytest
 pytest-asyncio
+pytest-cov
 pytest-sugar
+
+# Documentation
+documenteer
+lsst-sphinx-bootstrap-theme
 sphinx-automodapi
 sphinx-click
 sphinx-prompt
