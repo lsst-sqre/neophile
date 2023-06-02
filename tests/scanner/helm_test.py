@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neophile.scanner.helm import HelmDependency, HelmScanner
+from neophile.dependency.helm import HelmDependency
+from neophile.scanner.helm import HelmScanner
 
 
 def test_scanner() -> None:

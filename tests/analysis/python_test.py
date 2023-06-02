@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from git import Actor
+from git.util import Actor
 
 from neophile.config import Configuration
 from neophile.exceptions import UncommittedChangesError

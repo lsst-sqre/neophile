@@ -14,7 +14,7 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 
 from packaging import version
-from semver import Version
+from semver.version import Version
 
 __all__ = [
     "PackagingVersion",

@@ -12,7 +12,9 @@ from unittest.mock import call
 
 from aioresponses import CallbackResult, aioresponses
 from click.testing import CliRunner
-from git import Actor, Remote, Repo
+from git import Remote
+from git.repo import Repo
+from git.util import Actor
 from ruamel.yaml import YAML
 
 from neophile.cli import main

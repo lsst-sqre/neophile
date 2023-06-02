@@ -12,7 +12,9 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 from aioresponses import CallbackResult, aioresponses
-from git import Actor, PushInfo, Remote, Repo
+from git import PushInfo, Remote
+from git.repo import Repo
+from git.util import Actor
 from ruamel.yaml import YAML
 
 from neophile.config import Configuration, GitHubRepository

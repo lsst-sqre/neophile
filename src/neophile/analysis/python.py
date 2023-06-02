@@ -6,7 +6,7 @@ import logging
 import subprocess
 from typing import TYPE_CHECKING
 
-from git import Repo
+from git.repo import Repo
 
 from neophile.analysis.base import BaseAnalyzer
 from neophile.exceptions import UncommittedChangesError
