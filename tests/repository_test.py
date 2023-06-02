@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from git import Actor, Repo
+from git.repo import Repo
+from git.util import Actor
 
 from neophile.repository import Repository
 

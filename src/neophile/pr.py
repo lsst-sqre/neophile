@@ -9,7 +9,9 @@ from urllib.parse import urlencode, urlparse
 
 from gidgethub import QueryError
 from gidgethub.aiohttp import GitHubAPI
-from git import Actor, PushInfo, Remote, Repo
+from git import PushInfo, Remote
+from git.repo import Repo
+from git.util import Actor
 
 from neophile.config import GitHubRepository
 from neophile.exceptions import PushError

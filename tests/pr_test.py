@@ -11,7 +11,10 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 from aioresponses import CallbackResult, aioresponses
-from git import Actor, PushInfo, Remote, Repo
+from git import PushInfo, Remote
+from git.repo import Repo
+from git.util import Actor
+from pydantic import SecretStr
 
 from neophile.config import Configuration, GitHubRepository
 from neophile.exceptions import PushError
@@ -45,7 +48,9 @@ async def test_pr(
     tmp_path: Path, session: ClientSession, mock_push: Mock
 ) -> None:
     repo = setup_repo(tmp_path)
-    config = Configuration(github_user="someone", github_token="some-token")
+    config = Configuration(
+        github_user="someone", github_token=SecretStr("some-token")
+    )
     update = HelmUpdate(
         path=tmp_path / "Chart.yaml",
         applied=False,
@@ -95,7 +100,9 @@ async def test_pr(
 @pytest.mark.asyncio
 async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
     setup_repo(tmp_path)
-    config = Configuration(github_user="someone", github_token="some-token")
+    config = Configuration(
+        github_user="someone", github_token=SecretStr("some-token")
+    )
     update = HelmUpdate(
         path=tmp_path / "Chart.yaml",
         applied=False,
@@ -133,7 +140,9 @@ async def test_pr_no_automerge(
     tmp_path: Path, session: ClientSession, mock_push: Mock
 ) -> None:
     repo = setup_repo(tmp_path)
-    config = Configuration(github_user="someone", github_token="some-token")
+    config = Configuration(
+        github_user="someone", github_token=SecretStr("some-token")
+    )
     update = HelmUpdate(
         path=tmp_path / "Chart.yaml",
         applied=False,
@@ -188,7 +197,7 @@ async def test_pr_update(
     repo = setup_repo(tmp_path)
     config = Configuration(
         github_email="otheremail@example.com",
-        github_token="some-token",
+        github_token=SecretStr("some-token"),
         github_user="someone",
     )
     update = HelmUpdate(
@@ -249,7 +258,9 @@ async def test_get_authenticated_remote(
 ) -> None:
     repo = Repo.init(str(tmp_path), initial_branch="main")
 
-    config = Configuration(github_user="test", github_token="some-token")
+    config = Configuration(
+        github_user="test", github_token=SecretStr("some-token")
+    )
     pr = PullRequester(tmp_path, config, session)
 
     remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
@@ -273,7 +284,9 @@ async def test_get_authenticated_remote(
 async def test_get_github_repo(tmp_path: Path, session: ClientSession) -> None:
     repo = Repo.init(str(tmp_path), initial_branch="main")
 
-    config = Configuration(github_user="test", github_token="some-token")
+    config = Configuration(
+        github_user="test", github_token=SecretStr("some-token")
+    )
     pr = PullRequester(tmp_path, config, session)
 
     remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")

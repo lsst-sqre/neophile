@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neophile.scanner.kustomize import KustomizeDependency, KustomizeScanner
+from neophile.dependency.kustomize import KustomizeDependency
+from neophile.scanner.kustomize import KustomizeScanner
 
 
 def test_scanner() -> None:

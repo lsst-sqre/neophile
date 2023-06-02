@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neophile.scanner.pre_commit import PreCommitDependency, PreCommitScanner
+from neophile.dependency.pre_commit import PreCommitDependency
+from neophile.scanner.pre_commit import PreCommitScanner
 
 
 def test_scanner() -> None:

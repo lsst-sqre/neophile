@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 
 from aioresponses import CallbackResult
 from gidgethub import QueryError
-from git import Actor, Repo
+from git.repo import Repo
+from git.util import Actor
 from ruamel.yaml import YAML
 
 from neophile.pr import _GRAPHQL_ENABLE_AUTO_MERGE, _GRAPHQL_PR_ID
