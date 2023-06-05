@@ -1,6 +1,6 @@
-#############
-API reference
-#############
+###################
+Python internal API
+###################
 
 .. automodapi:: neophile
    :include-all-objects:

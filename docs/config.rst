@@ -2,7 +2,7 @@
 Using neophile with Dependabot and Renovate
 ###########################################
 
-As documented in `SQR-042 <https://sqr-042.lsst.io>`__, none of Dependabot, WhiteSource Renovate, or neophile can handle all types of dependencies with the desired feature set.
+As documented in :sqr:`042`, none of Dependabot, WhiteSource Renovate, or neophile can handle all types of dependencies with the desired feature set.
 All three should therefore be used in different situations.
 Below is documentation for when to use each service and how to configure it.
 
@@ -65,9 +65,8 @@ Use it for:
 
 #. Python frozen dependencies
 #. pre-commit hooks
-#. Kustomize references
 
-It also scans Helm chart references, but we prefer WhiteSource Renovate for those because the feature support is better.
+It also scans Helm chart and Kustomize references, but we prefer WhiteSource Renovate for those because the feature support is better.
 neophile should be configured for all Python packages using pre-commit, but is particularly useful for Python applications using dependencies frozen with ``pip-compile``.
 
 To enable neophile scanning of a repository, the GitHub ``sqrbot`` user must be added as a collaborator on the repository with ``Write`` permissions.

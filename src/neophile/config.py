@@ -8,7 +8,10 @@ from pydantic import BaseModel, BaseSettings, Field, SecretStr
 from ruamel.yaml import YAML
 from xdg import XDG_CACHE_HOME
 
-__all__ = ["Configuration"]
+__all__ = [
+    "Configuration",
+    "GitHubRepository",
+]
 
 
 class GitHubRepository(BaseModel):

@@ -28,8 +28,8 @@ class ParsedVersion(metaclass=ABCMeta):
     """Abstract base class for versions.
 
     We use two separate version implementations, one based on
-    `packaging.version.Version` and one based on `semver.VersionInfo`.  This
-    class defines the common interface.
+    `packaging.version.Version` and one based on `semver.version.Version`.
+    This class defines the common interface.
     """
 
     @classmethod
@@ -148,7 +148,7 @@ class SemanticVersion(ParsedVersion):
 
     @classmethod
     def from_str(cls, string: str) -> SemanticVersion:
-        """Parse a string into a `semver.VersionInfo`.
+        """Parse a string into a `SemanticVersion`.
 
         Parameters
         ----------

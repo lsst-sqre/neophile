@@ -19,9 +19,7 @@ pytest-sugar
 ruff
 
 # Documentation
-documenteer
-lsst-sphinx-bootstrap-theme
+autodoc_pydantic
+documenteer[guide]
 scriv[toml]
-sphinx-automodapi
 sphinx-click
-sphinx-prompt

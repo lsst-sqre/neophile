@@ -76,7 +76,7 @@ class HelmInventory:
         ------
         aiohttp.ClientError
             Failure to retrieve the index file from the Helm repository.
-        yaml.YAMLError
+        ruamel.yaml.YAMLError
             The index file for the repository doesn't parse as YAML.
         """
         url = self.canonicalize_url(url)
@@ -140,7 +140,7 @@ class CachedHelmInventory(HelmInventory):
         ------
         aiohttp.ClientError
             Failure to retrieve the index file from the Helm repository.
-        yaml.YAMLError
+        ruamel.yaml.YAMLError
             The index file for the repository doesn't parse as YAML.
 
         Notes

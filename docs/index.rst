@@ -11,49 +11,26 @@ neophile only checks whether a dependency is out of date.
 It doesn't attempt to determine whether the newer version has security fixes, is a major or minor change, is part of a different line of development, or other practical complexities.
 Its results should always be examined by a human rather than applied blindly.
 
-See `SQR-042 <https://sqr-042.lsst.io/>`__ for more details about the problem statement and the gap that neophile fills.
+See :sqr:`042` for more details about the problem statement and the gap that neophile fills.
 
 neophile is developed on `GitHub <https://github.com/lsst-sqre/neophile>`__.
 
-User guide
-==========
-
 .. toctree::
    :maxdepth: 2
+   :caption: Usage
 
    usage
    config
    install
    cli
 
-Changes
-=======
-
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
    changelog
 
-Development guide
-=================
-
 .. toctree::
    :maxdepth: 2
+   :caption: Development
 
-   dev/development
-   dev/release
-
-API
-===
-
-.. toctree::
-   :maxdepth: 2
-
-   api
-
-Indices
-=======
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   dev/index
