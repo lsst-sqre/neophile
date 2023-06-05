@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -18,7 +17,7 @@ from neophile.factory import Factory
 from neophile.inventory.github import GitHubInventory
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 __all__ = ["main"]
 
@@ -34,19 +33,18 @@ def print_yaml(results: Any) -> None:
 @click.option(
     "-c",
     "--config-path",
-    type=str,
+    type=click.Path(path_type=Path),
     metavar="PATH",
     default=str(XDG_CONFIG_HOME / "neophile.yaml"),
     envvar="NEOPHILE_CONFIG",
-    help="Path to configuration.",
+    help="Path to configuration",
 )
 @click.version_option(message="%(version)s")
 @click.pass_context
-def main(ctx: click.Context, config_path: str) -> None:
+def main(ctx: click.Context, config_path: Path) -> None:
     """Command-line interface for neophile."""
     ctx.ensure_object(dict)
-    assert isinstance(ctx.obj, dict)
-    if os.path.exists(config_path):
+    if config_path.exists():
         ctx.obj["config"] = Configuration.from_file(config_path)
     else:
         ctx.obj["config"] = Configuration()
@@ -55,7 +53,7 @@ def main(ctx: click.Context, config_path: str) -> None:
 @main.command()
 @click.argument("topic", default=None, required=False, nargs=1)
 @click.pass_context
-def help(ctx: click.Context, topic: Optional[str]) -> None:
+def help(ctx: click.Context, topic: str | None) -> None:
     """Show help for any command."""
     # The help command implementation is taken from
     # https://www.burgundywall.com/post/having-click-help-subcommand
@@ -66,7 +64,8 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
         else:
             raise click.UsageError(f"Unknown help topic {topic}", ctx)
     else:
-        assert ctx.parent
+        if not ctx.parent:
+            raise RuntimeError("help called without topic or parent")
         click.echo(ctx.parent.get_help())
 
 
@@ -74,11 +73,16 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 @click.option(
     "--allow-expressions/--no-allow-expressions",
     default=False,
-    help="Allow version match expressions.",
+    help="Allow version match expressions",
 )
-@click.option("--path", default=os.getcwd(), type=str, help="Path to analyze.")
 @click.option(
-    "--pr/--no-pr", default=False, help="Generate a pull request of changes."
+    "--path",
+    type=click.Path(path_type=Path),
+    default=Path.cwd(),
+    help="Path to analyze",
+)
+@click.option(
+    "--pr/--no-pr", default=False, help="Generate a pull request of changes"
 )
 @click.option(
     "--update/--no-update",
@@ -89,13 +93,13 @@ def help(ctx: click.Context, topic: Optional[str]) -> None:
 @run_with_asyncio
 async def analyze(
     ctx: click.Context,
+    *,
     allow_expressions: bool,
-    path: str,
+    path: Path,
     pr: bool,
     update: bool,
 ) -> None:
     """Analyze the current directory for pending upgrades."""
-    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
     config.allow_expressions = allow_expressions
 
@@ -103,11 +107,11 @@ async def analyze(
         factory = Factory(config, session)
         processor = factory.create_processor()
         if pr:
-            await processor.process_checkout(Path(path))
+            await processor.process_checkout(path)
         elif update:
-            await processor.update_checkout(Path(path))
+            await processor.update_checkout(path)
         else:
-            results = await processor.analyze_checkout(Path(path))
+            results = await processor.analyze_checkout(path)
             print_yaml(
                 {k: [u.to_dict() for u in v] for k, v in results.items()}
             )
@@ -120,13 +124,15 @@ async def analyze(
 @run_with_asyncio
 async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
     """Inventory available GitHub tags."""
-    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
 
     async with aiohttp.ClientSession() as session:
         inventory = GitHubInventory(config, session)
         result = await inventory.inventory(owner, repo)
-    print(result)
+        if result:
+            sys.stdout.write(result + "\n")
+        else:
+            sys.stderr.write(f"No versions found in {owner}/{repo}")
 
 
 @main.command()
@@ -135,14 +141,12 @@ async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
 @run_with_asyncio
 async def helm_inventory(ctx: click.Context, repository: str) -> None:
     """Inventory available Helm chart versions."""
-    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
         inventory = factory.create_helm_inventory()
-        results = await inventory.inventory(repository)
-    print_yaml(results)
+        print_yaml(await inventory.inventory(repository))
 
 
 @main.command()
@@ -150,7 +154,6 @@ async def helm_inventory(ctx: click.Context, repository: str) -> None:
 @run_with_asyncio
 async def process(ctx: click.Context) -> None:
     """Process all configured repositories."""
-    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
@@ -159,15 +162,19 @@ async def process(ctx: click.Context) -> None:
 
 
 @main.command()
-@click.option("--path", default=os.getcwd(), type=str, help="Path to scan.")
+@click.option(
+    "--path",
+    type=click.Path(path_type=Path),
+    default=Path.cwd(),
+    help="Path to scan",
+)
 @click.pass_context
 @run_with_asyncio
-async def scan(ctx: click.Context, path: str) -> None:
+async def scan(ctx: click.Context, path: Path) -> None:
     """Scan a path for versions."""
-    assert isinstance(ctx.obj, dict)
     config = ctx.obj["config"]
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
-        scanners = factory.create_all_scanners(Path(path))
-        results = {s.name(): s.scan() for s in scanners}
+        scanners = factory.create_all_scanners(path)
+        results = {s.name: s.scan() for s in scanners}
         print_yaml({k: [u.to_dict() for u in v] for k, v in results.items()})

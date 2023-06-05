@@ -8,7 +8,6 @@ from neophile.repository import Repository
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Dict, List
 
     from neophile.config import Configuration
     from neophile.factory import Factory
@@ -32,7 +31,7 @@ class Processor:
         self._config = config
         self._factory = factory
 
-    async def analyze_checkout(self, path: Path) -> Dict[str, List[Update]]:
+    async def analyze_checkout(self, path: Path) -> dict[str, list[Update]]:
         """Analyze a cloned repository without applying updates.
 
         Parameters
@@ -46,7 +45,7 @@ class Processor:
             Any updates found, sorted by the analyzer that found the update.
         """
         analyzers = self._factory.create_all_analyzers(path, use_venv=True)
-        return {a.name(): await a.analyze() for a in analyzers}
+        return {a.name: await a.analyze() for a in analyzers}
 
     async def process(self) -> None:
         """Process all configured repositories for updates."""
@@ -69,7 +68,7 @@ class Processor:
         repo = Repository(path)
         await self._process_one_repository(repo, path)
 
-    async def update_checkout(self, path: Path) -> List[Update]:
+    async def update_checkout(self, path: Path) -> list[Update]:
         """Update a cloned repository.
 
         This does not switch branches.  Updates are written to the current

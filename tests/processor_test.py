@@ -29,7 +29,8 @@ from tests.util import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterator
+    from collections.abc import Callable, Iterator
+    from typing import Any
 
     from aiohttp import ClientSession
 

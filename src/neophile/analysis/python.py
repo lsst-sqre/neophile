@@ -14,7 +14,6 @@ from neophile.update.python import PythonFrozenUpdate
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import List, Optional
 
     from neophile.update.base import Update
     from neophile.virtualenv import VirtualEnv
@@ -34,12 +33,12 @@ class PythonAnalyzer(BaseAnalyzer):
     """
 
     def __init__(
-        self, root: Path, virtualenv: Optional[VirtualEnv] = None
+        self, root: Path, virtualenv: VirtualEnv | None = None
     ) -> None:
         self._root = root
         self._virtualenv = virtualenv
 
-    async def analyze(self, update: bool = False) -> List[Update]:
+    async def analyze(self, *, update: bool = False) -> list[Update]:
         """Analyze a tree and return needed Python frozen dependency updates.
 
         Parameters
@@ -88,7 +87,9 @@ class PythonAnalyzer(BaseAnalyzer):
                     capture_output=True,
                 )
         except subprocess.CalledProcessError as e:
-            logging.error("make update-deps failed: %s%s", e.stdout, e.stderr)
+            logging.exception(
+                "make update-deps failed: %s%s", e.stdout, e.stderr
+            )
             return []
 
         if not repo.is_dirty():
@@ -104,5 +105,6 @@ class PythonAnalyzer(BaseAnalyzer):
             )
         ]
 
+    @property
     def name(self) -> str:
         return "python"

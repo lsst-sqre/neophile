@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Dict, Union
 
 __all__ = [
     "MethodMixin",
@@ -59,7 +58,7 @@ class UpdateMixin:
     applied: bool
     """Whether the update has already been applied."""
 
-    def to_dict(self) -> Dict[str, Union[str, bool]]:
+    def to_dict(self) -> dict[str, str | bool]:
         """Convert the object to a dict.
 
         Notes

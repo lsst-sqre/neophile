@@ -75,7 +75,6 @@ intersphinx_cache_limit = 5  # days
 
 linkcheck_retries = 2
 
-# linkcheck_ignore = [r'^https://jira.lsstcorp.org/browse/']
 
 linkcheck_timeout = 15
 

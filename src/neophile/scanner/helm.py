@@ -4,16 +4,12 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML
 
 from neophile.dependency.helm import HelmDependency
 from neophile.scanner.base import BaseScanner
 from neophile.scanner.util import find_files
-
-if TYPE_CHECKING:
-    from typing import List
 
 __all__ = ["HelmScanner"]
 
@@ -31,10 +27,11 @@ class HelmScanner(BaseScanner):
         self._root = root
         self._yaml = YAML()
 
+    @property
     def name(self) -> str:
         return "helm"
 
-    def scan(self) -> List[HelmDependency]:
+    def scan(self) -> list[HelmDependency]:
         """Scan a source tree for version references.
 
         Returns
@@ -51,7 +48,7 @@ class HelmScanner(BaseScanner):
 
         return results
 
-    def _build_helm_dependencies(self, path: Path) -> List[HelmDependency]:
+    def _build_helm_dependencies(self, path: Path) -> list[HelmDependency]:
         """Build Helm dependencies from chart dependencies.
 
         Given the path to a Helm chart file specifying dependencies, construct

@@ -120,9 +120,10 @@ class PackagingVersion(ParsedVersion):
         """
         try:
             version.parse(string)
-            return True
         except version.InvalidVersion:
             return False
+        else:
+            return True
 
     def __str__(self) -> str:
         return self.version

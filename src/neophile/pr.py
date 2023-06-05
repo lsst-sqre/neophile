@@ -17,8 +17,9 @@ from neophile.config import GitHubRepository
 from neophile.exceptions import PushError
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
-    from typing import ClassVar, List, Optional, Sequence
+    from typing import ClassVar
     from urllib.parse import ParseResult
 
     from aiohttp import ClientSession
@@ -56,7 +57,7 @@ mutation EnableAutoMerge($pr_id:ID!) {
 class CommitMessage:
     """A Git commit message."""
 
-    changes: List[str]
+    changes: list[str]
     """The changes represented by this commit."""
 
     title: ClassVar[str] = "[neophile] Update dependencies"
@@ -304,7 +305,7 @@ class PullRequester:
 
     async def _get_pr(
         self, github_repo: GitHubRepository, base_branch: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get the pull request number of an existing neophile PR.
 
         Parameters

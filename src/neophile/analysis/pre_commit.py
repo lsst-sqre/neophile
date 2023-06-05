@@ -8,8 +8,6 @@ from neophile.analysis.base import BaseAnalyzer
 from neophile.update.pre_commit import PreCommitUpdate
 
 if TYPE_CHECKING:
-    from typing import List
-
     from neophile.inventory.github import GitHubInventory
     from neophile.scanner.pre_commit import PreCommitScanner
     from neophile.update.base import Update
@@ -34,7 +32,7 @@ class PreCommitAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self, update: bool = False) -> List[Update]:
+    async def analyze(self, *, update: bool = False) -> list[Update]:
         """Analyze a tree and return a list of needed pre-commit hook changes.
 
         Parameters
@@ -49,7 +47,7 @@ class PreCommitAnalyzer(BaseAnalyzer):
         """
         dependencies = self._scanner.scan()
 
-        results: List[Update] = []
+        results: list[Update] = []
         for dependency in dependencies:
             latest = await self._inventory.inventory(
                 dependency.owner, dependency.repo
@@ -66,5 +64,6 @@ class PreCommitAnalyzer(BaseAnalyzer):
 
         return results
 
+    @property
     def name(self) -> str:
         return "pre-commit"

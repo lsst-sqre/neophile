@@ -46,8 +46,8 @@ def test_update(tmp_path: Path) -> None:
     kustomization = yaml.load(kustomization_path)
     for index, resource in enumerate(kustomization["resources"]):
         if resource == current:
+            kustomization["resources"][index] = new
             break
-    kustomization["resources"][index] = new
     assert yaml.load(update_path) == kustomization
 
 
