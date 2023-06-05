@@ -40,6 +40,9 @@ jobs:
       - name: Update package lists
         run: sudo apt-get update
 
+      - name: Install extra packages
+        run: sudo apt install -y graphviz
+
       - name: Check links
         uses: lsst-sqre/run-tox@v1
         with:
