@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
 
 __all__ = ["Dependency"]
 
@@ -23,8 +20,7 @@ class Dependency:
 
         Notes
         -----
-        Required because :py:mod:`ruamel.yaml` cannot serialize
-        `~pathlib.Path`.
+        Required because ruamel.yaml cannot serialize `~pathlib.Path`.
         """
         result = asdict(self)
         result["path"] = str(result["path"])

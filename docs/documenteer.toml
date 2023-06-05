@@ -1,0 +1,44 @@
+[project]
+title = "neophile"
+copyright = "Copyright 2020-2023 Association of Universities for Research in Astronomy, Inc. (AURA)"
+
+[project.python]
+package = "neophile"
+
+[sphinx]
+disable_primary_sidebars = [
+    "**/index",
+    "changelog",
+    "dev/internals",
+]
+extensions = [
+    "sphinx_click",
+    "sphinxcontrib.autodoc_pydantic",
+]
+nitpicky = true
+nitpick_ignore = [
+    # Ignore missing cross-references for modules that don't provide
+    # intersphinx. Automatic references are generated from the type signatures
+    # and can't be avoided. These are listed specifically rather than with
+    # regexes because I've caught documentation bugs by having Sphinx complain
+    # about a new symbol.
+    ["py:class", "pydantic.main.BaseModel"],
+    ["py:class", "pydantic.env_settings.BaseSettings"],
+    ["py:class", "pydantic.types.SecretStr"],
+    ["py:class", "pydantic.utils.Representation"],
+    ["py:exc", "ruamel.yaml.YAMLError"],
+]
+rst_epilog_file = "_rst_epilog.rst"
+
+[sphinx.intersphinx.projects]
+aiohttp = "https://docs.aiohttp.org/en/stable/"
+packaging = "https://packaging.pypa.io/en/latest/"
+python = "https://docs.python.org/3/"
+semver = "https://python-semver.readthedocs.io/en/latest/"
+
+[sphinx.linkcheck]
+ignore = [
+    # Generates redirects for authentication
+    '^https://github\.com/settings/developers$',
+    '^https://github\.com/.*/issues/new$',
+]
