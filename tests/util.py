@@ -17,7 +17,8 @@ from ruamel.yaml import YAML
 from neophile.pr import _GRAPHQL_ENABLE_AUTO_MERGE, _GRAPHQL_PR_ID
 
 if TYPE_CHECKING:
-    from typing import Any, Mapping, Sequence
+    from collections.abc import Mapping, Sequence
+    from typing import Any
 
     from aioresponses import aioresponses
 
@@ -178,7 +179,7 @@ def setup_kubernetes_repo(tmp_path: Path) -> Repo:
     return repo
 
 
-def setup_python_repo(tmp_path: Path, require_venv: bool = False) -> Repo:
+def setup_python_repo(tmp_path: Path, *, require_venv: bool = False) -> Repo:
     """Set up a test repository with the Python test files.
 
     Parameters

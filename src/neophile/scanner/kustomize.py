@@ -4,16 +4,12 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML
 
 from neophile.dependency.kustomize import KustomizeDependency
 from neophile.scanner.base import BaseScanner
 from neophile.scanner.util import find_files
-
-if TYPE_CHECKING:
-    from typing import List
 
 __all__ = ["KustomizeScanner"]
 
@@ -46,10 +42,11 @@ class KustomizeScanner(BaseScanner):
         self._root = root
         self._yaml = YAML()
 
+    @property
     def name(self) -> str:
         return "kustomize"
 
-    def scan(self) -> List[KustomizeDependency]:
+    def scan(self) -> list[KustomizeDependency]:
         """Scan a source tree for version references.
 
         Returns
@@ -67,7 +64,7 @@ class KustomizeScanner(BaseScanner):
 
     def _build_kustomize_dependencies(
         self, path: Path
-    ) -> List[KustomizeDependency]:
+    ) -> list[KustomizeDependency]:
         """Build Kustomize dependencies from a ``kustomization.yaml`` file.
 
         Given the path to a ``kustomization.yaml`` file, construct a list of

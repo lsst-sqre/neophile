@@ -4,15 +4,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import List, Set
 
 __all__ = ["find_files"]
 
 
-def find_files(root: Path, wanted_names: Set[str]) -> List[Path]:
+def find_files(root: Path, wanted_names: set[str]) -> list[Path]:
     """Scan a tree of files for files of a given set of names.
 
     Files in a directory named "tests" under the root directory will be

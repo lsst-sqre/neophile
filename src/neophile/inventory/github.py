@@ -16,8 +16,6 @@ from neophile.inventory.version import (
 )
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from aiohttp import ClientSession
 
     from neophile.config import Configuration
@@ -46,8 +44,8 @@ class GitHubInventory:
         )
 
     async def inventory(
-        self, owner: str, repo: str, semantic: bool = False
-    ) -> Optional[str]:
+        self, owner: str, repo: str, *, semantic: bool = False
+    ) -> str | None:
         """Return the latest tag of a GitHub repository.
 
         Parameters

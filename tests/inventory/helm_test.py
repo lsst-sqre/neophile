@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import ANY
@@ -80,10 +80,9 @@ async def test_cached_inventory(
     yaml = YAML()
     cache = yaml.load(cache_path)
     assert cache == {full_url: {"timestamp": ANY, "versions": EXPECTED}}
-    now = datetime.now(tz=timezone.utc)
+    now = time.time()
     timestamp = cache[full_url]["timestamp"]
-    assert (now - timedelta(seconds=5)).timestamp() < timestamp
-    assert timestamp < now.timestamp()
+    assert now - 5 < timestamp < now
 
     # Now, change the data provided to the inventory function.
     index = dict_to_yaml({"entries": {"gafaelfawr": [{"version": "1.4.0"}]}})
@@ -96,8 +95,8 @@ async def test_cached_inventory(
         results = await inventory.inventory(url)
 
     # Change the cache timestamp to be older than the cache age.
-    cache_timestamp = now - timedelta(seconds=CachedHelmInventory._LIFETIME)
-    cache[full_url]["timestamp"] = cache_timestamp.timestamp()
+    cache_timestamp = now - CachedHelmInventory._LIFETIME
+    cache[full_url]["timestamp"] = cache_timestamp
     yaml.dump(cache, cache_path)
 
     # Now the inventory will return entirely different results.

@@ -6,8 +6,6 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List
-
     from neophile.update.base import Update
 
 __all__ = ["BaseAnalyzer"]
@@ -17,7 +15,7 @@ class BaseAnalyzer(ABC):
     """Base class for an analysis step."""
 
     @abstractmethod
-    async def analyze(self, update: bool = False) -> List[Update]:
+    async def analyze(self, *, update: bool = False) -> list[Update]:
         """Analyze a tree and return a list of needed changes.
 
         Parameters
@@ -35,18 +33,16 @@ class BaseAnalyzer(ABC):
             A list of updates.
         """
 
+    @property
     @abstractmethod
     def name(self) -> str:
-        """The name of the analyzer type.
+        """Name of the analyzer type.
 
-        Returns
-        -------
-        name : `str`
-            A string representing the type of analyzer this is.  Used for
-            reporting results accumulated from a bunch of analyzers.
+        String representing the type of analyzer this is. Used for reporting
+        results accumulated from a bunch of analyzers.
         """
 
-    async def update(self) -> List[Update]:
+    async def update(self) -> list[Update]:
         """Analyze a tree, apply updates, and return them as a list.
 
         Returns

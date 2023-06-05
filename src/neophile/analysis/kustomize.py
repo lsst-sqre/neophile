@@ -8,8 +8,6 @@ from neophile.analysis.base import BaseAnalyzer
 from neophile.update.kustomize import KustomizeUpdate
 
 if TYPE_CHECKING:
-    from typing import List
-
     from neophile.inventory.github import GitHubInventory
     from neophile.scanner.kustomize import KustomizeScanner
     from neophile.update.base import Update
@@ -34,7 +32,7 @@ class KustomizeAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self, update: bool = False) -> List[Update]:
+    async def analyze(self, *, update: bool = False) -> list[Update]:
         """Analyze a tree and return a list of needed Kustomize changes.
 
         Parameters
@@ -49,7 +47,7 @@ class KustomizeAnalyzer(BaseAnalyzer):
         """
         dependencies = self._scanner.scan()
 
-        results: List[Update] = []
+        results: list[Update] = []
         for dependency in dependencies:
             latest = await self._inventory.inventory(
                 dependency.owner, dependency.repo, semantic=True
@@ -68,5 +66,6 @@ class KustomizeAnalyzer(BaseAnalyzer):
 
         return results
 
+    @property
     def name(self) -> str:
         return "kustomize"

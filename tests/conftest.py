@@ -11,7 +11,7 @@ from aiohttp import ClientSession
 from git import PushInfo, Remote
 
 if TYPE_CHECKING:
-    from typing import AsyncIterator, Iterator
+    from collections.abc import AsyncIterator, Iterator
 
 
 @pytest.fixture

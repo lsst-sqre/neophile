@@ -19,7 +19,6 @@ from neophile.virtualenv import VirtualEnv
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import List
 
     from aiohttp import ClientSession
 
@@ -47,7 +46,7 @@ class Factory:
 
     def create_all_analyzers(
         self, path: Path, *, use_venv: bool = False
-    ) -> List[BaseAnalyzer]:
+    ) -> list[BaseAnalyzer]:
         """Create all analyzers.
 
         Parameters
@@ -77,7 +76,7 @@ class Factory:
             self.create_pre_commit_analyzer(path),
         ]
 
-    def create_all_scanners(self, path: Path) -> List[BaseScanner]:
+    def create_all_scanners(self, path: Path) -> list[BaseScanner]:
         """Create all scanners.
 
         Parameters

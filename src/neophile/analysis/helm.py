@@ -10,8 +10,6 @@ from neophile.inventory.version import SemanticVersion
 from neophile.update.helm import HelmUpdate
 
 if TYPE_CHECKING:
-    from typing import List
-
     from neophile.inventory.helm import HelmInventory
     from neophile.scanner.helm import HelmScanner
     from neophile.update.base import Update
@@ -45,7 +43,7 @@ class HelmAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self, update: bool = False) -> List[Update]:
+    async def analyze(self, *, update: bool = False) -> list[Update]:
         """Analyze a tree and return a list of needed Helm changes.
 
         Parameters
@@ -64,7 +62,7 @@ class HelmAnalyzer(BaseAnalyzer):
         for repo in repositories:
             latest[repo] = await self._inventory.inventory(repo)
 
-        results: List[Update] = []
+        results: list[Update] = []
         for dependency in dependencies:
             repo = dependency.repository
             name = dependency.name
@@ -85,6 +83,7 @@ class HelmAnalyzer(BaseAnalyzer):
 
         return results
 
+    @property
     def name(self) -> str:
         return "helm"
 

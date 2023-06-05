@@ -12,7 +12,6 @@ from neophile.scanner.base import BaseScanner
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import List
 
 __all__ = ["PreCommitScanner"]
 
@@ -30,10 +29,11 @@ class PreCommitScanner(BaseScanner):
         self._root = root
         self._yaml = YAML()
 
+    @property
     def name(self) -> str:
         return "pre-commit"
 
-    def scan(self) -> List[PreCommitDependency]:
+    def scan(self) -> list[PreCommitDependency]:
         """Scan a source tree for pre-commit hook version references.
 
         Returns

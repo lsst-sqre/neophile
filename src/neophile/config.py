@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
 
 from pydantic import BaseModel, BaseSettings, Field, SecretStr
 from ruamel.yaml import YAML
@@ -38,7 +37,7 @@ class Configuration(BaseSettings):
         XDG_CACHE_HOME / "neophile", description="Path to the cache directory"
     )
 
-    github_email: Optional[str] = Field(
+    github_email: str | None = Field(
         None, description="Email address to use for GitHub commits"
     )
 
@@ -50,7 +49,7 @@ class Configuration(BaseSettings):
         "", description="GitHub user for creating pull requests"
     )
 
-    repositories: List[GitHubRepository] = Field(
+    repositories: list[GitHubRepository] = Field(
         default_factory=list, description="List of repositories to check"
     )
 
@@ -63,7 +62,7 @@ class Configuration(BaseSettings):
         env_prefix = "neophile_"
 
     @classmethod
-    def from_file(cls, path: str) -> Configuration:
+    def from_file(cls, path: Path) -> Configuration:
         """Initialize the configuration from a file.
 
         Parameters
@@ -77,6 +76,6 @@ class Configuration(BaseSettings):
             The configuration.
         """
         yaml = YAML()
-        with open(path, "r") as f:
+        with path.open("r") as f:
             settings = yaml.load(f)
         return Configuration.parse_obj(settings)

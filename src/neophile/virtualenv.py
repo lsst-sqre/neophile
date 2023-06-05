@@ -8,9 +8,10 @@ from typing import TYPE_CHECKING
 from venv import EnvBuilder
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
     from subprocess import CompletedProcess
-    from typing import Any, Dict, Optional, Sequence
+    from typing import Any
 
 __all__ = ["VirtualEnv"]
 
@@ -85,9 +86,7 @@ class VirtualEnv:
         kwargs["env"] = env
         return subprocess.run(command, **kwargs)
 
-    def _build_env(
-        self, env: Optional[Dict[str, str]] = None
-    ) -> Dict[str, str]:
+    def _build_env(self, env: dict[str, str] | None = None) -> dict[str, str]:
         """Construct the environment for running commands in the virtualenv.
 
         Parameters
@@ -101,10 +100,7 @@ class VirtualEnv:
         env : Dict[`str`, `str`]
             The environment to use when running commands in the virtualenv.
         """
-        if env:
-            env = dict(env)
-        else:
-            env = dict(os.environ)
+        env = dict(env) if env else dict(os.environ)
         env["PATH"] = str(self._path / "bin") + ":" + os.environ["PATH"]
         env["VIRTUAL_ENV"] = str(self._path)
         return env

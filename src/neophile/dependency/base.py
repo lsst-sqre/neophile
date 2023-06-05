@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Dict
 
 __all__ = ["Dependency"]
 
@@ -19,7 +18,7 @@ class Dependency:
     path: Path
     """The file that contains the dependency declaration."""
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         """Convert the object to a dict.
 
         Notes

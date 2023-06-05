@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+import time
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
@@ -13,7 +13,7 @@ from neophile.inventory.version import SemanticVersion
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Any, Dict
+    from typing import Any
 
     from aiohttp import ClientSession
 
@@ -56,7 +56,7 @@ class HelmInventory:
             url += "/"
         return urljoin(url, "index.yaml")
 
-    async def inventory(self, url: str) -> Dict[str, str]:
+    async def inventory(self, url: str) -> dict[str, str]:
         """Inventory the available versions of Helm charts.
 
         Retrieve the inventory from the given Helm repository.
@@ -116,11 +116,11 @@ class CachedHelmInventory(HelmInventory):
 
     def __init__(self, session: ClientSession, cache_path: Path) -> None:
         super().__init__(session)
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
         self._cache_path = cache_path
         self._load_cache()
 
-    async def inventory(self, url: str) -> Dict[str, str]:
+    async def inventory(self, url: str) -> dict[str, str]:
         """Inventory the available versions of Helm charts.
 
         Retrieve the inventory from the given Helm repository.
@@ -149,7 +149,7 @@ class CachedHelmInventory(HelmInventory):
         from mutating the cache unexpectedly.
         """
         url = self.canonicalize_url(url)
-        now = datetime.now(tz=timezone.utc).timestamp()
+        now = time.time()
         if url in self._cache:
             age = self._cache[url]["timestamp"]
             if age + self._LIFETIME > now:
