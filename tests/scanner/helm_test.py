@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neophile.dependency.helm import HelmDependency
+from neophile.models.dependencies import HelmDependency
 from neophile.scanner.helm import HelmScanner
 
 

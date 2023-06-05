@@ -7,9 +7,10 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-from neophile.dependency.kustomize import KustomizeDependency
 from neophile.scanner.base import BaseScanner
 from neophile.scanner.util import find_files
+
+from ..models.dependencies import KustomizeDependency
 
 __all__ = ["KustomizeScanner"]
 
@@ -51,7 +52,7 @@ class KustomizeScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`neophile.dependency.kustomize.KustomizeDependency`]
+        list of KustomizeDependency
             A list of all discovered dependencies.
         """
         dependency_paths = find_files(self._root, {"kustomization.yaml"})
@@ -77,7 +78,7 @@ class KustomizeScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`neophile.dependency.kustomize.KustomizeDependency`]
+        list of KustomizeDependency
             A list of all discovered Helm chart dependencies.
         """
         results = []

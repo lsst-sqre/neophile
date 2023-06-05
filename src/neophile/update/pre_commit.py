@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path  # noqa: F401
 from urllib.parse import urlparse
 
 from ruamel.yaml import YAML

@@ -19,14 +19,6 @@ Python internal API
 
 .. automodapi:: neophile.config
 
-.. automodapi:: neophile.dependency.base
-
-.. automodapi:: neophile.dependency.helm
-
-.. automodapi:: neophile.dependency.kustomize
-
-.. automodapi:: neophile.dependency.pre_commit
-
 .. automodapi:: neophile.exceptions
 
 .. automodapi:: neophile.factory
@@ -36,6 +28,8 @@ Python internal API
 .. automodapi:: neophile.inventory.helm
 
 .. automodapi:: neophile.inventory.version
+
+.. automodapi:: neophile.models.dependencies
 
 .. automodapi:: neophile.pr
 

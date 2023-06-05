@@ -7,9 +7,10 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-from neophile.dependency.helm import HelmDependency
 from neophile.scanner.base import BaseScanner
 from neophile.scanner.util import find_files
+
+from ..models.dependencies import HelmDependency
 
 __all__ = ["HelmScanner"]
 
@@ -36,7 +37,7 @@ class HelmScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`neophile.dependency.helm.HelmDependency`]
+        list of HelmDependency
             A list of all discovered dependencies.
         """
         wanted_files = {"Chart.yaml", "requirements.yaml"}
@@ -63,7 +64,7 @@ class HelmScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`HelmDependency`]
+        list of HelmDependency
             A list of all discovered Helm chart dependencies.
         """
         results = []

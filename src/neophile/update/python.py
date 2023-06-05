@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import subprocess
 from dataclasses import InitVar, dataclass
+from pathlib import Path  # noqa: F401
 from typing import TYPE_CHECKING
 
 from neophile.update.base import Update
