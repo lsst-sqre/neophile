@@ -7,8 +7,9 @@ from urllib.parse import urlparse
 
 from ruamel.yaml import YAML
 
-from neophile.dependency.pre_commit import PreCommitDependency
 from neophile.scanner.base import BaseScanner
+
+from ..models.dependencies import PreCommitDependency
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -38,7 +39,7 @@ class PreCommitScanner(BaseScanner):
 
         Returns
         -------
-        results : List[`neophile.dependency.pre_commit.PreCommitDependency`]
+        list of PreCommitDependency
             A list of all discovered pre-commit dependencies.
         """
         path = self._root / ".pre-commit-config.yaml"

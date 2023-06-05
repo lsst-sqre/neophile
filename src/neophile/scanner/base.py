@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from neophile.dependency.base import Dependency
+from ..models.dependencies import Dependency
 
 __all__ = ["BaseScanner"]
 
@@ -27,6 +24,6 @@ class BaseScanner(ABC):
 
         Returns
         -------
-        results : List[`neophile.dependency.base.Dependency`]
+        list of Dependency
             A list of all discovered dependencies.
         """

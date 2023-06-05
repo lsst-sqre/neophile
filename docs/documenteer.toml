@@ -22,6 +22,7 @@ nitpick_ignore = [
     # and can't be avoided. These are listed specifically rather than with
     # regexes because I've caught documentation bugs by having Sphinx complain
     # about a new symbol.
+    ["py:class", "dataclasses.InitVar"],
     ["py:class", "pydantic.main.BaseModel"],
     ["py:class", "pydantic.env_settings.BaseSettings"],
     ["py:class", "pydantic.types.SecretStr"],
