@@ -21,6 +21,7 @@ ruff
 # Documentation
 documenteer
 lsst-sphinx-bootstrap-theme
+scriv[toml]
 sphinx-automodapi
 sphinx-click
 sphinx-prompt
