@@ -31,8 +31,9 @@ class HelmUpdate(Update):
 
         Raises
         ------
-        neophile.exceptions.DependencyNotFoundError
-            The specified file doesn't contain a dependency of that name.
+        DependencyNotFoundError
+            Raised if the specified file doesn't contain a dependency of that
+            name.
         """
         if self.applied:
             return
@@ -56,13 +57,6 @@ class HelmUpdate(Update):
         self.applied = True
 
     def description(self) -> str:
-        """Build a description of this update.
-
-        Returns
-        -------
-        description : `str`
-            Short text description of the update.
-        """
         return (
             f"Update {self.name} Helm chart from {self.current}"
             f" to {self.latest}"

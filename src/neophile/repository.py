@@ -15,7 +15,7 @@ class Repository:
 
     Parameters
     ----------
-    path : `str`
+    path
         Root path of the Git repository.
     """
 
@@ -25,14 +25,14 @@ class Repository:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to where the clone should be kept (and may already exist).
-        url : `str`
+        url
             URL of the remote repository.
 
         Returns
         -------
-        repo : `Repository`
+        Repository
             Newly-created repository object.
         """
         if path.is_dir():

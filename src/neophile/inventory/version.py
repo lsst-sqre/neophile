@@ -1,12 +1,4 @@
-"""Version representation for inventories.
-
-Notes
------
-This is a bit more complicated than it should have to be to work around
-https://github.com/python/mypy/issues/5374.  The mixins avoid the conflict
-between an abstract base class and a dataclass in mypy's understanding of the
-Python type system.
-"""
+"""Version representation for inventories."""
 
 from __future__ import annotations
 
@@ -40,13 +32,13 @@ class ParsedVersion(metaclass=ABCMeta):
 
         Parameters
         ----------
-        string : `str`
-            The version as a string.
+        string
+            Version as a string.
 
         Returns
         -------
-        version : `ParsedVersion`
-            The parsed version.
+        ParsedVersion
+            Parsed version.
         """
 
     @staticmethod
@@ -56,18 +48,18 @@ class ParsedVersion(metaclass=ABCMeta):
 
         Parameters
         ----------
-        string : `str`
-            The version as a string.
+        string
+            Version as a string.
 
         Returns
         -------
-        result : `bool`
+        bool
             Whether it is valid.
         """
 
     @abstractmethod
     def __str__(self) -> str:
-        """Return the original form of the version."""
+        """Original form of the version."""
 
 
 @dataclass(frozen=True, order=True)
@@ -93,13 +85,13 @@ class PackagingVersion(ParsedVersion):
 
         Parameters
         ----------
-        string : `str`
-            The version as a string.
+        string
+            Version as a string.
 
         Returns
         -------
-        version : `PackagingVersion`
-            The parsed version.
+        PackagingVersion
+            Parsed version.
         """
         parsed_version = version.parse(string)
         return cls(parsed_version=parsed_version, version=string)
@@ -110,14 +102,14 @@ class PackagingVersion(ParsedVersion):
 
         Parameters
         ----------
-        string : `str`
-            The version as a string.
+        string
+            Version as a string.
 
         Returns
         -------
-        result : `True`
-            All versions are valid for this implementation (some will parse to
-            a legacy version).
+        bool
+            Always returns `True` since all versions are valid for this
+            implementation (some will parse to a legacy version).
         """
         try:
             version.parse(string)
@@ -153,31 +145,19 @@ class SemanticVersion(ParsedVersion):
 
         Parameters
         ----------
-        string : `str`
-            The version as a string.
+        string
+            Version as a string.
 
         Returns
         -------
-        version : `SemanticVersion`
-            The parsed version.
+        SemanticVersion
+            Parsed version.
         """
         version = string[1:] if string.startswith("v") else string
         return cls(version=string, parsed_version=Version.parse(version))
 
     @staticmethod
     def is_valid(string: str) -> bool:
-        """Return whether a version is valid.
-
-        Parameters
-        ----------
-        string : `str`
-            The version as a string.
-
-        Returns
-        -------
-        result : `bool`
-            Whether the version is valid.
-        """
         version = string[1:] if string.startswith("v") else string
         return Version.is_valid(version)
 

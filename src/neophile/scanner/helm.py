@@ -19,8 +19,8 @@ class HelmScanner(BaseScanner):
 
     Parameters
     ----------
-    root : `pathlib.Path`
-        The root of the source tree.
+    root
+        Root of the source tree.
     """
 
     def __init__(self, root: Path) -> None:
@@ -56,7 +56,7 @@ class HelmScanner(BaseScanner):
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the file containing the dependencies, either
             ``Chart.yaml`` (the new syntax) or ``requirements.yaml`` (the old
             syntax).

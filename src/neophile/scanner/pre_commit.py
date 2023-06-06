@@ -18,8 +18,8 @@ class PreCommitScanner(BaseScanner):
 
     Parameters
     ----------
-    root : `pathlib.Path`
-        The root of the source tree.
+    root
+        Root of the source tree.
     """
 
     def __init__(self, root: Path) -> None:

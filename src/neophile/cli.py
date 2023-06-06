@@ -35,7 +35,7 @@ def print_yaml(results: Any) -> None:
     metavar="PATH",
     default=str(XDG_CONFIG_HOME / "neophile.yaml"),
     envvar="NEOPHILE_CONFIG",
-    help="Path to configuration",
+    help="Path to configuration.",
 )
 @click.version_option(message="%(version)s")
 @click.pass_context
@@ -71,21 +71,21 @@ def help(ctx: click.Context, topic: str | None) -> None:
 @click.option(
     "--allow-expressions/--no-allow-expressions",
     default=False,
-    help="Allow version match expressions",
+    help="Allow version match expressions.",
 )
 @click.option(
     "--path",
     type=click.Path(path_type=Path),
     default=Path.cwd(),
-    help="Path to analyze",
+    help="Path to analyze (default: current directory).",
 )
 @click.option(
-    "--pr/--no-pr", default=False, help="Generate a pull request of changes"
+    "--pr/--no-pr", default=False, help="Generate a pull request of changes."
 )
 @click.option(
     "--update/--no-update",
     default=False,
-    help="Update out-of-date dependencies",
+    help="Update out-of-date dependencies.",
 )
 @click.pass_context
 @run_with_asyncio
@@ -97,7 +97,7 @@ async def analyze(
     pr: bool,
     update: bool,
 ) -> None:
-    """Analyze the current directory for pending upgrades."""
+    """Analyze a path for pending upgrades."""
     config = ctx.obj["config"]
     config.allow_expressions = allow_expressions
 
@@ -164,7 +164,7 @@ async def process(ctx: click.Context) -> None:
     "--path",
     type=click.Path(path_type=Path),
     default=Path.cwd(),
-    help="Path to scan",
+    help="Path to scan (default: current directory).",
 )
 @click.pass_context
 @run_with_asyncio

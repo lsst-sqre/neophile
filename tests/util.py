@@ -23,13 +23,13 @@ def dict_to_yaml(data: Mapping[str, Any]) -> str:
 
     Parameters
     ----------
-    data : Mapping[`str`, Any]
-        The data.
+    data
+        Data to convert.
 
     Returns
     -------
-    yaml : `str`
-        The data serialized as YAML.
+    str
+        Data serialized as YAML.
     """
     yaml = YAML()
     output = StringIO()
@@ -49,15 +49,15 @@ def mock_enable_auto_merge(
 
     Parameters
     ----------
-    mock : `aioresponses.aioresponses`
-        The mock object for aiohttp requests.
-    owner : `str`
+    mock
+        Mock object for aiohttp requests.
+    owner
         Owner of the repository.
-    repo : `str`
+    repo
         Name of the repository.
-    pr_number : `str`
+    pr_number
         Number of the PR for which auto-merge will be set.
-    fail : `bool`, optional
+    fail
         Whether to fail the request for automerge
     """
 
@@ -111,12 +111,12 @@ def register_mock_helm_repository(
 
     Parameters
     ----------
-    mock : `aioresponses.aioresponses`
-        The mock object for aiohttp requests.
-    url : `str`
-        The URL of the repository index.
-    versions : Mapping[`str`, Sequence[`str`]]
-        A mapping of Helm chart names to lists of version numbers that should
+    mock
+        Mock object for aiohttp requests.
+    url
+        URL of the repository index.
+    versions
+        Mapping of Helm chart names to lists of version numbers that should
         appear in the index for that chart.
     """
     data = {
@@ -135,12 +135,12 @@ def register_mock_github_tags(
 
     Parameters
     ----------
-    mock : `aioresponses.aioresponses`
-        The mock object for aiohttp requests.
-    repo : `str`
-        The name of the GitHub repository.
-    tags : Sequence[`str`]
-        The list of tags to return for that repository.
+    mock
+        Mock object for aiohttp requests.
+    repo
+        Name of the GitHub repository.
+    tags
+        List of tags to return for that repository.
     """
     data = [{"name": version} for version in tags]
     mock.get(
@@ -155,13 +155,13 @@ def setup_kubernetes_repo(tmp_path: Path) -> Repo:
 
     Parameters
     ----------
-    tmp_path : `pathlib.Path`
-        The directory in which to create the repository.
+    tmp_path
+        Directory in which to create the repository.
 
     Returns
     -------
-    repo : `git.Repo`
-        The repository object.
+    Repo
+        Repository object.
     """
     data_path = Path(__file__).parent / "data" / "kubernetes"
     shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
@@ -179,15 +179,15 @@ def setup_python_repo(tmp_path: Path, *, require_venv: bool = False) -> Repo:
 
     Parameters
     ----------
-    tmp_path : `pathlib.Path`
+    tmp_path
         The directory in which to create the repository.
-    require_venv : `bool`, optional
+    require_venv
         Whether ``make update-deps`` should fail if no virtualenv is in use.
 
     Returns
     -------
-    repo : `git.Repo`
-        The repository object.
+    Repo
+        Repository object.
     """
     data_path = Path(__file__).parent / "data" / "python"
     shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)

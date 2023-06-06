@@ -16,15 +16,15 @@ def find_files(root: Path, wanted_names: set[str]) -> list[Path]:
 
     Parameters
     ----------
-    root : `pathlib.Path`
+    root
         The root from which to begin the search.
-    wanted_names : Set[`str`]
+    wanted_names
         The file names to search for.
 
     Returns
     -------
-    results : List[`pathlib.Path`]
-        A list of matching files.
+    list of pathlib.Path
+        List of matching files.
     """
     tests_path = root / "tests"
 

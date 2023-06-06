@@ -32,13 +32,14 @@ class Processor:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             The path to the cloned repository.
 
         Returns
         -------
-        updates : Dict[`str`, List[`neophile.update.base.Update`]]
-            Any updates found, sorted by the analyzer that found the update.
+        dict of Update
+            Any updates found, organized by the analyzer that found the
+            update.
         """
         analyzers = self._factory.create_all_analyzers(path, use_venv=True)
         return {a.name: await a.analyze() for a in analyzers}
@@ -58,8 +59,8 @@ class Processor:
 
         Parameters
         ----------
-        path : `pathlib.Path`
-            The path to the cloned repository.
+        path
+            Path to the cloned repository.
         """
         repo = Repository(path)
         await self._process_one_repository(repo, path)
@@ -72,12 +73,12 @@ class Processor:
 
         Parameters
         ----------
-        path : `pathlib.Path`
-            The path to the cloned repository.
+        path
+            Path to the cloned repository.
 
         Returns
         -------
-        updates : List[`neophile.update.base.Update`]
+        list of Update
             All the updates that were applied.
         """
         analyzers = self._factory.create_all_analyzers(path, use_venv=True)
@@ -98,10 +99,10 @@ class Processor:
 
         Parameters
         ----------
-        repo : `neophile.repository.Repository`
-            The cloned repository to check.
-        path : `pathlib.Path`
-            The path to the cloned repository.
+        repo
+            Cloned repository to check.
+        path
+            Path to the cloned repository.
         """
         repo.switch_branch()
         updates = await self.update_checkout(path)

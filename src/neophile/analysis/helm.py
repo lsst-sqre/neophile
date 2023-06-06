@@ -19,14 +19,14 @@ class HelmAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    scanner : `neophile.scanner.helm.HelmScanner`
+    scanner
         Scanner for Helm dependencies.
-    inventory : `neophile.inventory.helm.HelmInventory`
+    inventory
         Inventory for Helm repositories.
-    allow_expressions : `bool`, optional
+    allow_expressions
         If set, allow dependencies to be expressed as expressions, and only
         report a needed update if the latest version is outside the range of
-        the expression.  Defaults to false.
+        the expression.
     """
 
     def __init__(
@@ -45,13 +45,13 @@ class HelmAnalyzer(BaseAnalyzer):
 
         Parameters
         ----------
-        update : `bool`, optional
+        update
             Ignored for this analyzer.
 
         Returns
         -------
-        results : List[`neophile.update.base.Update`]
-            A list of updates.
+        list of Update
+            List of needed updates.
         """
         dependencies = self._scanner.scan()
         repositories = {d.repository for d in dependencies}
@@ -89,16 +89,16 @@ class HelmAnalyzer(BaseAnalyzer):
 
         Parameters
         ----------
-        current : `str`
-            The current version number.  If this is not a valid version number,
-            it is assumed to be a match pattern.
-        latest_str : `str`
-            The version number of the latest release.
+        current
+            Current version number. If this is not a valid version number, it
+            is assumed to be a match pattern.
+        latest_str
+            Version number of the latest release.
 
         Returns
         -------
-        result : `bool`
-            Whether this dependency should be updated.  Returns true if the
+        bool
+            Whether this dependency should be updated. Returns `True` if the
             current version is invalid or if it is older than the latest
             version.
         """

@@ -31,7 +31,8 @@ class MethodMixin(ABC):
         Raises
         ------
         neophile.exceptions.DependencyNotFoundError
-            The specified file doesn't contain a dependency of that name.
+            Raised if the specified file doesn't contain a dependency of that
+            name.
         """
 
     @abstractmethod
@@ -40,7 +41,7 @@ class MethodMixin(ABC):
 
         Returns
         -------
-        description : `str`
+        str
             Short text description of the update.
         """
 
@@ -57,6 +58,11 @@ class UpdateMixin:
 
     def to_dict(self) -> dict[str, str | bool]:
         """Convert the object to a dict.
+
+        Returns
+        -------
+        dict of str or bool
+            Dictionary representation of this object.
 
         Notes
         -----
