@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
+from typing import Self
 
 from packaging import version
 from semver.version import Version
@@ -34,7 +35,7 @@ class ParsedVersion(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def from_str(cls, string: str) -> ParsedVersion:
+    def from_str(cls, string: str) -> Self:
         """Parse a string into a version.
 
         Parameters
@@ -87,7 +88,7 @@ class PackagingVersion(ParsedVersion):
     """The raw version string."""
 
     @classmethod
-    def from_str(cls, string: str) -> PackagingVersion:
+    def from_str(cls, string: str) -> Self:
         """Parse a string into a `~packaging.version.Version`.
 
         Parameters
@@ -147,7 +148,7 @@ class SemanticVersion(ParsedVersion):
     """The raw version string, which may start with a v."""
 
     @classmethod
-    def from_str(cls, string: str) -> SemanticVersion:
+    def from_str(cls, string: str) -> Self:
         """Parse a string into a `SemanticVersion`.
 
         Parameters

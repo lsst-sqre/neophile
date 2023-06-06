@@ -19,7 +19,7 @@ from git.repo import Repo
 from git.util import Actor
 from ruamel.yaml import YAML
 
-from neophile.config import Configuration, GitHubRepository
+from neophile.config import Config, GitHubRepository
 from neophile.factory import Factory
 from neophile.pr import CommitMessage
 from neophile.processor import Processor
@@ -84,7 +84,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
     tmp_repo = setup_python_repo(tmp_path / "tmp", require_venv=True)
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
-    config = Configuration(
+    config = Config(
         repositories=[GitHubRepository(owner="foo", repo="bar")],
         work_area=tmp_path / "work",
     )
@@ -168,7 +168,7 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     tmp_repo.index.commit("Initial commit", author=actor, committer=actor)
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
-    config = Configuration(
+    config = Config(
         repositories=[GitHubRepository(owner="foo", repo="bar")],
         work_area=tmp_path / "work",
     )
@@ -196,7 +196,7 @@ async def test_allow_expressions(
     tmp_repo = setup_kubernetes_repo(tmp_path / "tmp")
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
-    config = Configuration(
+    config = Config(
         allow_expressions=True,
         cache_enabled=False,
         repositories=[GitHubRepository(owner="foo", repo="bar")],

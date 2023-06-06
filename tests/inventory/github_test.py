@@ -6,7 +6,7 @@ import pytest
 from aiohttp import ClientSession
 from aioresponses import aioresponses
 
-from neophile.config import Configuration
+from neophile.config import Config
 from neophile.inventory.github import GitHubInventory
 
 from ..util import register_mock_github_tags
@@ -24,7 +24,7 @@ async def test_inventory(session: ClientSession) -> None:
     for test in tests:
         with aioresponses() as mock:
             register_mock_github_tags(mock, "foo", "bar", test["tags"])
-            inventory = GitHubInventory(Configuration(), session)
+            inventory = GitHubInventory(Config(), session)
             latest = await inventory.inventory("foo", "bar")
         assert latest == test["latest"]
 
@@ -35,7 +35,7 @@ async def test_inventory_semantic(session: ClientSession) -> None:
 
     with aioresponses() as mock:
         register_mock_github_tags(mock, "foo", "bar", tags)
-        inventory = GitHubInventory(Configuration(), session)
+        inventory = GitHubInventory(Config(), session)
         latest = await inventory.inventory("foo", "bar")
         assert latest == "20171120-1"
         latest = await inventory.inventory("foo", "bar", semantic=True)
@@ -47,6 +47,6 @@ async def test_inventory_missing(session: ClientSession) -> None:
     """Missing and empty version lists should return None."""
     with aioresponses() as mock:
         register_mock_github_tags(mock, "foo", "bar", [])
-        inventory = GitHubInventory(Configuration(), session)
+        inventory = GitHubInventory(Config(), session)
         assert await inventory.inventory("foo", "bar") is None
         assert await inventory.inventory("foo", "nonexistent") is None

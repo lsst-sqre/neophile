@@ -11,7 +11,7 @@ from .analysis.helm import HelmAnalyzer
 from .analysis.kustomize import KustomizeAnalyzer
 from .analysis.pre_commit import PreCommitAnalyzer
 from .analysis.python import PythonAnalyzer
-from .config import Configuration
+from .config import Config
 from .inventory.github import GitHubInventory
 from .inventory.helm import CachedHelmInventory, HelmInventory
 from .pr import PullRequester
@@ -29,13 +29,13 @@ class Factory:
 
     Parameters
     ----------
-    config : `neophile.config.Configuration`
+    config
         neophile configuration.
-    session : `aiohttp.ClientSession`
+    session
         The client session to use for requests.
     """
 
-    def __init__(self, config: Configuration, session: ClientSession) -> None:
+    def __init__(self, config: Config, session: ClientSession) -> None:
         self._config = config
         self._session = session
 

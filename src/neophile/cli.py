@@ -12,7 +12,7 @@ from ruamel.yaml import YAML
 from safir.asyncio import run_with_asyncio
 from xdg import XDG_CONFIG_HOME
 
-from .config import Configuration
+from .config import Config
 from .factory import Factory
 from .inventory.github import GitHubInventory
 from .processor import Processor
@@ -43,9 +43,9 @@ def main(ctx: click.Context, config_path: Path) -> None:
     """Command-line interface for neophile."""
     ctx.ensure_object(dict)
     if config_path.exists():
-        ctx.obj["config"] = Configuration.from_file(config_path)
+        ctx.obj["config"] = Config.from_file(config_path)
     else:
-        ctx.obj["config"] = Configuration()
+        ctx.obj["config"] = Config()
 
 
 @main.command()

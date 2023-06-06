@@ -16,7 +16,7 @@ from git import PushInfo, Remote
 from git.repo import Repo
 from git.util import Actor
 
-from .config import Configuration, GitHubRepository
+from .config import Config, GitHubRepository
 from .exceptions import PushError
 from .update.base import Update
 
@@ -70,16 +70,16 @@ class PullRequester:
 
     Parameters
     ----------
-    path : `pathlib.Path`
+    path
         Path to the Git repository.
-    config : `neophile.config.Configuration`
+    config
         neophile configuration.
-    session : `aiohttp.ClientSession`
+    session
         The client session to use for requests.
     """
 
     def __init__(
-        self, path: Path, config: Configuration, session: ClientSession
+        self, path: Path, config: Config, session: ClientSession
     ) -> None:
         self._config = config
         self._github = GitHubAPI(
