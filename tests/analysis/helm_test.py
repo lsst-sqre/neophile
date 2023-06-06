@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
+from aiohttp import ClientSession
 from aioresponses import aioresponses
 
 from neophile.analysis.helm import HelmAnalyzer
 from neophile.inventory.helm import HelmInventory
 from neophile.scanner.helm import HelmScanner
 from neophile.update.helm import HelmUpdate
-from tests.util import dict_to_yaml
 
-if TYPE_CHECKING:
-    from aiohttp import ClientSession
+from ..util import dict_to_yaml
 
 MOCK_REPOSITORIES = {
     "https://kubernetes-charts.storage.googleapis.com/index.yaml": {

@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from neophile.analysis.base import BaseAnalyzer
-from neophile.update.kustomize import KustomizeUpdate
-
-if TYPE_CHECKING:
-    from neophile.inventory.github import GitHubInventory
-    from neophile.scanner.kustomize import KustomizeScanner
-    from neophile.update.base import Update
+from ..inventory.github import GitHubInventory
+from ..scanner.kustomize import KustomizeScanner
+from ..update.base import Update
+from ..update.kustomize import KustomizeUpdate
+from .base import BaseAnalyzer
 
 __all__ = ["KustomizeAnalyzer"]
 

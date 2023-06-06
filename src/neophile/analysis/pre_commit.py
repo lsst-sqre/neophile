@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from neophile.analysis.base import BaseAnalyzer
-from neophile.update.pre_commit import PreCommitUpdate
-
-if TYPE_CHECKING:
-    from neophile.inventory.github import GitHubInventory
-    from neophile.scanner.pre_commit import PreCommitScanner
-    from neophile.update.base import Update
+from ..inventory.github import GitHubInventory
+from ..scanner.pre_commit import PreCommitScanner
+from ..update.base import Update
+from ..update.pre_commit import PreCommitUpdate
+from .base import BaseAnalyzer
 
 __all__ = ["PreCommitAnalyzer"]
 

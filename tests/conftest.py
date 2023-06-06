@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import AsyncIterator, Iterator
 from unittest.mock import Mock, patch
 
 import pytest
 import pytest_asyncio
 from aiohttp import ClientSession
 from git import PushInfo, Remote
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Iterator
 
 
 @pytest.fixture

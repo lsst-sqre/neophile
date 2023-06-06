@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 import re
 import shutil
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any
 from unittest.mock import Mock, call, patch
 
 import pytest
+from aiohttp import ClientSession
 from aioresponses import CallbackResult, aioresponses
 from git import PushInfo, Remote
 from git.repo import Repo
@@ -20,19 +22,15 @@ from ruamel.yaml import YAML
 from neophile.config import Configuration, GitHubRepository
 from neophile.factory import Factory
 from neophile.pr import CommitMessage
-from tests.util import (
+from neophile.processor import Processor
+
+from .util import (
     mock_enable_auto_merge,
     register_mock_github_tags,
     register_mock_helm_repository,
     setup_kubernetes_repo,
     setup_python_repo,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
-    from typing import Any
-
-    from aiohttp import ClientSession
 
 
 def create_upstream_git_repository(repo: Repo, upstream_path: Path) -> None:
@@ -142,7 +140,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
         # Unfortunately, the mock_push fixture can't be used here because we
         # want to use git.Remote.push in create_upstream_git_repository.
         factory = Factory(config, session)
-        processor = factory.create_processor()
+        processor = Processor(config, factory)
         with patch_clone_from("foo", "bar", upstream_path):
             with patch.object(Remote, "push") as mock_push:
                 mock_push.return_value = push_result
@@ -180,7 +178,7 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     with aioresponses() as mock:
         mock.get("https://api.github.com/user", payload=user)
         factory = Factory(config, session)
-        processor = factory.create_processor()
+        processor = Processor(config, factory)
         with patch_clone_from("foo", "bar", upstream_path):
             with patch.object(Remote, "push") as mock_push:
                 await processor.process()
@@ -255,7 +253,7 @@ async def test_allow_expressions(
         # Unfortunately, the mock_push fixture can't be used here because we
         # want to use git.Remote.push in create_upstream_git_repository.
         factory = Factory(config, session)
-        processor = factory.create_processor()
+        processor = Processor(config, factory)
         with patch_clone_from("foo", "bar", upstream_path):
             with patch.object(Remote, "push") as mock_push:
                 mock_push.return_value = push_result

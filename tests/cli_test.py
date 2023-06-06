@@ -7,8 +7,8 @@ import re
 import shutil
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
-from unittest.mock import call
+from typing import Any
+from unittest.mock import Mock, call
 
 from aioresponses import CallbackResult, aioresponses
 from click.testing import CliRunner
@@ -19,11 +19,8 @@ from ruamel.yaml import YAML
 
 from neophile.cli import main
 from neophile.pr import CommitMessage
-from tests.util import dict_to_yaml, mock_enable_auto_merge
 
-if TYPE_CHECKING:
-    from typing import Any
-    from unittest.mock import Mock
+from .util import dict_to_yaml, mock_enable_auto_merge
 
 
 def test_help() -> None:

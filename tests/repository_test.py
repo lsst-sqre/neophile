@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from git.repo import Repo
 from git.util import Actor
 
 from neophile.repository import Repository
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def create_repo(upstream_path: Path, checkout_path: Path) -> Repo:

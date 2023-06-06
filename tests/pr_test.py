@@ -6,10 +6,11 @@ import json
 import re
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any
 from unittest.mock import Mock, call, patch
 
 import pytest
+from aiohttp import ClientSession
 from aioresponses import CallbackResult, aioresponses
 from git import PushInfo, Remote
 from git.repo import Repo
@@ -21,12 +22,8 @@ from neophile.exceptions import PushError
 from neophile.pr import CommitMessage, PullRequester
 from neophile.repository import Repository
 from neophile.update.helm import HelmUpdate
-from tests.util import mock_enable_auto_merge
 
-if TYPE_CHECKING:
-    from typing import Any
-
-    from aiohttp import ClientSession
+from .util import mock_enable_auto_merge
 
 
 def setup_repo(tmp_path: Path) -> Repo:

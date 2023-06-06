@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import os
 import subprocess
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
+from pathlib import Path
+from subprocess import CompletedProcess
+from typing import Any
 from venv import EnvBuilder
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from pathlib import Path
-    from subprocess import CompletedProcess
-    from typing import Any
 
 __all__ = ["VirtualEnv"]
 

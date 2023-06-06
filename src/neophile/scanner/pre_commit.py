@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 from urllib.parse import urlparse
 
 from ruamel.yaml import YAML
 
-from neophile.scanner.base import BaseScanner
-
 from ..models.dependencies import PreCommitDependency
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from .base import BaseScanner
 
 __all__ = ["PreCommitScanner"]
 
