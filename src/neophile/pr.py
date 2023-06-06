@@ -51,17 +51,17 @@ class CommitMessage:
     """A Git commit message."""
 
     changes: list[str]
-    """The changes represented by this commit."""
+    """Changes represented by this commit."""
 
     title: ClassVar[str] = "[neophile] Update dependencies"
-    """The title of the commit message, currently fixed for all commits."""
+    """Title of the commit message, currently fixed for all commits."""
 
     def __str__(self) -> str:
         return f"{self.title}\n\n{self.body}"
 
     @property
     def body(self) -> str:
-        """The body of the commit message."""
+        """Body of the commit message."""
         return "- " + "\n- ".join(self.changes) + "\n"
 
 
@@ -94,13 +94,13 @@ class PullRequester:
 
         Parameters
         ----------
-        changes : Sequence[`neophile.update.base.Update`]
+        changes
             The changes.
 
         Raises
         ------
-        neophile.exceptions.PushError
-            Pushing the branch to GitHub failed.
+        PushError
+            Raised if pushing the branch to GitHub failed.
         """
         github_repo = self._get_github_repo()
         default_branch = await self._get_github_default_branch(github_repo)
@@ -120,13 +120,13 @@ class PullRequester:
 
         Parameters
         ----------
-        changes : Sequence[`neophile.update.base.Update`]
+        changes
             The changes.
 
         Returns
         -------
-        message : `CommitMessage`
-            The corresponding commit message.
+        CommitMessage
+            Corresponding commit message.
         """
         descriptions = [change.description() for change in changes]
         return CommitMessage(changes=descriptions)
@@ -140,13 +140,13 @@ class PullRequester:
 
         Parameters
         ----------
-        changes : Sequence[`neophile.update.base.Update`]
-            The changes to apply and commit.
+        changes
+            Changes to apply and commit.
 
         Returns
         -------
-        message : `CommitMessage`
-            The commit message of the commit.
+        CommitMessage
+            Commit message of the commit.
         """
         actor = await self._get_github_actor()
         for change in changes:
@@ -165,12 +165,12 @@ class PullRequester:
 
         Parameters
         ----------
-        github_repo : `neophile.config.GitHubRepository`
+        github_repo
             GitHub repository in which to create the pull request.
-        base_branch : `str`
-            The branch of the repository to use as the base for the PR.
-        message : `CommitMessage`
-            The commit message to use for the pull request.
+        base_branch
+            Branch of the repository to use as the base for the PR.
+        message
+            Commit message to use for the pull request.
         """
         branch = self._repo.head.ref.name
         data = {
@@ -193,12 +193,14 @@ class PullRequester:
     ) -> None:
         """Enable automerge for a PR.
 
+        Failures are logged but do not raise an exception.
+
         Parameters
         ----------
-        github_repo : `neophile.config.GitHubRepository`
+        github_repo
             GitHub repository in which to create the pull request.
-        pr_number : `str`
-            The number of the PR in that repository to enable auto-merge for.
+        pr_number
+            Number of the PR in that repository to enable auto-merge for.
         """
         # Enabling auto-merge is only available via the GraphQL API with a
         # mutation.  To use that, we have to retrieve the GraphQL ID of the PR
@@ -229,8 +231,8 @@ class PullRequester:
 
         Returns
         -------
-        url : `str`
-            A URL suitable for an authenticated push of a new branch.
+        url
+            URL suitable for an authenticated push of a new branch.
         """
         url = self._get_remote_url()
         token = self._config.github_token.get_secret_value()
@@ -248,8 +250,8 @@ class PullRequester:
 
         Returns
         -------
-        author : `git.objects.util.Actor`
-            The actor to use for commits.
+        author
+            Actor to use for commits.
         """
         response = await self._github.getitem("/user")
         if self._config.github_email:
@@ -266,13 +268,13 @@ class PullRequester:
 
         Parameters
         ----------
-        github_repo : `neophile.config.GitHubRepository`
+        github_repo
             GitHub repository in which to create the pull request.
 
         Returns
         -------
-        branch : `str`
-            The name of the main branch.
+        str
+            Name of the main branch.
         """
         repo = await self._github.getitem(
             "/repos{/owner}{/repo}",
@@ -287,7 +289,7 @@ class PullRequester:
 
         Returns
         -------
-        repo : `neophile.config.GitHubRepository`
+        GitHubRepository
             GitHub repository information.
         """
         url = self._get_remote_url()
@@ -303,21 +305,21 @@ class PullRequester:
 
         Parameters
         ----------
-        github_repo : `neophile.config.GitHubRepository`
+        github_repo
             GitHub repository in which to search for a pull request.
-        bsae_branch : `str`
-            The base repository branch used to limit the search.
+        bsae_branch
+            Base repository branch used to limit the search.
 
         Returns
         -------
-        pr_number : `str` or `None`
-            The PR number or `None` if there is no open pull request from
+        str or None
+            PR number, or `None` if there is no open pull request from
             neophile.
 
         Notes
         -----
         The pull request is found by searching for all PRs in the open state
-        whose branch is u/neophile.
+        whose branch is ``u/neophile``.
         """
         query = {
             "state": "open",
@@ -341,8 +343,8 @@ class PullRequester:
 
         Returns
         -------
-        url : `str`
-            The results of `~urllib.parse.urlparse` on the origin remote URL.
+        url
+            Results of `~urllib.parse.urlparse` on the origin remote URL.
         """
         url = next(self._repo.remotes.origin.urls)
         if "//" in url:
@@ -352,12 +354,12 @@ class PullRequester:
             return urlparse(f"https://github.com/{path}")
 
     def _push_branch(self) -> None:
-        """Push the u/neophile branch to GitHub.
+        """Push the ``u/neophile`` branch to GitHub.
 
         Raises
         ------
-        neophile.exceptions.PushError
-            Pushing the branch to GitHub failed.
+        PushError
+            Raised if pushing the branch to GitHub failed.
         """
         branch = self._repo.head.ref.name
         remote_url = self._get_authenticated_remote()
@@ -381,12 +383,12 @@ class PullRequester:
 
         Parameters
         ----------
-        github_repo : `neophile.config.GitHubRepository`
+        github_repo
             GitHub repository in which to create the pull request.
-        pr_number : `str`
-            The number of the pull request to update.
-        message : `CommitMessage`
-            The commit message to use for the pull request.
+        pr_number
+            Number of the pull request to update.
+        message
+            Commit message to use for the pull request.
         """
         data = {
             "title": message.title,

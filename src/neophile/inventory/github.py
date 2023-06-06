@@ -11,9 +11,7 @@ from gidgethub.aiohttp import GitHubAPI
 from ..config import Config
 from .version import PackagingVersion, ParsedVersion, SemanticVersion
 
-__all__ = [
-    "GitHubInventory",
-]
+__all__ = ["GitHubInventory"]
 
 
 class GitHubInventory:
@@ -41,22 +39,22 @@ class GitHubInventory:
 
         Parameters
         ----------
-        owner : `str`
+        owner
             Owner of the repository.
-        repo : `str`
+        repo
             Name of the repository.
-        semantic : `bool`, optional
+        semantic
             If set to true, only semantic versions will be considered and the
             latest version will be determined by semantic version sorting
             instead of `packaging.version.Version`.
 
         Returns
         -------
-        result : `str` or `None`
-            The latest tag in sorted order.  Tags that parse as valid versions
+        str or None
+            The latest tag in sorted order. Tags that parse as valid versions
             sort before tags that do not, which should normally produce the
-            correct results when version tags are mixed with other tags.  If
-            no valid tags are found or the repository doesn't exist, returns
+            correct results when version tags are mixed with other tags. If no
+            valid tags are found or the repository doesn't exist, returns
             `None`.
         """
         logging.info("Inventorying GitHub repo %s/%s", owner, repo)

@@ -22,9 +22,9 @@ class PythonAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    root : `pathlib.Path`
+    root
         Root of the directory tree to analyze.
-    virtualenv : `neophile.virtualenv.VirtualEnv`, optional
+    virtualenv
         Virtual environment manager.
     """
 
@@ -39,24 +39,24 @@ class PythonAnalyzer(BaseAnalyzer):
 
         Parameters
         ----------
-        update : `bool`, optional
-            If set to `True`, leave the update applied.  This avoids having
-            to run ``make update-deps`` twice, once to see if an update is
-            needed and again to apply it properly.
+        update
+            If set to `True`, leave the update applied. This avoids having to
+            run ``make update-deps`` twice, once to see if an update is needed
+            and again to apply it properly.
 
         Returns
         -------
-        results : List[`neophile.update.base.Update`]
-            Will contain either no elements (no updates needed) or a single
+        list of Update
+            Either an empty list (no updates needed) or a list with a single
             element (an update needed).
 
         Raises
         ------
-        neophile.exceptions.UncommittedChangesError
-            The repository being analyzed has uncommitted changes and
-            therefore cannot be checked for updates.
+        UncommittedChangesError
+            Raised if the repository being analyzed has uncommitted changes
+            and therefore cannot be checked for updates.
         subprocess.CalledProcessError
-            Running ``make update-deps`` failed.
+            Raised if running ``make update-deps`` failed.
         """
         for name in ("Makefile", "requirements/main.in"):
             if not (self._root / name).exists():

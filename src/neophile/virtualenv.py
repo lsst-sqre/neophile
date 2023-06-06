@@ -18,13 +18,13 @@ class VirtualEnv:
 
     Python dependency updates using ``make update`` have to be done inside a
     virtual environment because they may attempt to install packages with
-    pip.  This class manages creation and execution of commands inside a
+    ``pip``. This class manages creation and execution of commands inside a
     virtual environment.
 
     Parameters
     ----------
-    path : `pathlib.Path`
-        Path to where to create the virtual environment.  If that directory
+    path
+        Path to where to create the virtual environment. If that directory
         already exists, it will be used as an existing virtual environment
         instead of creating a new one.
     """
@@ -38,8 +38,7 @@ class VirtualEnv:
         Raises
         ------
         subprocess.CalledProcessError
-            On failure to install the wheel package or if the command given
-            sets the ``check`` argument.
+            Raised on failure to install the wheel package.
         """
         if self._path.is_dir():
             return
@@ -60,22 +59,22 @@ class VirtualEnv:
 
         Parameters
         ----------
-        command : Sequence[`str`]
+        command
             The command to run.
-        **kwargs: `typing.Any`
+        **kwargs
             The arguments, which except for the ``env`` parameter if any will
-            be passed as-is to :py:func:`subprocess.run`.
+            be passed as-is to `subprocess.run`.
 
         Returns
         -------
-        result : `subprocess.CompletedProcess`
-            The return value of :py:func:`subprocess.run`.
+        subprocess.CompletedProcess
+            Return value of `subprocess.run`.
 
         Raises
         ------
         subprocess.CalledProcessError
-            On failure to install the wheel package or if the command given
-            sets the ``check`` argument.
+            Raised on failure to install the wheel package or failure of the
+            provided command.
         """
         self.create()
 
@@ -88,14 +87,14 @@ class VirtualEnv:
 
         Parameters
         ----------
-        env : Dict[`str`, `str`], optional
+        env
             The existing environment on which to base the new environment.
             If none is given, will use `os.environ` instead.
 
         Returns
         -------
-        env : Dict[`str`, `str`]
-            The environment to use when running commands in the virtualenv.
+        dict of str to str
+            Environment to use when running commands in the virtualenv.
         """
         env = dict(env) if env else dict(os.environ)
         env["PATH"] = str(self._path / "bin") + ":" + os.environ["PATH"]

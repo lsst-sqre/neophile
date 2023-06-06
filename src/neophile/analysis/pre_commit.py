@@ -16,9 +16,9 @@ class PreCommitAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    scanner : `neophile.scanner.pre_commit.PreCommitScanner`
+    scanner
         Scanner for pre-commit hook dependencies.
-    inventory : `neophile.inventory.github.GitHubInventory`
+    inventory
         Inventory for GitHub tags.
     """
 
@@ -29,17 +29,17 @@ class PreCommitAnalyzer(BaseAnalyzer):
         self._inventory = inventory
 
     async def analyze(self, *, update: bool = False) -> list[Update]:
-        """Analyze a tree and return a list of needed pre-commit hook changes.
+        """Analyze a tree and return needed pre-commit hook changes.
 
         Parameters
         ----------
-        update : `bool`, optional
+        update
             Ignored for this analyzer.
 
         Returns
         -------
-        results : List[`neophile.update.base.Update`]
-            A list of updates.
+        list of Update
+            List of needed updates.
         """
         dependencies = self._scanner.scan()
 

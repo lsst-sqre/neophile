@@ -24,9 +24,8 @@ class HelmInventory:
 
     Parameters
     ----------
-    session : `aiohttp.ClientSession`
-        The aiohttp client session to use to make requests for Helm repository
-        index files.
+    session
+        Client session to use for requests for Helm repository index files.
     """
 
     def __init__(self, session: ClientSession) -> None:
@@ -38,12 +37,12 @@ class HelmInventory:
 
         Parameters
         ----------
-        url : `str`
+        url
             The URL for a Helm repository.
 
         Returns
         -------
-        canonical_url : `str`
+        str
             The canonical URL for the index.yaml file of the repository.
         """
         if url.endswith("/index.yaml"):
@@ -59,21 +58,23 @@ class HelmInventory:
 
         Parameters
         ----------
-        url : `str`
+        url
             URL of the repository.
 
         Returns
         -------
-        results : Dict[`str`, `str`]
-            Returns a dict of Helm chart names to the latest available version
-            of that Helm chart.
+        dict of str
+            Mapping of Helm chart names to the latest available version of
+            that Helm chart.
 
         Raises
         ------
         aiohttp.ClientError
-            Failure to retrieve the index file from the Helm repository.
+            Raised on failure to retrieve the index file from the Helm
+            repository.
         ruamel.yaml.YAMLError
-            The index file for the repository doesn't parse as YAML.
+            Raised if the index file for the repository doesn't parse as
+            YAML.
         """
         url = self.canonicalize_url(url)
         logging.info("Inventorying %s", url)
@@ -102,9 +103,8 @@ class CachedHelmInventory(HelmInventory):
 
     Parameters
     ----------
-    session : `aiohttp.ClientSession`
-        The aiohttp client session to use to make requests for Helm repository
-        index files.
+    session
+        Client session to use for requests for Helm repository index files.
     """
 
     _LIFETIME = 24 * 60 * 60
@@ -123,26 +123,23 @@ class CachedHelmInventory(HelmInventory):
 
         Parameters
         ----------
-        url : `str`
+        url
             URL of the repository.
 
         Returns
         -------
-        results : Dict[`str`, `str`]
-            Returns a dict of Helm chart names to the latest available version
-            of that Helm chart.
+        dict of str
+            Mapping of Helm chart names to the latest available version of
+            that Helm chart.
 
         Raises
         ------
         aiohttp.ClientError
-            Failure to retrieve the index file from the Helm repository.
+            Raised on failure to retrieve the index file from the Helm
+            repository.
         ruamel.yaml.YAMLError
-            The index file for the repository doesn't parse as YAML.
-
-        Notes
-        -----
-        This makes a copy of the contents of the cache to prevent the caller
-        from mutating the cache unexpectedly.
+            Raised if the index file for the repository doesn't parse as
+            YAML.
         """
         url = self.canonicalize_url(url)
         now = time.time()

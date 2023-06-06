@@ -18,17 +18,17 @@ class BaseAnalyzer(ABC):
 
         Parameters
         ----------
-        update : `bool`, optional
+        update
             If set to `True`, leave the update applied if this is more
-            efficient.  Used by analyzers like the Python frozen dependency
+            efficient. Used by analyzers like the Python frozen dependency
             analyzer that have to do work and apply the update to see if any
-            update is necessary.  They can then mark the returned update as
+            update is necessary. They can then mark the returned update as
             already applied and not have to run it twice.
 
         Returns
         -------
-        results : List[`neophile.update.base.Update`]
-            A list of updates.
+        list of Update
+            List of updates found.
         """
 
     @property
@@ -41,12 +41,12 @@ class BaseAnalyzer(ABC):
         """
 
     async def update(self) -> list[Update]:
-        """Analyze a tree, apply updates, and return them as a list.
+        """Analyze a tree and apply updates.
 
         Returns
         -------
-        results : List[`neophile.update.base.Update`]
-            A list of updates.
+        list of Update
+            List of updates applied.
         """
         updates = await self.analyze(update=True)
         for update in updates:

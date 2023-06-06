@@ -16,9 +16,9 @@ class KustomizeAnalyzer(BaseAnalyzer):
 
     Parameters
     ----------
-    scanner : `neophile.scanner.kustomize.KustomizeScanner`
+    scanner
         Scanner for Kustomize dependencies.
-    inventory : `neophile.inventory.github.GitHubInventory`
+    inventory
         Inventory for GitHub tags.
     """
 
@@ -33,13 +33,13 @@ class KustomizeAnalyzer(BaseAnalyzer):
 
         Parameters
         ----------
-        update : `bool`, optional
+        update
             Ignored for this analyzer.
 
         Returns
         -------
-        results : List[`neophile.update.base.Update`]
-            A list of updates.
+        list of Update
+            List of needed updates.
         """
         dependencies = self._scanner.scan()
 

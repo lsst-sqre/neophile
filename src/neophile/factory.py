@@ -46,15 +46,14 @@ class Factory:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the Git repository.
-        use_venv : `bool`, optional
-            Whether to use a virtualenv to isolate analysis.  Default is
-            false.
+        use_venv
+            Whether to use a virtualenv to isolate analysis.
 
         Returns
         -------
-        analyzers : List[`neophile.analysis.base.BaseAnalyzer`]
+        list of BaseAnalyzer
             List of all available analyzers.
 
         Notes
@@ -76,12 +75,12 @@ class Factory:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the Git repository to scan.
 
         Returns
         -------
-        scanners : List[`neophile.scanner.base.BaseScanner`]
+        list of BaseScanner
             List of all available scanners.
         """
         return [
@@ -95,12 +94,12 @@ class Factory:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the Git repository.
 
         Returns
         -------
-        analyzer : `neophile.analysis.helm.HelmAnalyzer`
+        HelmAnalyzer
             New analyzer.
         """
         scanner = HelmScanner(path)
@@ -119,7 +118,7 @@ class Factory:
 
         Returns
         -------
-        inventory : `neophile.inventory.helm.HelmInventory`
+        HelmInventory
             New inventory.
         """
         if not self._config.cache_enabled:
@@ -133,12 +132,12 @@ class Factory:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the Git repository.
 
         Returns
         -------
-        analyzer : `neophile.analysis.kustomize.KustomizeAnalyzer`
+        KustomizeAnalyzer
             New analyzer.
         """
         scanner = KustomizeScanner(path)
@@ -150,12 +149,12 @@ class Factory:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the Git repository.
 
         Returns
         -------
-        analyzer : `neophile.analysis.pre_commit.PreCommitAnalyzer`
+        PreCommitAnalyzer
             New analyzer.
         """
         scanner = PreCommitScanner(path)
@@ -169,15 +168,14 @@ class Factory:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the Git repository.
-        use_venv : `bool`, optional
-            Whether to use a virtualenv to isolate analysis.  Default is
-            false.
+        use_venv
+            Whether to use a virtualenv to isolate analysis.
 
         Returns
         -------
-        analyzer : `neophile.analysis.python.PythonAnalyzer`
+        PythonAnalyzer
             New analyzer.
         """
         if use_venv:
@@ -191,12 +189,12 @@ class Factory:
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the Git repository.
 
         Returns
         -------
-        pull_requester : `neophile.pr.PullRequester`
+        PullRequester
             New pull requester.
         """
         return PullRequester(path, self._config, self._session)

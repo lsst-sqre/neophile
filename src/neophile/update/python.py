@@ -29,7 +29,7 @@ class PythonFrozenUpdate(Update):
         Raises
         ------
         subprocess.CalledProcessError
-            Running ``make update-deps`` failed.
+            Raised if running ``make update-deps`` failed.
         """
         if self.applied:
             return
@@ -59,11 +59,4 @@ class PythonFrozenUpdate(Update):
         self.applied = True
 
     def description(self) -> str:
-        """Build a description of this update.
-
-        Returns
-        -------
-        description : `str`
-            Short text description of the update.
-        """
         return "Update frozen Python dependencies"

@@ -24,7 +24,7 @@ class KustomizeScanner(BaseScanner):
 
     Parameters
     ----------
-    root : `pathlib.Path`
+    root
         The root of the source tree.
     """
 
@@ -72,7 +72,7 @@ class KustomizeScanner(BaseScanner):
 
         Parameters
         ----------
-        path : `pathlib.Path`
+        path
             Path to the ``kustomization.yaml`` file.
 
         Returns
