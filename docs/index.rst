@@ -17,12 +17,8 @@ neophile is developed on `GitHub <https://github.com/lsst-sqre/neophile>`__.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Usage
 
-   usage
-   config
-   install
-   cli
+   user-guide/index
 
 .. toctree::
    :hidden:
@@ -31,6 +27,5 @@ neophile is developed on `GitHub <https://github.com/lsst-sqre/neophile>`__.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Development
 
    dev/index
