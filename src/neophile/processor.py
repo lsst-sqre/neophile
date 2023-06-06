@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .config import Configuration
+from .config import Config
 from .factory import Factory
 from .repository import Repository
 from .update.base import Update
@@ -17,13 +17,13 @@ class Processor:
 
     Parameters
     ----------
-    config : `neophile.config.Configuration`
+    config
         The neophile configuration.
-    factory : `neophile.factory.Factory`
+    factory
         Used to create additional components where necessary.
     """
 
-    def __init__(self, config: Configuration, factory: Factory) -> None:
+    def __init__(self, config: Config, factory: Factory) -> None:
         self._config = config
         self._factory = factory
 

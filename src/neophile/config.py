@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Self
 
 from pydantic import BaseModel, BaseSettings, Field, SecretStr
 from ruamel.yaml import YAML
 from xdg import XDG_CACHE_HOME
 
 __all__ = [
-    "Configuration",
+    "Config",
     "GitHubRepository",
 ]
 
@@ -24,7 +25,7 @@ class GitHubRepository(BaseModel):
     """The name of the repository."""
 
 
-class Configuration(BaseSettings):
+class Config(BaseSettings):
     """Configuration for neophile."""
 
     allow_expressions: bool = Field(
@@ -65,20 +66,20 @@ class Configuration(BaseSettings):
         env_prefix = "neophile_"
 
     @classmethod
-    def from_file(cls, path: Path) -> Configuration:
+    def from_file(cls, path: Path) -> Self:
         """Initialize the configuration from a file.
 
         Parameters
         ----------
-        path : `str`
+        path
             Path to a configuration file in YAML format.
 
         Returns
         -------
-        config : `Configuration`
+        Config
             The configuration.
         """
         yaml = YAML()
         with path.open("r") as f:
             settings = yaml.load(f)
-        return Configuration.parse_obj(settings)
+        return cls.parse_obj(settings)

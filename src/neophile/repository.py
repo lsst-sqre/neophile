@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import Self
 
 from git.repo import Repo
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 __all__ = ["Repository"]
 
@@ -22,7 +20,7 @@ class Repository:
     """
 
     @classmethod
-    def clone_or_update(cls, path: Path, url: str) -> Repository:
+    def clone_or_update(cls, path: Path, url: str) -> Self:
         """Clone a repository or update an existing repository.
 
         Parameters

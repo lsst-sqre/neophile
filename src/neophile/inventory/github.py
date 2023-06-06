@@ -8,7 +8,7 @@ from aiohttp import ClientError, ClientSession
 from gidgethub import BadRequest
 from gidgethub.aiohttp import GitHubAPI
 
-from ..config import Configuration
+from ..config import Config
 from .version import PackagingVersion, ParsedVersion, SemanticVersion
 
 __all__ = [
@@ -21,13 +21,13 @@ class GitHubInventory:
 
     Parameters
     ----------
-    config : `neophile.config.Configuration`
+    config
         neophile configuration.
-    session : `aiohttp.ClientSession`
+    session
         The aiohttp client session to use to make requests for GitHub tags.
     """
 
-    def __init__(self, config: Configuration, session: ClientSession) -> None:
+    def __init__(self, config: Config, session: ClientSession) -> None:
         self._github = GitHubAPI(
             session,
             config.github_user,

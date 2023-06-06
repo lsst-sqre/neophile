@@ -8,7 +8,7 @@ import pytest
 from aiohttp import ClientSession
 from aioresponses import aioresponses
 
-from neophile.config import Configuration
+from neophile.config import Config
 from neophile.factory import Factory
 from neophile.update.kustomize import KustomizeUpdate
 
@@ -26,7 +26,7 @@ async def test_analyzer(session: ClientSession) -> None:
         register_mock_github_tags(
             mock, "lsst-sqre", "sqrbot", ["20170114", "0.6.1", "0.7.0"]
         )
-        factory = Factory(Configuration(), session)
+        factory = Factory(Config(), session)
         analyzer = factory.create_kustomize_analyzer(data_path)
         results = await analyzer.analyze()
 
@@ -49,6 +49,6 @@ async def test_analyzer_missing(session: ClientSession) -> None:
     data_path = Path(__file__).parent.parent / "data" / "kubernetes"
 
     with aioresponses():
-        factory = Factory(Configuration(), session)
+        factory = Factory(Config(), session)
         analyzer = factory.create_kustomize_analyzer(data_path)
         assert await analyzer.analyze() == []
