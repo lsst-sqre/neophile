@@ -4,18 +4,14 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import Any
 from urllib.parse import urljoin
 
+from aiohttp import ClientSession
 from ruamel.yaml import YAML
 
-from neophile.inventory.version import SemanticVersion
-
-if TYPE_CHECKING:
-    from pathlib import Path
-    from typing import Any
-
-    from aiohttp import ClientSession
+from .version import SemanticVersion
 
 __all__ = [
     "CachedHelmInventory",

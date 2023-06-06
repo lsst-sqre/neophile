@@ -8,8 +8,8 @@ from pathlib import Path  # noqa: F401
 
 from ruamel.yaml import YAML
 
-from neophile.exceptions import DependencyNotFoundError
-from neophile.update.base import Update
+from ..exceptions import DependencyNotFoundError
+from .base import Update
 
 __all__ = ["KustomizeUpdate"]
 

@@ -3,22 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
-from aiohttp import ClientError
+from aiohttp import ClientError, ClientSession
 from gidgethub import BadRequest
 from gidgethub.aiohttp import GitHubAPI
 
-from neophile.inventory.version import (
-    PackagingVersion,
-    ParsedVersion,
-    SemanticVersion,
-)
-
-if TYPE_CHECKING:
-    from aiohttp import ClientSession
-
-    from neophile.config import Configuration
+from ..config import Configuration
+from .version import PackagingVersion, ParsedVersion, SemanticVersion
 
 __all__ = [
     "GitHubInventory",

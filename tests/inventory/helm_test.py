@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
 from unittest.mock import ANY
 
 import pytest
+from aiohttp import ClientSession
 from aioresponses import aioresponses
 from ruamel.yaml import YAML
 
 from neophile.inventory.helm import CachedHelmInventory, HelmInventory
-from tests.util import dict_to_yaml
 
-if TYPE_CHECKING:
-    from aiohttp import ClientSession
+from ..util import dict_to_yaml
 
 EXPECTED = {
     "cadc-tap": "0.1.9",

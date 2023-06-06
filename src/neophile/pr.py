@@ -3,29 +3,22 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-from urllib.parse import urlencode, urlparse
+from pathlib import Path
+from typing import ClassVar
+from urllib.parse import ParseResult, urlencode, urlparse
 
+from aiohttp import ClientSession
 from gidgethub import QueryError
 from gidgethub.aiohttp import GitHubAPI
 from git import PushInfo, Remote
 from git.repo import Repo
 from git.util import Actor
 
-from neophile.config import GitHubRepository
-from neophile.exceptions import PushError
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from pathlib import Path
-    from typing import ClassVar
-    from urllib.parse import ParseResult
-
-    from aiohttp import ClientSession
-
-    from neophile.config import Configuration
-    from neophile.update.base import Update
+from .config import Configuration, GitHubRepository
+from .exceptions import PushError
+from .update.base import Update
 
 __all__ = [
     "CommitMessage",

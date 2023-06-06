@@ -4,19 +4,15 @@ from __future__ import annotations
 
 import logging
 import subprocess
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from git.repo import Repo
 
-from neophile.analysis.base import BaseAnalyzer
-from neophile.exceptions import UncommittedChangesError
-from neophile.update.python import PythonFrozenUpdate
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from neophile.update.base import Update
-    from neophile.virtualenv import VirtualEnv
+from ..exceptions import UncommittedChangesError
+from ..update.base import Update
+from ..update.python import PythonFrozenUpdate
+from ..virtualenv import VirtualEnv
+from .base import BaseAnalyzer
 
 __all__ = ["PythonAnalyzer"]
 

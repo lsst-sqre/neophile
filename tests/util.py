@@ -4,23 +4,18 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections.abc import Mapping, Sequence
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any
 
-from aioresponses import CallbackResult
+from aioresponses import CallbackResult, aioresponses
 from gidgethub import QueryError
 from git.repo import Repo
 from git.util import Actor
 from ruamel.yaml import YAML
 
 from neophile.pr import _GRAPHQL_ENABLE_AUTO_MERGE, _GRAPHQL_PR_ID
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
-    from typing import Any
-
-    from aioresponses import aioresponses
 
 
 def dict_to_yaml(data: Mapping[str, Any]) -> str:

@@ -4,20 +4,18 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
+from _pytest.logging import LogCaptureFixture
+from aiohttp import ClientSession
 from git.util import Actor
 
 from neophile.config import Configuration
 from neophile.exceptions import UncommittedChangesError
 from neophile.factory import Factory
 from neophile.update.python import PythonFrozenUpdate
-from tests.util import setup_python_repo
 
-if TYPE_CHECKING:
-    from _pytest.logging import LogCaptureFixture
-    from aiohttp import ClientSession
+from ..util import setup_python_repo
 
 
 @pytest.mark.asyncio

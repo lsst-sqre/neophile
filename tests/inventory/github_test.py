@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
+from aiohttp import ClientSession
 from aioresponses import aioresponses
 
 from neophile.config import Configuration
 from neophile.inventory.github import GitHubInventory
-from tests.util import register_mock_github_tags
 
-if TYPE_CHECKING:
-    from aiohttp import ClientSession
+from ..util import register_mock_github_tags
 
 
 @pytest.mark.asyncio

@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from neophile.virtualenv import VirtualEnv
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def test_provided_env(tmp_path: Path) -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any
 
 import aiohttp
 import click
@@ -12,12 +12,10 @@ from ruamel.yaml import YAML
 from safir.asyncio import run_with_asyncio
 from xdg import XDG_CONFIG_HOME
 
-from neophile.config import Configuration
-from neophile.factory import Factory
-from neophile.inventory.github import GitHubInventory
-
-if TYPE_CHECKING:
-    from typing import Any
+from .config import Configuration
+from .factory import Factory
+from .inventory.github import GitHubInventory
+from .processor import Processor
 
 __all__ = ["main"]
 
@@ -105,7 +103,7 @@ async def analyze(
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
-        processor = factory.create_processor()
+        processor = Processor(config, factory)
         if pr:
             await processor.process_checkout(path)
         elif update:
@@ -157,7 +155,7 @@ async def process(ctx: click.Context) -> None:
     config = ctx.obj["config"]
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
-        processor = factory.create_processor()
+        processor = Processor(config, factory)
         await processor.process()
 
 

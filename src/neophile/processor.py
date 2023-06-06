@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
-from neophile.repository import Repository
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from neophile.config import Configuration
-    from neophile.factory import Factory
-    from neophile.update.base import Update
+from .config import Configuration
+from .factory import Factory
+from .repository import Repository
+from .update.base import Update
 
 __all__ = ["Processor"]
 

@@ -7,10 +7,9 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-from neophile.scanner.base import BaseScanner
-from neophile.scanner.util import find_files
-
 from ..models.dependencies import KustomizeDependency
+from .base import BaseScanner
+from .util import find_files
 
 __all__ = ["KustomizeScanner"]
 

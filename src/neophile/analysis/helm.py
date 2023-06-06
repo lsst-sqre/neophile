@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
-from neophile.analysis.base import BaseAnalyzer
-from neophile.inventory.version import SemanticVersion
-from neophile.update.helm import HelmUpdate
-
-if TYPE_CHECKING:
-    from neophile.inventory.helm import HelmInventory
-    from neophile.scanner.helm import HelmScanner
-    from neophile.update.base import Update
+from ..inventory.helm import HelmInventory
+from ..inventory.version import SemanticVersion
+from ..scanner.helm import HelmScanner
+from ..update.base import Update
+from ..update.helm import HelmUpdate
+from .base import BaseAnalyzer
 
 __all__ = ["HelmAnalyzer"]
 

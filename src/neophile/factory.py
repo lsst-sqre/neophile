@@ -2,29 +2,24 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
-from neophile.analysis.helm import HelmAnalyzer
-from neophile.analysis.kustomize import KustomizeAnalyzer
-from neophile.analysis.pre_commit import PreCommitAnalyzer
-from neophile.analysis.python import PythonAnalyzer
-from neophile.inventory.github import GitHubInventory
-from neophile.inventory.helm import CachedHelmInventory, HelmInventory
-from neophile.pr import PullRequester
-from neophile.processor import Processor
-from neophile.scanner.helm import HelmScanner
-from neophile.scanner.kustomize import KustomizeScanner
-from neophile.scanner.pre_commit import PreCommitScanner
-from neophile.virtualenv import VirtualEnv
+from aiohttp import ClientSession
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from aiohttp import ClientSession
-
-    from neophile.analysis.base import BaseAnalyzer
-    from neophile.config import Configuration
-    from neophile.scanner.base import BaseScanner
+from .analysis.base import BaseAnalyzer
+from .analysis.helm import HelmAnalyzer
+from .analysis.kustomize import KustomizeAnalyzer
+from .analysis.pre_commit import PreCommitAnalyzer
+from .analysis.python import PythonAnalyzer
+from .config import Configuration
+from .inventory.github import GitHubInventory
+from .inventory.helm import CachedHelmInventory, HelmInventory
+from .pr import PullRequester
+from .scanner.base import BaseScanner
+from .scanner.helm import HelmScanner
+from .scanner.kustomize import KustomizeScanner
+from .scanner.pre_commit import PreCommitScanner
+from .virtualenv import VirtualEnv
 
 __all__ = ["Factory"]
 
@@ -190,10 +185,6 @@ class Factory:
             return PythonAnalyzer(path, virtualenv)
         else:
             return PythonAnalyzer(path)
-
-    def create_processor(self) -> Processor:
-        """Create a new repository processor."""
-        return Processor(self._config, self)
 
     def create_pull_requester(self, path: Path) -> PullRequester:
         """Create a new pull requester.

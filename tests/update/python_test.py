@@ -5,14 +5,13 @@ from __future__ import annotations
 import re
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING
+
+from _pytest.logging import LogCaptureFixture
 
 from neophile.update.python import PythonFrozenUpdate
 from neophile.virtualenv import VirtualEnv
-from tests.util import setup_python_repo
 
-if TYPE_CHECKING:
-    from _pytest.logging import LogCaptureFixture
+from ..util import setup_python_repo
 
 
 def test_python_update(tmp_path: Path) -> None:
