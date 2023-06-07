@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from ..inventory.github import GitHubInventory
 from ..scanner.kustomize import KustomizeScanner
 from ..update.base import Update
@@ -28,11 +30,15 @@ class KustomizeAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self, *, update: bool = False) -> list[Update]:
+    async def analyze(
+        self, root: Path, *, update: bool = False
+    ) -> list[Update]:
         """Analyze a tree and return a list of needed Kustomize changes.
 
         Parameters
         ----------
+        root
+            Root of the path to analyze.
         update
             Ignored for this analyzer.
 
@@ -41,7 +47,7 @@ class KustomizeAnalyzer(BaseAnalyzer):
         list of Update
             List of needed updates.
         """
-        dependencies = self._scanner.scan()
+        dependencies = self._scanner.scan(root)
 
         results: list[Update] = []
         for dependency in dependencies:

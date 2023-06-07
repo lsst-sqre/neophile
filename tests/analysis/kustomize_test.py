@@ -27,8 +27,8 @@ async def test_analyzer(session: ClientSession) -> None:
             mock, "lsst-sqre", "sqrbot", ["20170114", "0.6.1", "0.7.0"]
         )
         factory = Factory(Config(), session)
-        analyzer = factory.create_kustomize_analyzer(data_path)
-        results = await analyzer.analyze()
+        analyzer = factory.create_kustomize_analyzer()
+        results = await analyzer.analyze(data_path)
 
     assert results == [
         KustomizeUpdate(
@@ -50,5 +50,5 @@ async def test_analyzer_missing(session: ClientSession) -> None:
 
     with aioresponses():
         factory = Factory(Config(), session)
-        analyzer = factory.create_kustomize_analyzer(data_path)
-        assert await analyzer.analyze() == []
+        analyzer = factory.create_kustomize_analyzer()
+        assert await analyzer.analyze(data_path) == []

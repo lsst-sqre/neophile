@@ -76,8 +76,8 @@ async def test_pr(
         repository = Repository(tmp_path)
         repository.switch_branch()
         update.apply()
-        pr = PullRequester(tmp_path, config, session)
-        await pr.make_pull_request([update])
+        pr = PullRequester(config, session)
+        await pr.make_pull_request(tmp_path, [update])
 
     assert mock_push.call_args_list == [
         call("u/neophile:u/neophile", force=True)
@@ -123,11 +123,11 @@ async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
             r"https://api.github.com/repos/foo/bar/pulls\?.*base=main.*"
         )
         mock_responses.get(pattern, payload=[])
-        pr = PullRequester(tmp_path, config, session)
+        pr = PullRequester(config, session)
         with patch.object(Remote, "push") as mock:
             mock.return_value = [push_error]
             with pytest.raises(PushError) as excinfo:
-                await pr.make_pull_request([update])
+                await pr.make_pull_request(tmp_path, [update])
 
     assert "Some error" in str(excinfo.value)
 
@@ -168,8 +168,8 @@ async def test_pr_no_automerge(
         repository = Repository(tmp_path)
         repository.switch_branch()
         update.apply()
-        pr = PullRequester(tmp_path, config, session)
-        await pr.make_pull_request([update])
+        pr = PullRequester(config, session)
+        await pr.make_pull_request(tmp_path, [update])
 
     assert mock_push.call_args_list == [
         call("u/neophile:u/neophile", force=True)
@@ -234,8 +234,8 @@ async def test_pr_update(
         repository = Repository(tmp_path)
         repository.switch_branch()
         update.apply()
-        pr = PullRequester(tmp_path, config, session)
-        await pr.make_pull_request([update])
+        pr = PullRequester(config, session)
+        await pr.make_pull_request(tmp_path, [update])
 
     assert mock_push.call_args_list == [
         call("u/neophile:u/neophile", force=True)
@@ -256,22 +256,22 @@ async def test_get_authenticated_remote(
     repo = Repo.init(str(tmp_path), initial_branch="main")
 
     config = Config(github_user="test", github_token=SecretStr("some-token"))
-    pr = PullRequester(tmp_path, config, session)
+    pr = PullRequester(config, session)
 
     remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
-    url = pr._get_authenticated_remote()
+    url = pr._get_authenticated_remote(repo)
     assert url == "https://test:some-token@github.com/foo/bar"
 
     remote.set_url("https://foo@github.com:8080/foo/bar")
-    url = pr._get_authenticated_remote()
+    url = pr._get_authenticated_remote(repo)
     assert url == "https://test:some-token@github.com:8080/foo/bar"
 
     remote.set_url("git@github.com:bar/foo")
-    url = pr._get_authenticated_remote()
+    url = pr._get_authenticated_remote(repo)
     assert url == "https://test:some-token@github.com/bar/foo"
 
     remote.set_url("ssh://git:blahblah@github.com/baz/stuff")
-    url = pr._get_authenticated_remote()
+    url = pr._get_authenticated_remote(repo)
     assert url == "https://test:some-token@github.com/baz/stuff"
 
 
@@ -280,13 +280,16 @@ async def test_get_github_repo(tmp_path: Path, session: ClientSession) -> None:
     repo = Repo.init(str(tmp_path), initial_branch="main")
 
     config = Config(github_user="test", github_token=SecretStr("some-token"))
-    pr = PullRequester(tmp_path, config, session)
+    pr = PullRequester(config, session)
 
     remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
-    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")
+    github_repo = pr._get_github_repo(repo)
+    assert github_repo == GitHubRepository(owner="foo", repo="bar")
 
     remote.set_url("https://github.com/foo/bar.git")
-    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")
+    github_repo = pr._get_github_repo(repo)
+    assert github_repo == GitHubRepository(owner="foo", repo="bar")
 
     remote.set_url("ssh://git@github.com/foo/bar")
-    assert pr._get_github_repo() == GitHubRepository(owner="foo", repo="bar")
+    github_repo = pr._get_github_repo(repo)
+    assert github_repo == GitHubRepository(owner="foo", repo="bar")

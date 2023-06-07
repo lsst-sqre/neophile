@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from aiohttp import ClientSession
 
 from .analysis.base import BaseAnalyzer
@@ -15,6 +13,7 @@ from .config import Config
 from .inventory.github import GitHubInventory
 from .inventory.helm import CachedHelmInventory, HelmInventory
 from .pr import PullRequester
+from .processor import Processor
 from .scanner.base import BaseScanner
 from .scanner.helm import HelmScanner
 from .scanner.kustomize import KustomizeScanner
@@ -40,14 +39,12 @@ class Factory:
         self._session = session
 
     def create_all_analyzers(
-        self, path: Path, *, use_venv: bool = False
+        self, *, use_venv: bool = False
     ) -> list[BaseAnalyzer]:
         """Create all analyzers.
 
         Parameters
         ----------
-        path
-            Path to the Git repository.
         use_venv
             Whether to use a virtualenv to isolate analysis.
 
@@ -64,19 +61,14 @@ class Factory:
         to the working tree).
         """
         return [
-            self.create_python_analyzer(path, use_venv=use_venv),
-            self.create_helm_analyzer(path),
-            self.create_kustomize_analyzer(path),
-            self.create_pre_commit_analyzer(path),
+            self.create_python_analyzer(use_venv=use_venv),
+            self.create_helm_analyzer(),
+            self.create_kustomize_analyzer(),
+            self.create_pre_commit_analyzer(),
         ]
 
-    def create_all_scanners(self, path: Path) -> list[BaseScanner]:
+    def create_all_scanners(self) -> list[BaseScanner]:
         """Create all scanners.
-
-        Parameters
-        ----------
-        path
-            Path to the Git repository to scan.
 
         Returns
         -------
@@ -84,29 +76,22 @@ class Factory:
             List of all available scanners.
         """
         return [
-            HelmScanner(path),
-            KustomizeScanner(path),
-            PreCommitScanner(path),
+            HelmScanner(),
+            KustomizeScanner(),
+            PreCommitScanner(),
         ]
 
-    def create_helm_analyzer(self, path: Path) -> HelmAnalyzer:
+    def create_helm_analyzer(self) -> HelmAnalyzer:
         """Create a new Helm analyzer.
-
-        Parameters
-        ----------
-        path
-            Path to the Git repository.
 
         Returns
         -------
         HelmAnalyzer
             New analyzer.
         """
-        scanner = HelmScanner(path)
-        inventory = self.create_helm_inventory()
         return HelmAnalyzer(
-            scanner,
-            inventory,
+            HelmScanner(),
+            self.create_helm_inventory(),
             allow_expressions=self._config.allow_expressions,
         )
 
@@ -127,49 +112,37 @@ class Factory:
             cache_path = self._config.cache_path / "helm.yaml"
             return CachedHelmInventory(self._session, cache_path)
 
-    def create_kustomize_analyzer(self, path: Path) -> KustomizeAnalyzer:
+    def create_kustomize_analyzer(self) -> KustomizeAnalyzer:
         """Create a new Helm analyzer.
-
-        Parameters
-        ----------
-        path
-            Path to the Git repository.
 
         Returns
         -------
         KustomizeAnalyzer
             New analyzer.
         """
-        scanner = KustomizeScanner(path)
+        scanner = KustomizeScanner()
         inventory = GitHubInventory(self._config, self._session)
         return KustomizeAnalyzer(scanner, inventory)
 
-    def create_pre_commit_analyzer(self, path: Path) -> PreCommitAnalyzer:
+    def create_pre_commit_analyzer(self) -> PreCommitAnalyzer:
         """Create a new pre-commit hook analyzer.
-
-        Parameters
-        ----------
-        path
-            Path to the Git repository.
 
         Returns
         -------
         PreCommitAnalyzer
             New analyzer.
         """
-        scanner = PreCommitScanner(path)
+        scanner = PreCommitScanner()
         inventory = GitHubInventory(self._config, self._session)
         return PreCommitAnalyzer(scanner, inventory)
 
     def create_python_analyzer(
-        self, path: Path, *, use_venv: bool = False
+        self, *, use_venv: bool = False
     ) -> PythonAnalyzer:
         """Create a new Python frozen dependency analyzer.
 
         Parameters
         ----------
-        path
-            Path to the Git repository.
         use_venv
             Whether to use a virtualenv to isolate analysis.
 
@@ -180,21 +153,35 @@ class Factory:
         """
         if use_venv:
             virtualenv = VirtualEnv(self._config.work_area / "venv")
-            return PythonAnalyzer(path, virtualenv)
+            return PythonAnalyzer(virtualenv)
         else:
-            return PythonAnalyzer(path)
+            return PythonAnalyzer()
 
-    def create_pull_requester(self, path: Path) -> PullRequester:
-        """Create a new pull requester.
+    def create_processor(self) -> Processor:
+        """Create a new repository processor.
 
         Parameters
         ----------
-        path
-            Path to the Git repository.
+        use_venv
+            Whether to use a virtualenv to isolate analysis.
+
+        Returns
+        -------
+        Processor
+            New processor.
+        """
+        return Processor(
+            self._config,
+            self.create_all_analyzers(use_venv=True),
+            self.create_pull_requester(),
+        )
+
+    def create_pull_requester(self) -> PullRequester:
+        """Create a new pull requester.
 
         Returns
         -------
         PullRequester
             New pull requester.
         """
-        return PullRequester(path, self._config, self._session)
+        return PullRequester(self._config, self._session)

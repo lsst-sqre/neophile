@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .analysis.base import BaseAnalyzer
 from .config import Config
-from .factory import Factory
+from .pr import PullRequester
 from .repository import Repository
 from .update.base import Update
 
@@ -18,14 +19,22 @@ class Processor:
     Parameters
     ----------
     config
-        The neophile configuration.
-    factory
-        Used to create additional components where necessary.
+        neophile configuration.
+    analyzers
+        Analyzers to run on the repositories.
+    pull_requester
+        Used to create pull requests.
     """
 
-    def __init__(self, config: Config, factory: Factory) -> None:
+    def __init__(
+        self,
+        config: Config,
+        analyzers: list[BaseAnalyzer],
+        pull_requester: PullRequester,
+    ) -> None:
         self._config = config
-        self._factory = factory
+        self._analyzers = analyzers
+        self._pull_requester = pull_requester
 
     async def analyze_checkout(self, path: Path) -> dict[str, list[Update]]:
         """Analyze a cloned repository without applying updates.
@@ -33,7 +42,7 @@ class Processor:
         Parameters
         ----------
         path
-            The path to the cloned repository.
+            Path to the cloned repository.
 
         Returns
         -------
@@ -41,8 +50,7 @@ class Processor:
             Any updates found, organized by the analyzer that found the
             update.
         """
-        analyzers = self._factory.create_all_analyzers(path, use_venv=True)
-        return {a.name: await a.analyze() for a in analyzers}
+        return {a.name: await a.analyze(path) for a in self._analyzers}
 
     async def process(self) -> None:
         """Process all configured repositories for updates."""
@@ -68,7 +76,7 @@ class Processor:
     async def update_checkout(self, path: Path) -> list[Update]:
         """Update a cloned repository.
 
-        This does not switch branches.  Updates are written to the current
+        This does not switch branches. Updates are written to the current
         working tree.
 
         Parameters
@@ -81,13 +89,10 @@ class Processor:
         list of Update
             All the updates that were applied.
         """
-        analyzers = self._factory.create_all_analyzers(path, use_venv=True)
-
         all_updates = []
-        for analyzer in analyzers:
-            updates = await analyzer.update()
+        for analyzer in self._analyzers:
+            updates = await analyzer.update(path)
             all_updates.extend(updates)
-
         return all_updates
 
     async def _process_one_repository(
@@ -107,6 +112,5 @@ class Processor:
         repo.switch_branch()
         updates = await self.update_checkout(path)
         if updates:
-            pull_requester = self._factory.create_pull_requester(path)
-            await pull_requester.make_pull_request(updates)
+            await self._pull_requester.make_pull_request(path, updates)
         repo.restore_branch()

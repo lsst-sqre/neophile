@@ -46,12 +46,12 @@ async def test_analyzer(session: ClientSession) -> None:
     with aioresponses() as mock:
         for url, index in MOCK_REPOSITORIES.items():
             mock.get(url, body=dict_to_yaml(index), repeat=True)
-        scanner = HelmScanner(data_path)
+        scanner = HelmScanner()
         inventory = HelmInventory(session)
         analyzer = HelmAnalyzer(scanner, inventory)
-        results = await analyzer.analyze()
+        results = await analyzer.analyze(data_path)
         analyzer = HelmAnalyzer(scanner, inventory, allow_expressions=True)
-        results_expressions = await analyzer.analyze()
+        results_expressions = await analyzer.analyze(data_path)
 
     assert sorted(results) == [
         HelmUpdate(

@@ -15,7 +15,6 @@ from xdg import XDG_CONFIG_HOME
 from .config import Config
 from .factory import Factory
 from .inventory.github import GitHubInventory
-from .processor import Processor
 
 __all__ = ["main"]
 
@@ -103,7 +102,7 @@ async def analyze(
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
-        processor = Processor(config, factory)
+        processor = factory.create_processor()
         if pr:
             await processor.process_checkout(path)
         elif update:
@@ -155,7 +154,7 @@ async def process(ctx: click.Context) -> None:
     config = ctx.obj["config"]
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
-        processor = Processor(config, factory)
+        processor = factory.create_processor()
         await processor.process()
 
 
@@ -173,6 +172,6 @@ async def scan(ctx: click.Context, path: Path) -> None:
     config = ctx.obj["config"]
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
-        scanners = factory.create_all_scanners(path)
-        results = {s.name: s.scan() for s in scanners}
+        scanners = factory.create_all_scanners()
+        results = {s.name: s.scan(path) for s in scanners}
         print_yaml({k: [u.to_dict() for u in v] for k, v in results.items()})

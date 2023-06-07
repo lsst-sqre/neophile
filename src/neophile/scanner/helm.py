@@ -15,24 +15,22 @@ __all__ = ["HelmScanner"]
 
 
 class HelmScanner(BaseScanner):
-    """Scan a source tree for Helm version references.
+    """Scan a source tree for Helm version references."""
 
-    Parameters
-    ----------
-    root
-        Root of the source tree.
-    """
-
-    def __init__(self, root: Path) -> None:
-        self._root = root
+    def __init__(self) -> None:
         self._yaml = YAML()
 
     @property
     def name(self) -> str:
         return "helm"
 
-    def scan(self) -> list[HelmDependency]:
+    def scan(self, root: Path) -> list[HelmDependency]:
         """Scan a source tree for version references.
+
+        Parameters
+        ----------
+        root
+            Root of the source tree.
 
         Returns
         -------
@@ -40,7 +38,7 @@ class HelmScanner(BaseScanner):
             A list of all discovered dependencies.
         """
         wanted_files = {"Chart.yaml", "requirements.yaml"}
-        dependency_paths = find_files(self._root, wanted_files)
+        dependency_paths = find_files(root, wanted_files)
 
         results = []
         for path in dependency_paths:

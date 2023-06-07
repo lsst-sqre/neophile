@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from ..update.base import Update
 
@@ -13,11 +14,15 @@ class BaseAnalyzer(ABC):
     """Base class for an analysis step."""
 
     @abstractmethod
-    async def analyze(self, *, update: bool = False) -> list[Update]:
+    async def analyze(
+        self, root: Path, *, update: bool = False
+    ) -> list[Update]:
         """Analyze a tree and return a list of needed changes.
 
         Parameters
         ----------
+        root
+            Root of the path to analyze.
         update
             If set to `True`, leave the update applied if this is more
             efficient. Used by analyzers like the Python frozen dependency
@@ -40,7 +45,7 @@ class BaseAnalyzer(ABC):
         results accumulated from a bunch of analyzers.
         """
 
-    async def update(self) -> list[Update]:
+    async def update(self, root: Path) -> list[Update]:
         """Analyze a tree and apply updates.
 
         Returns
@@ -48,7 +53,7 @@ class BaseAnalyzer(ABC):
         list of Update
             List of updates applied.
         """
-        updates = await self.analyze(update=True)
+        updates = await self.analyze(root, update=True)
         for update in updates:
             update.apply()
         return updates

@@ -28,17 +28,18 @@ class PythonAnalyzer(BaseAnalyzer):
         Virtual environment manager.
     """
 
-    def __init__(
-        self, root: Path, virtualenv: VirtualEnv | None = None
-    ) -> None:
-        self._root = root
+    def __init__(self, virtualenv: VirtualEnv | None = None) -> None:
         self._virtualenv = virtualenv
 
-    async def analyze(self, *, update: bool = False) -> list[Update]:
+    async def analyze(
+        self, root: Path, *, update: bool = False
+    ) -> list[Update]:
         """Analyze a tree and return needed Python frozen dependency updates.
 
         Parameters
         ----------
+        root
+            Root of the path to analyze.
         update
             If set to `True`, leave the update applied. This avoids having to
             run ``make update-deps`` twice, once to see if an update is needed
@@ -59,9 +60,9 @@ class PythonAnalyzer(BaseAnalyzer):
             Raised if running ``make update-deps`` failed.
         """
         for name in ("Makefile", "requirements/main.in"):
-            if not (self._root / name).exists():
+            if not (root / name).exists():
                 return []
-        repo = Repo(str(self._root))
+        repo = Repo(str(root))
 
         if repo.is_dirty():
             msg = "Working tree contains uncommitted changes"
@@ -71,14 +72,14 @@ class PythonAnalyzer(BaseAnalyzer):
             if self._virtualenv:
                 self._virtualenv.run(
                     ["make", "update-deps"],
-                    cwd=str(self._root),
+                    cwd=str(root),
                     check=True,
                     capture_output=True,
                 )
             else:
                 subprocess.run(
                     ["make", "update-deps"],
-                    cwd=str(self._root),
+                    cwd=str(root),
                     check=True,
                     capture_output=True,
                 )
@@ -95,7 +96,7 @@ class PythonAnalyzer(BaseAnalyzer):
             repo.git.restore(".")
         return [
             PythonFrozenUpdate(
-                path=self._root / "requirements",
+                path=root / "requirements",
                 applied=update,
                 virtualenv=self._virtualenv,
             )

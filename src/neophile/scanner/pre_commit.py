@@ -14,35 +14,33 @@ __all__ = ["PreCommitScanner"]
 
 
 class PreCommitScanner(BaseScanner):
-    """Scan a source tree for pre-commit hook version references.
+    """Scan a source tree for pre-commit hook version references."""
 
-    Parameters
-    ----------
-    root
-        Root of the source tree.
-    """
-
-    def __init__(self, root: Path) -> None:
-        self._root = root
+    def __init__(self) -> None:
         self._yaml = YAML()
 
     @property
     def name(self) -> str:
         return "pre-commit"
 
-    def scan(self) -> list[PreCommitDependency]:
+    def scan(self, root: Path) -> list[PreCommitDependency]:
         """Scan a source tree for pre-commit hook version references.
+
+        Parameters
+        ----------
+        root
+            Root of the source tree.
 
         Returns
         -------
         list of PreCommitDependency
             A list of all discovered pre-commit dependencies.
         """
-        path = self._root / ".pre-commit-config.yaml"
+        path = root / ".pre-commit-config.yaml"
         if not path.exists():
             return []
-        results = []
 
+        results = []
         with path.open() as f:
             config = self._yaml.load(f)
         for hook in config.get("repos", []):
@@ -55,5 +53,4 @@ class PreCommitScanner(BaseScanner):
                 path=path,
             )
             results.append(dependency)
-
         return results

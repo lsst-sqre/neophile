@@ -10,8 +10,8 @@ from neophile.scanner.pre_commit import PreCommitScanner
 
 def test_scanner() -> None:
     data_path = Path(__file__).parent.parent / "data" / "python"
-    scanner = PreCommitScanner(data_path)
-    results = scanner.scan()
+    scanner = PreCommitScanner()
+    results = scanner.scan(data_path)
 
     assert results == [
         PreCommitDependency(

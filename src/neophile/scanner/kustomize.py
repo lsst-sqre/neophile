@@ -21,11 +21,6 @@ class KustomizeScanner(BaseScanner):
 
        github.com/<owner>/<repo>(.git)?//<path>?ref=<version>
        https://github.com/<owner>/<repo>/<path>?ref=<version>
-
-    Parameters
-    ----------
-    root
-        The root of the source tree.
     """
 
     RESOURCE_REGEXES = [
@@ -38,28 +33,30 @@ class KustomizeScanner(BaseScanner):
     will be the repository name, and the third match group will be the tag.
     """
 
-    def __init__(self, root: Path) -> None:
-        self._root = root
+    def __init__(self) -> None:
         self._yaml = YAML()
 
     @property
     def name(self) -> str:
         return "kustomize"
 
-    def scan(self) -> list[KustomizeDependency]:
+    def scan(self, root: Path) -> list[KustomizeDependency]:
         """Scan a source tree for version references.
+
+        Parameters
+        ----------
+        root
+            The root of the source tree.
 
         Returns
         -------
         list of KustomizeDependency
             A list of all discovered dependencies.
         """
-        dependency_paths = find_files(self._root, {"kustomization.yaml"})
-
+        dependency_paths = find_files(root, {"kustomization.yaml"})
         results = []
         for path in dependency_paths:
             results.extend(self._build_kustomize_dependencies(path))
-
         return results
 
     def _build_kustomize_dependencies(
@@ -81,7 +78,6 @@ class KustomizeScanner(BaseScanner):
             A list of all discovered Helm chart dependencies.
         """
         results = []
-
         with path.open() as f:
             kustomization = self._yaml.load(f)
         for resource in kustomization.get("resources", []):
@@ -99,5 +95,4 @@ class KustomizeScanner(BaseScanner):
                 path=path,
             )
             results.append(dependency)
-
         return results

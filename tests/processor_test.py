@@ -22,7 +22,6 @@ from ruamel.yaml import YAML
 from neophile.config import Config, GitHubRepository
 from neophile.factory import Factory
 from neophile.pr import CommitMessage
-from neophile.processor import Processor
 
 from .util import (
     mock_enable_auto_merge,
@@ -140,7 +139,7 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
         # Unfortunately, the mock_push fixture can't be used here because we
         # want to use git.Remote.push in create_upstream_git_repository.
         factory = Factory(config, session)
-        processor = Processor(config, factory)
+        processor = factory.create_processor()
         with patch_clone_from("foo", "bar", upstream_path):
             with patch.object(Remote, "push") as mock_push:
                 mock_push.return_value = push_result
@@ -178,7 +177,7 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     with aioresponses() as mock:
         mock.get("https://api.github.com/user", payload=user)
         factory = Factory(config, session)
-        processor = Processor(config, factory)
+        processor = factory.create_processor()
         with patch_clone_from("foo", "bar", upstream_path):
             with patch.object(Remote, "push") as mock_push:
                 await processor.process()
@@ -253,7 +252,7 @@ async def test_allow_expressions(
         # Unfortunately, the mock_push fixture can't be used here because we
         # want to use git.Remote.push in create_upstream_git_repository.
         factory = Factory(config, session)
-        processor = Processor(config, factory)
+        processor = factory.create_processor()
         with patch_clone_from("foo", "bar", upstream_path):
             with patch.object(Remote, "push") as mock_push:
                 mock_push.return_value = push_result
