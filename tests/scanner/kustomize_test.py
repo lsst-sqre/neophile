@@ -10,8 +10,8 @@ from neophile.scanner.kustomize import KustomizeScanner
 
 def test_scanner() -> None:
     data_path = Path(__file__).parent.parent / "data" / "kubernetes"
-    scanner = KustomizeScanner(data_path)
-    results = scanner.scan()
+    scanner = KustomizeScanner()
+    results = scanner.scan(data_path)
 
     assert sorted(results) == [
         KustomizeDependency(

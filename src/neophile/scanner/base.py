@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from pathlib import Path
 
 from ..models.dependencies import Dependency
 
@@ -19,8 +20,13 @@ class BaseScanner(ABC):
         """Name of the scanner type."""
 
     @abstractmethod
-    def scan(self) -> Sequence[Dependency]:
+    def scan(self, root: Path) -> Sequence[Dependency]:
         """Scan a source tree for dependencies.
+
+        Parameters
+        ----------
+        root
+            Root of the source tree.
 
         Returns
         -------

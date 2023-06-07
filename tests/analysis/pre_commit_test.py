@@ -32,8 +32,8 @@ async def test_analyzer(session: ClientSession) -> None:
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
         register_mock_github_tags(mock, "pycqa", "flake8", ["3.7.0", "3.9.0"])
         factory = Factory(Config(), session)
-        analyzer = factory.create_pre_commit_analyzer(data_path)
-        results = await analyzer.analyze()
+        analyzer = factory.create_pre_commit_analyzer()
+        results = await analyzer.analyze(data_path)
 
     pre_commit_path = data_path / ".pre-commit-config.yaml"
     assert results == [

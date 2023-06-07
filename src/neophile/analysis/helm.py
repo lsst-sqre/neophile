@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from ..inventory.helm import HelmInventory
 from ..inventory.version import SemanticVersion
@@ -40,11 +41,15 @@ class HelmAnalyzer(BaseAnalyzer):
         self._scanner = scanner
         self._inventory = inventory
 
-    async def analyze(self, *, update: bool = False) -> list[Update]:
+    async def analyze(
+        self, path: Path, *, update: bool = False
+    ) -> list[Update]:
         """Analyze a tree and return a list of needed Helm changes.
 
         Parameters
         ----------
+        root
+            Root of the path to analyze.
         update
             Ignored for this analyzer.
 
@@ -53,7 +58,7 @@ class HelmAnalyzer(BaseAnalyzer):
         list of Update
             List of needed updates.
         """
-        dependencies = self._scanner.scan()
+        dependencies = self._scanner.scan(path)
         repositories = {d.repository for d in dependencies}
         latest = {}
         for repo in repositories:

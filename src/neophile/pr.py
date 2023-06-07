@@ -70,30 +70,29 @@ class PullRequester:
 
     Parameters
     ----------
-    path
-        Path to the Git repository.
     config
         neophile configuration.
     session
         The client session to use for requests.
     """
 
-    def __init__(
-        self, path: Path, config: Config, session: ClientSession
-    ) -> None:
+    def __init__(self, config: Config, session: ClientSession) -> None:
         self._config = config
         self._github = GitHubAPI(
             session,
             config.github_user,
             oauth_token=config.github_token.get_secret_value(),
         )
-        self._repo = Repo(str(path))
 
-    async def make_pull_request(self, changes: Sequence[Update]) -> None:
+    async def make_pull_request(
+        self, path: Path, changes: Sequence[Update]
+    ) -> None:
         """Create or update a pull request for a list of changes.
 
         Parameters
         ----------
+        path
+            Path to the Git repository.
         changes
             The changes.
 
@@ -102,16 +101,22 @@ class PullRequester:
         PushError
             Raised if pushing the branch to GitHub failed.
         """
-        github_repo = self._get_github_repo()
+        repo = Repo(str(path))
+        github_repo = self._get_github_repo(repo)
         default_branch = await self._get_github_default_branch(github_repo)
         pr_number = await self._get_pr(github_repo, default_branch)
 
-        message = await self._commit_changes(changes)
-        self._push_branch()
+        message = await self._commit_changes(repo, changes)
+        self._push_branch(repo)
         if pr_number is not None:
             await self._update_pr(github_repo, pr_number, message)
         else:
-            await self._create_pr(github_repo, default_branch, message)
+            await self._create_pr(
+                repo=repo,
+                github_repo=github_repo,
+                base_branch=default_branch,
+                message=message,
+            )
 
     def _build_commit_message(
         self, changes: Sequence[Update]
@@ -132,7 +137,7 @@ class PullRequester:
         return CommitMessage(changes=descriptions)
 
     async def _commit_changes(
-        self, changes: Sequence[Update]
+        self, repo: Repo, changes: Sequence[Update]
     ) -> CommitMessage:
         """Commit a set of changes to the repository.
 
@@ -140,6 +145,8 @@ class PullRequester:
 
         Parameters
         ----------
+        repo
+            Local Git repository.
         changes
             Changes to apply and commit.
 
@@ -150,13 +157,15 @@ class PullRequester:
         """
         actor = await self._get_github_actor()
         for change in changes:
-            self._repo.index.add(str(change.path))
+            repo.index.add(str(change.path))
         message = self._build_commit_message(changes)
-        self._repo.index.commit(str(message), author=actor, committer=actor)
+        repo.index.commit(str(message), author=actor, committer=actor)
         return message
 
     async def _create_pr(
         self,
+        *,
+        repo: Repo,
         github_repo: GitHubRepository,
         base_branch: str,
         message: CommitMessage,
@@ -165,6 +174,8 @@ class PullRequester:
 
         Parameters
         ----------
+        repo
+            Local Git repository.
         github_repo
             GitHub repository in which to create the pull request.
         base_branch
@@ -172,7 +183,7 @@ class PullRequester:
         message
             Commit message to use for the pull request.
         """
-        branch = self._repo.head.ref.name
+        branch = repo.head.ref.name
         data = {
             "title": message.title,
             "body": message.body,
@@ -223,18 +234,23 @@ class PullRequester:
             )
             logging.warning(msg)
 
-    def _get_authenticated_remote(self) -> str:
+    def _get_authenticated_remote(self, repo: Repo) -> str:
         """Get the URL with authentication credentials of the origin remote.
 
         Supports an ssh URL, an https URL, or the SSH syntax that Git
         understands (user@host:path).
+
+        Parameters
+        ----------
+        repo
+            Local Git repository.
 
         Returns
         -------
         url
             URL suitable for an authenticated push of a new branch.
         """
-        url = self._get_remote_url()
+        url = self._get_remote_url(repo)
         token = self._config.github_token.get_secret_value()
         auth = f"{self._config.github_user}:{token}"
         host = url.netloc.rsplit("@", 1)[-1]
@@ -282,7 +298,7 @@ class PullRequester:
         )
         return repo.get("default_branch", "main")
 
-    def _get_github_repo(self) -> GitHubRepository:
+    def _get_github_repo(self, repo: Repo) -> GitHubRepository:
         """Get the GitHub repository.
 
         Done by parsing the URL of the origin remote.
@@ -292,11 +308,11 @@ class PullRequester:
         GitHubRepository
             GitHub repository information.
         """
-        url = self._get_remote_url()
-        _, owner, repo = url.path.split("/")
-        if repo.endswith(".git"):
-            repo = repo[: -len(".git")]
-        return GitHubRepository(owner=owner, repo=repo)
+        url = self._get_remote_url(repo)
+        _, owner, github_repo = url.path.split("/")
+        if github_repo.endswith(".git"):
+            github_repo = github_repo[: -len(".git")]
+        return GitHubRepository(owner=owner, repo=github_repo)
 
     async def _get_pr(
         self, github_repo: GitHubRepository, base_branch: str
@@ -307,7 +323,7 @@ class PullRequester:
         ----------
         github_repo
             GitHub repository in which to search for a pull request.
-        bsae_branch
+        base_branch
             Base repository branch used to limit the search.
 
         Returns
@@ -335,35 +351,45 @@ class PullRequester:
             return str(pr["number"])
         return None
 
-    def _get_remote_url(self) -> ParseResult:
+    def _get_remote_url(self, repo: Repo) -> ParseResult:
         """Get the parsed URL of the origin remote.
 
         The URL will be converted to https form.  https, ssh, and the SSH
         remote syntax used by Git are supported.
+
+        Parameters
+        ----------
+        repo
+            Local Git repository.
 
         Returns
         -------
         url
             Results of `~urllib.parse.urlparse` on the origin remote URL.
         """
-        url = next(self._repo.remotes.origin.urls)
+        url = next(repo.remotes.origin.urls)
         if "//" in url:
             return urlparse(url)
         else:
             path = url.rsplit(":", 1)[-1]
             return urlparse(f"https://github.com/{path}")
 
-    def _push_branch(self) -> None:
+    def _push_branch(self, repo: Repo) -> None:
         """Push the ``u/neophile`` branch to GitHub.
+
+        Parameters
+        ----------
+        repo
+            Local Git repository.
 
         Raises
         ------
         PushError
             Raised if pushing the branch to GitHub failed.
         """
-        branch = self._repo.head.ref.name
-        remote_url = self._get_authenticated_remote()
-        remote = Remote.add(self._repo, "tmp-neophile", remote_url)
+        branch = repo.head.ref.name
+        remote_url = self._get_authenticated_remote(repo)
+        remote = Remote.add(repo, "tmp-neophile", remote_url)
         try:
             push_info = remote.push(f"{branch}:{branch}", force=True)
             for result in push_info:
@@ -371,7 +397,7 @@ class PullRequester:
                     msg = f"Pushing {branch} failed: {result.summary}"
                     raise PushError(msg)
         finally:
-            Remote.remove(self._repo, "tmp-neophile")
+            Remote.remove(repo, "tmp-neophile")
 
     async def _update_pr(
         self,

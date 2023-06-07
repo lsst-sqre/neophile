@@ -24,8 +24,8 @@ async def test_analyzer(tmp_path: Path, session: ClientSession) -> None:
     actor = Actor("Someone", "someone@example.com")
 
     factory = Factory(Config(), session)
-    analyzer = factory.create_python_analyzer(tmp_path)
-    results = await analyzer.analyze()
+    analyzer = factory.create_python_analyzer()
+    results = await analyzer.analyze(tmp_path)
 
     assert results == [
         PythonFrozenUpdate(path=tmp_path / "requirements", applied=False)
@@ -38,17 +38,17 @@ async def test_analyzer(tmp_path: Path, session: ClientSession) -> None:
     subprocess.run(["make", "update-deps"], cwd=str(tmp_path), check=True)
     assert repo.is_dirty()
     factory = Factory(Config(), session)
-    analyzer = factory.create_python_analyzer(tmp_path)
+    analyzer = factory.create_python_analyzer()
     with pytest.raises(UncommittedChangesError):
-        results = await analyzer.analyze()
+        results = await analyzer.analyze(tmp_path)
 
     # Commit the changed dependencies and remove the pre-commit configuration
     # file.  Analysis should now return no changes.
     repo.index.add(str(tmp_path / "requirements"))
     repo.index.commit("Update dependencies", author=actor, committer=actor)
     factory = Factory(Config(), session)
-    analyzer = factory.create_python_analyzer(tmp_path)
-    results = await analyzer.analyze()
+    analyzer = factory.create_python_analyzer()
+    results = await analyzer.analyze(tmp_path)
     assert results == []
 
 
@@ -57,8 +57,8 @@ async def test_analyzer_update(tmp_path: Path, session: ClientSession) -> None:
     repo = setup_python_repo(tmp_path)
 
     factory = Factory(Config(), session)
-    analyzer = factory.create_python_analyzer(tmp_path)
-    results = await analyzer.update()
+    analyzer = factory.create_python_analyzer()
+    results = await analyzer.update(tmp_path)
 
     assert results == [
         PythonFrozenUpdate(path=tmp_path / "requirements", applied=True)
@@ -73,6 +73,6 @@ async def test_virtualenv(
     setup_python_repo(tmp_path, require_venv=True)
 
     factory = Factory(Config(), session)
-    analyzer = factory.create_python_analyzer(tmp_path)
-    assert await analyzer.analyze() == []
+    analyzer = factory.create_python_analyzer()
+    assert await analyzer.analyze(tmp_path) == []
     assert "make update-deps failed" in caplog.records[0].msg

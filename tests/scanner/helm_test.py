@@ -10,8 +10,8 @@ from neophile.scanner.helm import HelmScanner
 
 def test_scanner() -> None:
     data_path = Path(__file__).parent.parent / "data" / "kubernetes"
-    scanner = HelmScanner(data_path)
-    results = scanner.scan()
+    scanner = HelmScanner()
+    results = scanner.scan(data_path)
 
     assert sorted(results, key=lambda r: r.name) == [
         HelmDependency(
