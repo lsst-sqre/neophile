@@ -17,6 +17,13 @@ from ruamel.yaml import YAML
 
 from neophile.pr import _GRAPHQL_ENABLE_AUTO_MERGE, _GRAPHQL_PR_ID
 
+__all__ = [
+    "dict_to_yaml",
+    "mock_enable_auto_merge",
+    "register_mock_github_tags",
+    "setup_python_repo",
+]
+
 
 def dict_to_yaml(data: Mapping[str, Any]) -> str:
     """Convert any mapping to YAML serialized as a string.
@@ -104,30 +111,6 @@ def mock_enable_auto_merge(
     mock.post("https://api.github.com/graphql", callback=graphql_2)
 
 
-def register_mock_helm_repository(
-    mock: aioresponses, url: str, versions: Mapping[str, Sequence[str]]
-) -> None:
-    """Register a list of versions for a Helm repository.
-
-    Parameters
-    ----------
-    mock
-        Mock object for aiohttp requests.
-    url
-        URL of the repository index.
-    versions
-        Mapping of Helm chart names to lists of version numbers that should
-        appear in the index for that chart.
-    """
-    data = {
-        "entries": {
-            chart: [{"version": ver} for ver in vers]
-            for chart, vers in versions.items()
-        }
-    }
-    mock.get(url, body=dict_to_yaml(data))
-
-
 def register_mock_github_tags(
     mock: aioresponses, owner: str, repo: str, tags: Sequence[str]
 ) -> None:
@@ -148,30 +131,6 @@ def register_mock_github_tags(
         payload=data,
         repeat=True,
     )
-
-
-def setup_kubernetes_repo(tmp_path: Path) -> Repo:
-    """Set up a test repository with the Kubernetes test files.
-
-    Parameters
-    ----------
-    tmp_path
-        Directory in which to create the repository.
-
-    Returns
-    -------
-    Repo
-        Repository object.
-    """
-    data_path = Path(__file__).parent / "data" / "kubernetes"
-    shutil.copytree(str(data_path), str(tmp_path), dirs_exist_ok=True)
-    repo = Repo.init(str(tmp_path), initial_branch="main")
-    for path in tmp_path.iterdir():
-        if not path.name.startswith("."):
-            repo.index.add(str(path))
-    actor = Actor("Someone", "someone@example.com")
-    repo.index.commit("Initial commit", author=actor, committer=actor)
-    return repo
 
 
 def setup_python_repo(tmp_path: Path, *, require_venv: bool = False) -> Repo:

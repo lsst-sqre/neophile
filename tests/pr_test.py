@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock, call, patch
@@ -14,46 +13,32 @@ from aiohttp import ClientSession
 from aioresponses import CallbackResult, aioresponses
 from git import PushInfo, Remote
 from git.repo import Repo
-from git.util import Actor
 from pydantic import SecretStr
 
 from neophile.config import Config, GitHubRepository
 from neophile.exceptions import PushError
 from neophile.pr import CommitMessage, PullRequester
 from neophile.repository import Repository
-from neophile.update.helm import HelmUpdate
+from neophile.update.pre_commit import PreCommitUpdate
 
-from .util import mock_enable_auto_merge
-
-
-def setup_repo(tmp_path: Path) -> Repo:
-    """Set up a repository with the Gafaelfawr Helm chart."""
-    repo = Repo.init(str(tmp_path), initial_branch="main")
-    Remote.create(repo, "origin", "https://github.com/foo/bar")
-    helm_path = Path(__file__).parent / "data" / "kubernetes"
-    chart_path = helm_path / "gafaelfawr" / "Chart.yaml"
-    update_path = tmp_path / "Chart.yaml"
-    shutil.copy(str(chart_path), str(update_path))
-    repo.index.add(str(update_path))
-    actor = Actor("Someone", "someone@example.com")
-    repo.index.commit("Initial commit", author=actor, committer=actor)
-    return repo
+from .util import mock_enable_auto_merge, setup_python_repo
 
 
 @pytest.mark.asyncio
 async def test_pr(
     tmp_path: Path, session: ClientSession, mock_push: Mock
 ) -> None:
-    repo = setup_repo(tmp_path)
+    repo = setup_python_repo(tmp_path)
+    Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
         github_user="someone", github_token=SecretStr("some-token")
     )
-    update = HelmUpdate(
-        path=tmp_path / "Chart.yaml",
+    update = PreCommitUpdate(
+        path=tmp_path / ".pre-commit-config.yaml",
         applied=False,
-        name="gafaelfawr",
-        current="1.0.0",
-        latest="2.0.0",
+        repository="https://github.com/ambv/black",
+        current="19.10b0",
+        latest="23.3.0",
     )
     payload = {"name": "Someone", "email": "someone@example.com"}
 
@@ -89,23 +74,24 @@ async def test_pr(
     assert commit.author.email == "someone@example.com"
     assert commit.committer.name == "Someone"
     assert commit.committer.email == "someone@example.com"
-    change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
+    change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
     assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
 @pytest.mark.asyncio
 async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
-    setup_repo(tmp_path)
+    repo = setup_python_repo(tmp_path)
+    Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
         github_user="someone", github_token=SecretStr("some-token")
     )
-    update = HelmUpdate(
-        path=tmp_path / "Chart.yaml",
+    update = PreCommitUpdate(
+        path=tmp_path / ".pre-commit-config.yaml",
         applied=False,
-        name="gafaelfawr",
-        current="1.0.0",
-        latest="2.0.0",
+        repository="https://github.com/ambv/black",
+        current="19.10b0",
+        latest="23.3.0",
     )
     remote = Mock(spec=Remote)
     push_error = PushInfo(
@@ -136,16 +122,17 @@ async def test_pr_push_failure(tmp_path: Path, session: ClientSession) -> None:
 async def test_pr_no_automerge(
     tmp_path: Path, session: ClientSession, mock_push: Mock
 ) -> None:
-    repo = setup_repo(tmp_path)
+    repo = setup_python_repo(tmp_path)
+    Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
         github_user="someone", github_token=SecretStr("some-token")
     )
-    update = HelmUpdate(
-        path=tmp_path / "Chart.yaml",
+    update = PreCommitUpdate(
+        path=tmp_path / ".pre-commit-config.yaml",
         applied=False,
-        name="gafaelfawr",
-        current="1.0.0",
-        latest="2.0.0",
+        repository="https://github.com/ambv/black",
+        current="19.10b0",
+        latest="23.3.0",
     )
     payload = {"name": "Someone", "email": "someone@example.com"}
 
@@ -181,7 +168,7 @@ async def test_pr_no_automerge(
     assert commit.author.email == "someone@example.com"
     assert commit.committer.name == "Someone"
     assert commit.committer.email == "someone@example.com"
-    change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
+    change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
     assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
@@ -191,24 +178,25 @@ async def test_pr_update(
     tmp_path: Path, session: ClientSession, mock_push: Mock
 ) -> None:
     """Test updating an existing PR."""
-    repo = setup_repo(tmp_path)
+    repo = setup_python_repo(tmp_path)
+    Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
         github_email="otheremail@example.com",
         github_token=SecretStr("some-token"),
         github_user="someone",
     )
-    update = HelmUpdate(
-        path=tmp_path / "Chart.yaml",
+    update = PreCommitUpdate(
+        path=tmp_path / ".pre-commit-config.yaml",
         applied=False,
-        name="gafaelfawr",
-        current="1.0.0",
-        latest="2.0.0",
+        repository="https://github.com/ambv/black",
+        current="19.10b0",
+        latest="23.3.0",
     )
     user = {"name": "Someone", "email": "someone@example.com"}
     updated_pr = False
 
     def check_pr_update(url: str, **kwargs: Any) -> CallbackResult:
-        change = "Update gafaelfawr Helm chart from 1.0.0 to 2.0.0"
+        change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
         assert json.loads(kwargs["data"]) == {
             "title": CommitMessage.title,
             "body": f"- {change}\n",
