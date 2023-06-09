@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
+import subprocess
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -26,8 +26,6 @@ from neophile.pr import CommitMessage
 from .util import (
     mock_enable_auto_merge,
     register_mock_github_tags,
-    register_mock_helm_repository,
-    setup_kubernetes_repo,
     setup_python_repo,
 )
 
@@ -37,9 +35,9 @@ def create_upstream_git_repository(repo: Repo, upstream_path: Path) -> None:
 
     Parameters
     ----------
-    repo : `git.Repo`
+    repo
         The repository to use as the contents of the upstream repository.
-    upstream_path : `pathlib.Path`
+    upstream_path
         Where to put the upstream repository.
     """
     upstream_path.mkdir()
@@ -54,11 +52,11 @@ def patch_clone_from(owner: str, repo: str, path: Path) -> Iterator[None]:
 
     Parameters
     ----------
-    owner : `str`
+    owner
         GitHub repository owner to expect.
-    repo : `str`
+    repo
         GitHub repository name to expect.
-    path : `pathlib.Path`
+    path
         File path to use as the true upstream location.
     """
     expected_url = f"https://github.com/{owner}/{repo}"
@@ -123,6 +121,13 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
 
     with aioresponses() as mock:
         register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
+        register_mock_github_tags(
+            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+        )
+        register_mock_github_tags(
+            mock, "timothycrosley", "isort", ["4.3.21-2"]
+        )
+        register_mock_github_tags(mock, "pycqa", "flake8", ["3.8.1"])
         mock.get("https://api.github.com/user", payload=user)
         mock.get(
             "https://api.github.com/repos/foo/bar",
@@ -158,13 +163,13 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
 
 @pytest.mark.asyncio
 async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
-    data_path = Path(__file__).parent / "data" / "kubernetes" / "sqrbot-jr"
-    tmp_repo_path = tmp_path / "tmp"
-    tmp_repo_path.mkdir()
-    tmp_repo = Repo.init(str(tmp_repo_path), initial_branch="main")
-    shutil.copytree(str(data_path), str(tmp_repo_path / "sqrbot-jr"))
+    tmp_repo = setup_python_repo(tmp_path / "tmp")
+    subprocess.run(
+        ["make", "update-deps"], cwd=str(tmp_path / "tmp"), check=True
+    )
+    tmp_repo.index.add(str(tmp_path / "tmp" / "requirements"))
     actor = Actor("Someone", "someone@example.com")
-    tmp_repo.index.commit("Initial commit", author=actor, committer=actor)
+    tmp_repo.index.commit("Update dependencies", author=actor, committer=actor)
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
     config = Config(
@@ -173,8 +178,15 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     )
     user = {"name": "Someone", "email": "someone@example.com"}
 
-    # Don't register any GitHub tag lists, so we shouldn't see any updates.
     with aioresponses() as mock:
+        register_mock_github_tags(mock, "ambv", "black", ["19.10b0"])
+        register_mock_github_tags(
+            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+        )
+        register_mock_github_tags(
+            mock, "timothycrosley", "isort", ["4.3.21-2"]
+        )
+        register_mock_github_tags(mock, "pycqa", "flake8", ["3.8.1"])
         mock.get("https://api.github.com/user", payload=user)
         factory = Factory(config, session)
         processor = factory.create_processor()
@@ -186,76 +198,3 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
     repo = Repo(str(tmp_path / "work" / "bar"))
     assert not repo.is_dirty()
     assert repo.head.ref.name == "main"
-
-
-@pytest.mark.asyncio
-async def test_allow_expressions(
-    tmp_path: Path, session: ClientSession
-) -> None:
-    tmp_repo = setup_kubernetes_repo(tmp_path / "tmp")
-    upstream_path = tmp_path / "upstream"
-    create_upstream_git_repository(tmp_repo, upstream_path)
-    config = Config(
-        allow_expressions=True,
-        cache_enabled=False,
-        repositories=[GitHubRepository(owner="foo", repo="bar")],
-        work_area=tmp_path / "work",
-    )
-    user = {"name": "Someone", "email": "someone@example.com"}
-    remote = Mock(spec=Remote)
-    push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", remote)]
-    created_pr = False
-
-    def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
-        assert json.loads(kwargs["data"]) == {
-            "title": CommitMessage.title,
-            "body": "- Update gafaelfawr Helm chart from 1.3.1 to v1.4.0\n",
-            "head": "u/neophile",
-            "base": "main",
-            "maintainer_can_modify": True,
-            "draft": False,
-        }
-
-        nonlocal created_pr
-        created_pr = True
-        return CallbackResult(status=201, payload={"number": 42})
-
-    with aioresponses() as mock:
-        register_mock_helm_repository(
-            mock,
-            "https://kubernetes-charts.storage.googleapis.com/index.yaml",
-            {"elasticsearch": ["1.26.2"], "kibana": ["3.0.1"]},
-        )
-        register_mock_helm_repository(
-            mock,
-            "https://kiwigrid.github.io/index.yaml",
-            {"fluentd-elasticsearch": ["3.0.0"]},
-        )
-        register_mock_helm_repository(
-            mock,
-            "https://lsst-sqre.github.io/charts/index.yaml",
-            {"gafaelfawr": ["1.3.1", "v1.4.0"]},
-        )
-        mock.get("https://api.github.com/user", payload=user)
-        mock.get(
-            "https://api.github.com/repos/foo/bar",
-            payload={"default_branch": "main"},
-        )
-        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
-        mock.get(pattern, payload=[])
-        mock.post(
-            "https://api.github.com/repos/foo/bar/pulls",
-            callback=check_pr_post,
-        )
-        mock_enable_auto_merge(mock, "foo", "bar", "42")
-
-        # Unfortunately, the mock_push fixture can't be used here because we
-        # want to use git.Remote.push in create_upstream_git_repository.
-        factory = Factory(config, session)
-        processor = factory.create_processor()
-        with patch_clone_from("foo", "bar", upstream_path):
-            with patch.object(Remote, "push") as mock_push:
-                mock_push.return_value = push_result
-                await processor.process()
-
-    assert created_pr

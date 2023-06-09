@@ -68,11 +68,6 @@ def help(ctx: click.Context, topic: str | None) -> None:
 
 @main.command()
 @click.option(
-    "--allow-expressions/--no-allow-expressions",
-    default=False,
-    help="Allow version match expressions.",
-)
-@click.option(
     "--path",
     type=click.Path(path_type=Path),
     default=Path.cwd(),
@@ -91,14 +86,12 @@ def help(ctx: click.Context, topic: str | None) -> None:
 async def analyze(
     ctx: click.Context,
     *,
-    allow_expressions: bool,
     path: Path,
     pr: bool,
     update: bool,
 ) -> None:
     """Analyze a path for pending upgrades."""
     config = ctx.obj["config"]
-    config.allow_expressions = allow_expressions
 
     async with aiohttp.ClientSession() as session:
         factory = Factory(config, session)
@@ -130,20 +123,6 @@ async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
             sys.stdout.write(result + "\n")
         else:
             sys.stderr.write(f"No versions found in {owner}/{repo}")
-
-
-@main.command()
-@click.argument("repository", required=True)
-@click.pass_context
-@run_with_asyncio
-async def helm_inventory(ctx: click.Context, repository: str) -> None:
-    """Inventory available Helm chart versions."""
-    config = ctx.obj["config"]
-
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(config, session)
-        inventory = factory.create_helm_inventory()
-        print_yaml(await inventory.inventory(repository))
 
 
 @main.command()

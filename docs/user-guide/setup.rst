@@ -2,7 +2,7 @@
 Using neophile with Dependabot and Renovate
 ###########################################
 
-As documented in :sqr:`042`, none of Dependabot, WhiteSource Renovate, or neophile can handle all types of dependencies with the desired feature set.
+As documented in :sqr:`042`, none of Dependabot, Mend Renovate, or neophile can handle all types of dependencies with the desired feature set.
 All three should therefore be used in different situations.
 Below is documentation for when to use each service and how to configure it.
 
@@ -20,10 +20,9 @@ Use it for:
 #. GitHub Actions
 #. Docker base images
 #. Python library (not application) dependencies.
-   These are dependencies expressed in ``pyproject.toml`` or ``setup.cfg``, but not dependencies frozen with ``pip-compile``.
+   These are dependencies expressed in ``pyproject.toml``, but not dependencies frozen with ``pip-compile``.
 
-Use the integrated GitHub Dependabot service, not the pre-acquisition Dependabot Preview GitHub App.
-See `GitHub's help on dependency updates <https://docs.github.com/en/github/administering-a-repository/keeping-your-dependencies-updated-automatically>`__ for documentation.
+See `GitHub's help on dependency updates <https://docs.github.com/en/code-security/dependabot/dependabot-version-updates>`__ for documentation.
 
 Configuration should be stored in ``.github/dependabot.yml``.
 Here is the configuration to use for GitHub Actions (which nearly every project will have):
@@ -66,14 +65,13 @@ Use it for:
 #. Python frozen dependencies
 #. pre-commit hooks
 
-It also scans Helm chart and Kustomize references, but we prefer WhiteSource Renovate for those because the feature support is better.
-neophile should be configured for all Python packages using pre-commit, but is particularly useful for Python applications using dependencies frozen with ``pip-compile``.
+Any Python package using pre-commit should use neophile, but is particularly useful for Python applications using dependencies frozen with ``pip-compile``.
 
 To enable neophile scanning of a repository, the GitHub ``sqrbot`` user must be added as a collaborator on the repository with ``Write`` permissions.
 This will already be done automatically if ``sqrbot`` created the repository.
 Otherwise, it must be done by a repository or organization admin.
-Do this in the GitHub web interface by going to the repository, going to **Settings**, and then going to **Manage access**.
-Then use **Invite teams or people** to add ``sqrbot`` with the ``Write`` role.
+Do this in the GitHub web interface by going to the repository, going to :guilabel:`Settings`, and then going to :guilabel:`Manage access`.
+Then use :guilabel:`Invite teams or people` to add ``sqrbot`` with the ``Write`` role.
 
 Then, enable neophile by editing `its configuration in Roundtable <https://github.com/lsst-sqre/roundtable/blob/master/deployments/neophile/values.yaml>`__.
 Add the repository to the ``repositories`` key.
@@ -87,10 +85,10 @@ A sample entry looks like:
 for the ``lsst-sqre/neophile`` repository.
 
 This is the only configuration that is necessary (or supported).
-neophile will create a pull request weekly with any updates that it has detected to be needed.
+neophile will create a pull request weekly with any updates that it has detected to be needed and set automerge on that pull request.
 
-WhiteSource Renovate
-====================
+Mend Renovate
+=============
 
 Renovate is the most flexible of the available options but requires a bit more configuration and setup work.
 Use it for:
@@ -98,39 +96,69 @@ Use it for:
 #. Helm chart repositories with Docker image references.
 #. Argo CD deployment repositories with Helm chart references.
 #. Packages that use ``docker-compose`` to stand up a test environment.
+   (Although consider using the ``latest`` tag of any test dependencies if you don't expect their behavior to change significantly, such as Redis and PostgreSQL images used only for testing.)
+
+Renovate is capable of doing all of the updates that dependabot can do, but since dependabot is a first-party GitHub application that is almost certain not to go away, we prefer to use it when it does a good enough job.
 
 Renovate generates a lot of spam and pull requests if enabled for an entire organization, so we selectively enable it only for the repositories where we want to use it.
 To enable it for a repository, go to the GitHub page for the organization that owns that repository (`lsst-sqre <https://github.com/lsst-sqre>`__, for example).
-Then go to **Settings**, and then **Installed GitHub Apps**.
-Select **Configure** for Renovate.
+Then go to :guilabel:`Settings`, and then :guilabel:`Installed GitHub Apps`.
+Select :guilabel:`Configure` for Renovate.
 Scroll down to the bottom, and add the additional repository that you want it to scan.
 
 Renovate will then perform an initial scan of that repository and generate a pull request containing a trivial ``renovate.json`` file.
 Included in that PR will be a preview of the issues that Renovate would create PRs for.
 Create a local branch based on the PR branch created by Renovate so that you can make some modifications to the configuration.
 
-For Argo CD and Helm chart repositories, change the configuration to:
+For Argo CD repositories, change the configuration to:
 
 .. code-block:: json
+   :caption: renovate.json
 
    {
      "extends": [
-       "config:base",
-       "schedule:weekly"
+       "config:base"
      ],
-     "versioning": "docker"
+     "configMigration": true,
+     "schedule": [
+       "before 6am on Monday"
+     ],
+     "timezone": "America/Los_Angeles"
    }
 
-This fixes the version comparison algorithm to not strip qualifiers from the end of the Docker image version and changes the frequency of PRs for new versions to weekly (instead of immediate).
+This runs Renovate weekly so that its PRs will be ready for merging on Monday mornings, and lets it create up to five PRs at a time.
 
-For repositories that construct a test environment using ``docker-compose``, change the configuration to:
+If the Argo CD repository uses the commit queue, also add ``"rebaseWhen": "conflicted"`` to tell Renovate to not rebase branches on every commit.
+The commit queue will rebase and retest the PR, so those extra rebases add to testing load and notification noise without accomplishing anything that useful.
+
+For Helm chart repositories, instead use:
+
+.. code-block:: json
+   :caption: renovate.json
+   :emphasize-lines: 5
+
+   {
+     "extends": [
+       "config:base"
+     ],
+     "bumpVersion": "patch",
+     "configMigration": true,
+     "schedule": [
+       "before 6am on Monday"
+     ],
+     "timezone": "America/Los_Angeles"
+   }
+
+This tells Renovate to increase the version of the Helm chart each time it changes the versions of its dependencies, which is necessary for published Helm charts.
+(For Argo CD repositories, we don't maintain versioning for Helm charts and leave the version at ``1.0.0``.)
+
+For repositories that construct a test environment using ``docker-compose`` and use pinned versions for those dependencies, change the configuration to:
 
 .. code-block:: json
 
    {
      "enabledManagers": [
-       "docker-compose",
-       "kustomize"
+       "docker-compose"
      ],
      "extends": [
        "config:base",
@@ -147,8 +175,6 @@ For repositories that construct a test environment using ``docker-compose``, cha
    }
 
 This groups updates to the ``docker-compose`` configuration into a single pull request.
-It also enables scanning of Kustomize dependencies.
-Delete this if the package does not include Kustomize resources.
 
 Once you have updated the configuration, push the modified configuration to the same PR branch that Renovate used originally.
 Renovate will then regenerate its preview of PRs that it will create.

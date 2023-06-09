@@ -5,18 +5,13 @@ from __future__ import annotations
 from aiohttp import ClientSession
 
 from .analysis.base import BaseAnalyzer
-from .analysis.helm import HelmAnalyzer
-from .analysis.kustomize import KustomizeAnalyzer
 from .analysis.pre_commit import PreCommitAnalyzer
 from .analysis.python import PythonAnalyzer
 from .config import Config
 from .inventory.github import GitHubInventory
-from .inventory.helm import CachedHelmInventory, HelmInventory
 from .pr import PullRequester
 from .processor import Processor
 from .scanner.base import BaseScanner
-from .scanner.helm import HelmScanner
-from .scanner.kustomize import KustomizeScanner
 from .scanner.pre_commit import PreCommitScanner
 from .virtualenv import VirtualEnv
 
@@ -62,8 +57,6 @@ class Factory:
         """
         return [
             self.create_python_analyzer(use_venv=use_venv),
-            self.create_helm_analyzer(),
-            self.create_kustomize_analyzer(),
             self.create_pre_commit_analyzer(),
         ]
 
@@ -75,54 +68,7 @@ class Factory:
         list of BaseScanner
             List of all available scanners.
         """
-        return [
-            HelmScanner(),
-            KustomizeScanner(),
-            PreCommitScanner(),
-        ]
-
-    def create_helm_analyzer(self) -> HelmAnalyzer:
-        """Create a new Helm analyzer.
-
-        Returns
-        -------
-        HelmAnalyzer
-            New analyzer.
-        """
-        return HelmAnalyzer(
-            HelmScanner(),
-            self.create_helm_inventory(),
-            allow_expressions=self._config.allow_expressions,
-        )
-
-    def create_helm_inventory(self) -> HelmInventory:
-        """Create a new Helm inventory.
-
-        Uses the configuration to determine whether this should be a cached
-        inventory and, if so, where to put the cache.
-
-        Returns
-        -------
-        HelmInventory
-            New inventory.
-        """
-        if not self._config.cache_enabled:
-            return HelmInventory(self._session)
-        else:
-            cache_path = self._config.cache_path / "helm.yaml"
-            return CachedHelmInventory(self._session, cache_path)
-
-    def create_kustomize_analyzer(self) -> KustomizeAnalyzer:
-        """Create a new Helm analyzer.
-
-        Returns
-        -------
-        KustomizeAnalyzer
-            New analyzer.
-        """
-        scanner = KustomizeScanner()
-        inventory = GitHubInventory(self._config, self._session)
-        return KustomizeAnalyzer(scanner, inventory)
+        return [PreCommitScanner()]
 
     def create_pre_commit_analyzer(self) -> PreCommitAnalyzer:
         """Create a new pre-commit hook analyzer.
