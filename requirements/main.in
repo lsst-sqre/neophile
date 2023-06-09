@@ -6,9 +6,9 @@
 #     make update-deps
 
 GitPython
-aiohttp
 click
 gidgethub
+httpx
 packaging
 pydantic
 ruamel.yaml

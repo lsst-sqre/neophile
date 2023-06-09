@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 import json
-import re
 import shutil
 from io import StringIO
 from pathlib import Path
-from typing import Any
 from unittest.mock import Mock, call
 
-from aioresponses import CallbackResult, aioresponses
+import respx
 from click.testing import CliRunner
 from git import Remote
 from git.repo import Repo
 from git.util import Actor
+from httpx import Request, Response
 from ruamel.yaml import YAML
 
 from neophile.cli import main
@@ -44,23 +43,23 @@ def test_help() -> None:
     assert "Unknown help topic unknown-command" in result.output
 
 
-def test_analyze(tmp_path: Path) -> None:
+def test_analyze(tmp_path: Path, respx_mock: respx.Router) -> None:
     runner = CliRunner()
     src = Path(__file__).parent / "data" / "python" / ".pre-commit-config.yaml"
     dst = tmp_path / ".pre-commit-config.yaml"
     shutil.copy(src, dst)
+    register_mock_github_tags(
+        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
+    )
+    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
-    with aioresponses() as mock:
-        register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
-        register_mock_github_tags(
-            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-        )
-        register_mock_github_tags(
-            mock, "timothycrosley", "isort", ["4.3.21-2"]
-        )
-        register_mock_github_tags(mock, "pycqa", "flake8", ["3.8.1"])
-        result = runner.invoke(main, ["analyze", "--path", str(tmp_path)])
-
+    result = runner.invoke(main, ["analyze", "--path", str(tmp_path)])
     assert result.exit_code == 0
     yaml = YAML()
     data = yaml.load(result.output)
@@ -70,7 +69,7 @@ def test_analyze(tmp_path: Path) -> None:
     assert data["pre-commit"][0]["latest"] == "20.0.0"
 
 
-def test_analyze_update(tmp_path: Path) -> None:
+def test_analyze_update(tmp_path: Path, respx_mock: respx.Router) -> None:
     runner = CliRunner()
     src = Path(__file__).parent / "data" / "python" / ".pre-commit-config.yaml"
     dst = tmp_path / ".pre-commit-config.yaml"
@@ -78,28 +77,30 @@ def test_analyze_update(tmp_path: Path) -> None:
     yaml = YAML()
     output = StringIO()
     output.getvalue()
+    register_mock_github_tags(
+        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
+    )
+    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
-    with aioresponses() as mock:
-        register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
-        register_mock_github_tags(
-            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-        )
-        register_mock_github_tags(
-            mock, "timothycrosley", "isort", ["4.3.21-2"]
-        )
-        register_mock_github_tags(mock, "pycqa", "flake8", ["3.8.1"])
-        result = runner.invoke(
-            main,
-            ["analyze", "--path", str(tmp_path), "--update"],
-            env={"NEOPHILE_CACHE_ENABLED": "0"},
-        )
-
+    result = runner.invoke(
+        main,
+        ["analyze", "--path", str(tmp_path), "--update"],
+        env={"NEOPHILE_CACHE_ENABLED": "0"},
+    )
     assert result.exit_code == 0
     data = yaml.load(dst)
     assert data["repos"][2]["rev"] == "20.0.0"
 
 
-def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
+def test_analyze_pr(
+    tmp_path: Path, respx_mock: respx.Router, mock_push: Mock
+) -> None:
     runner = CliRunner()
     repo = Repo.init(str(tmp_path), initial_branch="main")
     Remote.create(repo, "origin", "https://github.com/foo/bar")
@@ -109,12 +110,11 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
     repo.index.add(str(dst))
     actor = Actor("Someone", "someone@example.com")
     repo.index.commit("Initial commit", author=actor, committer=actor)
-    payload = {"name": "Someone", "email": "someone@example.com"}
     created_pr = False
 
-    def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
+    def check_pr_post(request: Request) -> Response:
         change = "Update ambv/black pre-commit hook from 19.10b0 to 20.0.0"
-        assert json.loads(kwargs["data"]) == {
+        assert json.loads(request.content) == {
             "title": CommitMessage.title,
             "body": f"- {change}\n",
             "head": "u/neophile",
@@ -134,33 +134,36 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201, payload={"number": 42})
+        return Response(201, json={"number": 42})
 
-    with aioresponses() as mock:
-        register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
-        register_mock_github_tags(
-            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    register_mock_github_tags(
+        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
+    )
+    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
+    respx_mock.get("https://api.github.com/user").mock(
+        return_value=Response(
+            200, json={"name": "Someone", "email": "someone@example.com"}
         )
-        register_mock_github_tags(
-            mock, "timothycrosley", "isort", ["4.3.21-2"]
-        )
-        register_mock_github_tags(mock, "pycqa", "flake8", ["3.8.1"])
-        mock.get("https://api.github.com/user", payload=payload)
-        mock.get(
-            "https://api.github.com/repos/foo/bar",
-            payload={"default_branch": "main"},
-        )
-        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
-        mock.get(pattern, payload=[])
-        mock.post(
-            "https://api.github.com/repos/foo/bar/pulls",
-            callback=check_pr_post,
-        )
-        mock_enable_auto_merge(mock, "foo", "bar", "42")
-        result = runner.invoke(
-            main, ["analyze", "--path", str(tmp_path), "--pr"]
-        )
+    )
+    respx_mock.get("https://api.github.com/repos/foo/bar").mock(
+        return_value=Response(200, json={"default_branch": "main"})
+    )
+    pattern = r"https://api.github.com/repos/foo/bar/pulls\?.*"
+    respx_mock.get(url__regex=pattern).mock(
+        return_value=Response(200, json=[])
+    )
+    respx_mock.post("https://api.github.com/repos/foo/bar/pulls").mock(
+        side_effect=check_pr_post
+    )
+    mock_enable_auto_merge(respx_mock, "foo", "bar", "42")
 
+    result = runner.invoke(main, ["analyze", "--path", str(tmp_path), "--pr"])
     assert result.exit_code == 0
     assert created_pr
     assert mock_push.call_args_list == [
@@ -169,14 +172,13 @@ def test_analyze_pr(tmp_path: Path, mock_push: Mock) -> None:
     assert repo.head.ref.name == "main"
 
 
-def test_github_inventory() -> None:
+def test_github_inventory(respx_mock: respx.Router) -> None:
+    respx_mock.get("https://api.github.com/repos/foo/bar/tags").mock(
+        return_value=Response(200, json=[{"name": "1.1.0"}, {"name": "1.2.0"}])
+    )
+
     runner = CliRunner()
-    tags = [{"name": "1.1.0"}, {"name": "1.2.0"}]
-
-    with aioresponses() as mock:
-        mock.get("https://api.github.com/repos/foo/bar/tags", payload=tags)
-        result = runner.invoke(main, ["github-inventory", "foo", "bar"])
-
+    result = runner.invoke(main, ["github-inventory", "foo", "bar"])
     assert result.exit_code == 0
     assert result.output == "1.2.0\n"
 

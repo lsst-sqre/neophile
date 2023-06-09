@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import ClassVar
 from urllib.parse import ParseResult, urlencode, urlparse
 
-from aiohttp import ClientSession
 from gidgethub import QueryError
-from gidgethub.aiohttp import GitHubAPI
+from gidgethub.httpx import GitHubAPI
 from git import PushInfo, Remote
 from git.repo import Repo
 from git.util import Actor
+from httpx import AsyncClient
 
 from .config import Config, GitHubRepository
 from .exceptions import PushError
@@ -72,14 +72,14 @@ class PullRequester:
     ----------
     config
         neophile configuration.
-    session
-        The client session to use for requests.
+    http_client
+        HTTP client to use for requests.
     """
 
-    def __init__(self, config: Config, session: ClientSession) -> None:
+    def __init__(self, config: Config, http_client: AsyncClient) -> None:
         self._config = config
         self._github = GitHubAPI(
-            session,
+            http_client,
             config.github_user,
             oauth_token=config.github_token.get_secret_value(),
         )
@@ -230,9 +230,9 @@ class PullRequester:
         except QueryError as e:
             msg = (
                 f"cannot enable automerge for {github_repo.owner}/"
-                f"{github_repo.repo}#{pr_number}: {str(e)}"
+                f"{github_repo.repo}#{pr_number}: {e!s}"
             )
-            logging.warning(msg)
+            logging.exception(msg)
 
     def _get_authenticated_remote(self, repo: Repo) -> str:
         """Get the URL with authentication credentials of the origin remote.

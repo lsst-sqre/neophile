@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 
-from aiohttp import ClientError, ClientSession
 from gidgethub import BadRequest
-from gidgethub.aiohttp import GitHubAPI
+from gidgethub.httpx import GitHubAPI
+from httpx import AsyncClient, HTTPError
 
 from ..config import Config
 from .version import PackagingVersion, ParsedVersion, SemanticVersion
@@ -21,13 +21,13 @@ class GitHubInventory:
     ----------
     config
         neophile configuration.
-    session
-        The aiohttp client session to use to make requests for GitHub tags.
+    http_client
+        HTTP client to use for requests.
     """
 
-    def __init__(self, config: Config, session: ClientSession) -> None:
+    def __init__(self, config: Config, http_client: AsyncClient) -> None:
         self._github = GitHubAPI(
-            session,
+            http_client,
             config.github_user,
             oauth_token=config.github_token.get_secret_value(),
         )
@@ -57,7 +57,7 @@ class GitHubInventory:
             valid tags are found or the repository doesn't exist, returns
             `None`.
         """
-        logging.info("Inventorying GitHub repo %s/%s", owner, repo)
+        logging.info(f"Inventorying GitHub repo {owner}/{repo}")
         if semantic:
             cls: type[ParsedVersion] = SemanticVersion
         else:
@@ -73,19 +73,17 @@ class GitHubInventory:
                 async for tag in tags
                 if cls.is_valid(tag["name"])
             ]
-        except (BadRequest, ClientError) as e:
-            logging.warning(
-                "Unable to inventory GitHub repo %s/%s: %s",
-                owner,
-                repo,
-                str(e),
-            )
+        except (BadRequest, HTTPError) as e:
+            error = type(e).__name__
+            if str(e):
+                error += f": {e!s}"
+            msg = f"Unable to inventory GitHub repo {owner}/{repo}: {error}"
+            logging.exception(msg)
             return None
 
         if versions:
             return str(max(versions))
         else:
-            logging.warning(
-                "No valid versions for GitHub repo %s/%s", owner, repo
-            )
+            msg = f"No valid versions for GitHub repo {owner}/{repo}"
+            logging.warning(msg)
             return None

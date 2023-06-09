@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from aiohttp import ClientSession
+from httpx import AsyncClient
 
 from .analysis.base import BaseAnalyzer
 from .analysis.pre_commit import PreCommitAnalyzer
@@ -25,13 +25,13 @@ class Factory:
     ----------
     config
         neophile configuration.
-    session
-        The client session to use for requests.
+    http_client
+        HTTP client to use for requests.
     """
 
-    def __init__(self, config: Config, session: ClientSession) -> None:
+    def __init__(self, config: Config, http_client: AsyncClient) -> None:
         self._config = config
-        self._session = session
+        self._http_client = http_client
 
     def create_all_analyzers(
         self, *, use_venv: bool = False
@@ -79,7 +79,7 @@ class Factory:
             New analyzer.
         """
         scanner = PreCommitScanner()
-        inventory = GitHubInventory(self._config, self._session)
+        inventory = GitHubInventory(self._config, self._http_client)
         return PreCommitAnalyzer(scanner, inventory)
 
     def create_python_analyzer(
@@ -130,4 +130,4 @@ class Factory:
         PullRequester
             New pull requester.
         """
-        return PullRequester(self._config, self._session)
+        return PullRequester(self._config, self._http_client)

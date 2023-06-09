@@ -6,8 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import aiohttp
 import click
+from httpx import AsyncClient
 from ruamel.yaml import YAML
 from safir.asyncio import run_with_asyncio
 from xdg import XDG_CONFIG_HOME
@@ -93,8 +93,8 @@ async def analyze(
     """Analyze a path for pending upgrades."""
     config = ctx.obj["config"]
 
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(config, session)
+    async with AsyncClient() as client:
+        factory = Factory(config, client)
         processor = factory.create_processor()
         if pr:
             await processor.process_checkout(path)
@@ -116,8 +116,8 @@ async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
     """Inventory available GitHub tags."""
     config = ctx.obj["config"]
 
-    async with aiohttp.ClientSession() as session:
-        inventory = GitHubInventory(config, session)
+    async with AsyncClient() as client:
+        inventory = GitHubInventory(config, client)
         result = await inventory.inventory(owner, repo)
         if result:
             sys.stdout.write(result + "\n")
@@ -131,8 +131,8 @@ async def github_inventory(ctx: click.Context, owner: str, repo: str) -> None:
 async def process(ctx: click.Context) -> None:
     """Process all configured repositories."""
     config = ctx.obj["config"]
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(config, session)
+    async with AsyncClient() as client:
+        factory = Factory(config, client)
         processor = factory.create_processor()
         await processor.process()
 
@@ -149,8 +149,8 @@ async def process(ctx: click.Context) -> None:
 async def scan(ctx: click.Context, path: Path) -> None:
     """Scan a path for versions."""
     config = ctx.obj["config"]
-    async with aiohttp.ClientSession() as session:
-        factory = Factory(config, session)
+    async with AsyncClient() as client:
+        factory = Factory(config, client)
         scanners = factory.create_all_scanners()
         results = {s.name: s.scan(path) for s in scanners}
         print_yaml({k: [u.to_dict() for u in v] for k, v in results.items()})

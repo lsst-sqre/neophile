@@ -23,6 +23,7 @@ nitpick_ignore = [
     # regexes because I've caught documentation bugs by having Sphinx complain
     # about a new symbol.
     ["py:class", "dataclasses.InitVar"],
+    ["py:class", "httpx.AsyncClient"],
     ["py:class", "pydantic.main.BaseModel"],
     ["py:class", "pydantic.env_settings.BaseSettings"],
     ["py:class", "pydantic.types.SecretStr"],
@@ -33,7 +34,6 @@ python_api_dir = "dev/internals"
 rst_epilog_file = "_rst_epilog.rst"
 
 [sphinx.intersphinx.projects]
-aiohttp = "https://docs.aiohttp.org/en/stable/"
 packaging = "https://packaging.pypa.io/en/latest/"
 python = "https://docs.python.org/3/"
 semver = "https://python-semver.readthedocs.io/en/latest/"
