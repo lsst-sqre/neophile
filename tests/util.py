@@ -9,10 +9,11 @@ from io import StringIO
 from pathlib import Path
 from typing import Any
 
-from aioresponses import CallbackResult, aioresponses
+import respx
 from gidgethub import QueryError
 from git.repo import Repo
 from git.util import Actor
+from httpx import Request, Response
 from ruamel.yaml import YAML
 
 from neophile.pr import _GRAPHQL_ENABLE_AUTO_MERGE, _GRAPHQL_PR_ID
@@ -45,7 +46,7 @@ def dict_to_yaml(data: Mapping[str, Any]) -> str:
 
 
 def mock_enable_auto_merge(
-    mock: aioresponses,
+    respx_mock: respx.Router,
     owner: str,
     repo: str,
     pr_number: str,
@@ -56,8 +57,8 @@ def mock_enable_auto_merge(
 
     Parameters
     ----------
-    mock
-        Mock object for aiohttp requests.
+    respx_mock
+        Mock object for HTTP requests.
     owner
         Owner of the repository.
     repo
@@ -67,11 +68,13 @@ def mock_enable_auto_merge(
     fail
         Whether to fail the request for automerge
     """
+    first = True
 
-    def graphql_1(url: str, **kwargs: Any) -> CallbackResult:
-        assert str(url) == "https://api.github.com/graphql"
-        expected = json.dumps(
-            {
+    def graphql(request: Request) -> Response:
+        data = json.loads(request.content)
+        nonlocal first
+        if first:
+            assert data == {
                 "query": _GRAPHQL_PR_ID,
                 "variables": {
                     "owner": owner,
@@ -79,57 +82,50 @@ def mock_enable_auto_merge(
                     "pr_number": int(pr_number),
                 },
             }
-        ).encode()
-        assert kwargs["data"] == expected
-        return CallbackResult(
-            status=200,
-            payload={
-                "data": {"repository": {"pullRequest": {"id": "some-id"}}}
-            },
-        )
-
-    def graphql_2(url: str, **kwargs: Any) -> CallbackResult:
-        assert str(url) == "https://api.github.com/graphql"
-        expected = json.dumps(
-            {
+            first = False
+            return Response(
+                200,
+                json={
+                    "data": {"repository": {"pullRequest": {"id": "some-id"}}}
+                },
+            )
+        else:
+            assert data == {
                 "query": _GRAPHQL_ENABLE_AUTO_MERGE,
                 "variables": {"pr_id": "some-id"},
             }
-        ).encode()
-        assert kwargs["data"] == expected
-        if fail:
-            msg = (
-                "Pull request is not in the correct state to enable auto-merge"
+            if fail:
+                msg = (
+                    "Pull request is not in the correct state to enable"
+                    " auto-merge"
+                )
+                response = {"errors": [{"message": msg}]}
+                raise QueryError(response)
+            return Response(
+                200, json={"data": {"actor": {"login": "some-user"}}}
             )
-            response = {"errors": [{"message": msg}]}
-            raise QueryError(response)
-        return CallbackResult(
-            status=200, payload={"data": {"actor": {"login": "some-user"}}}
-        )
 
-    mock.post("https://api.github.com/graphql", callback=graphql_1)
-    mock.post("https://api.github.com/graphql", callback=graphql_2)
+    url = "https://api.github.com/graphql"
+    respx_mock.post(url).mock(side_effect=graphql)
 
 
 def register_mock_github_tags(
-    mock: aioresponses, owner: str, repo: str, tags: Sequence[str]
+    respx_mock: respx.Router, owner: str, repo: str, tags: Sequence[str]
 ) -> None:
     """Register a list of tags for a GitHub repository.
 
     Parameters
     ----------
-    mock
-        Mock object for aiohttp requests.
+    respx_mock
+        Mock object for HTTP requests.
     repo
         Name of the GitHub repository.
     tags
         List of tags to return for that repository.
     """
     data = [{"name": version} for version in tags]
-    mock.get(
-        f"https://api.github.com/repos/{owner}/{repo}/tags",
-        payload=data,
-        repeat=True,
+    respx_mock.get(f"https://api.github.com/repos/{owner}/{repo}/tags").mock(
+        return_value=Response(200, json=data)
     )
 
 

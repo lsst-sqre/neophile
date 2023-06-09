@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from aiohttp import ClientSession
-from aioresponses import aioresponses
+import respx
+from httpx import AsyncClient
 
 from neophile.config import Config
 from neophile.factory import Factory
@@ -16,24 +16,27 @@ from ..util import register_mock_github_tags
 
 
 @pytest.mark.asyncio
-async def test_analyzer(session: ClientSession) -> None:
+async def test_analyzer(client: AsyncClient, respx_mock: respx.Router) -> None:
     data_path = Path(__file__).parent.parent / "data" / "python"
+    register_mock_github_tags(
+        respx_mock,
+        "pre-commit",
+        "pre-commit-hooks",
+        ["v3.0.0", "v3.1.0", "v3.2.0"],
+    )
+    register_mock_github_tags(
+        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
+    )
+    register_mock_github_tags(
+        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "pycqa", "flake8", ["3.7.0", "3.9.0"]
+    )
 
-    with aioresponses() as mock:
-        register_mock_github_tags(
-            mock,
-            "pre-commit",
-            "pre-commit-hooks",
-            ["v3.0.0", "v3.1.0", "v3.2.0"],
-        )
-        register_mock_github_tags(
-            mock, "timothycrosley", "isort", ["4.3.21-2"]
-        )
-        register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
-        register_mock_github_tags(mock, "pycqa", "flake8", ["3.7.0", "3.9.0"])
-        factory = Factory(Config(), session)
-        analyzer = factory.create_pre_commit_analyzer()
-        results = await analyzer.analyze(data_path)
+    factory = Factory(Config(), client)
+    analyzer = factory.create_pre_commit_analyzer()
+    results = await analyzer.analyze(data_path)
 
     pre_commit_path = data_path / ".pre-commit-config.yaml"
     assert results == [

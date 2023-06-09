@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -12,11 +11,11 @@ from typing import Any
 from unittest.mock import Mock, call, patch
 
 import pytest
-from aiohttp import ClientSession
-from aioresponses import CallbackResult, aioresponses
+import respx
 from git import PushInfo, Remote
 from git.repo import Repo
 from git.util import Actor
+from httpx import AsyncClient, Request, Response
 from ruamel.yaml import YAML
 
 from neophile.config import Config, GitHubRepository
@@ -77,7 +76,9 @@ def patch_clone_from(owner: str, repo: str, path: Path) -> Iterator[None]:
 
 
 @pytest.mark.asyncio
-async def test_processor(tmp_path: Path, session: ClientSession) -> None:
+async def test_processor(
+    tmp_path: Path, client: AsyncClient, respx_mock: respx.Router
+) -> None:
     tmp_repo = setup_python_repo(tmp_path / "tmp", require_venv=True)
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
@@ -85,18 +86,17 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
         repositories=[GitHubRepository(owner="foo", repo="bar")],
         work_area=tmp_path / "work",
     )
-    user = {"name": "Someone", "email": "someone@example.com"}
     remote = Mock(spec=Remote)
     push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", remote)]
     created_pr = False
 
-    def check_pr_post(url: str, **kwargs: Any) -> CallbackResult:
+    def check_pr_post(request: Request) -> Response:
         changes = [
             "Update frozen Python dependencies",
             "Update ambv/black pre-commit hook from 19.10b0 to 20.0.0",
         ]
         body = "- " + "\n- ".join(changes) + "\n"
-        assert json.loads(kwargs["data"]) == {
+        assert json.loads(request.content) == {
             "title": CommitMessage.title,
             "body": body,
             "head": "u/neophile",
@@ -117,38 +117,43 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
 
         nonlocal created_pr
         created_pr = True
-        return CallbackResult(status=201, payload={"number": 42})
+        return Response(201, json={"number": 42})
 
-    with aioresponses() as mock:
-        register_mock_github_tags(mock, "ambv", "black", ["20.0.0", "19.10b0"])
-        register_mock_github_tags(
-            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    register_mock_github_tags(
+        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
+    )
+    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
+    respx_mock.get("https://api.github.com/user").mock(
+        return_value=Response(
+            200, json={"name": "Someone", "email": "someone@example.com"}
         )
-        register_mock_github_tags(
-            mock, "timothycrosley", "isort", ["4.3.21-2"]
-        )
-        register_mock_github_tags(mock, "pycqa", "flake8", ["3.8.1"])
-        mock.get("https://api.github.com/user", payload=user)
-        mock.get(
-            "https://api.github.com/repos/foo/bar",
-            payload={"default_branch": "main"},
-        )
-        pattern = re.compile(r"https://api.github.com/repos/foo/bar/pulls\?.*")
-        mock.get(pattern, payload=[])
-        mock.post(
-            "https://api.github.com/repos/foo/bar/pulls",
-            callback=check_pr_post,
-        )
-        mock_enable_auto_merge(mock, "foo", "bar", "42")
+    )
+    respx_mock.get("https://api.github.com/repos/foo/bar").mock(
+        return_value=Response(200, json={"default_branch": "main"})
+    )
+    pattern = r"https://api.github.com/repos/foo/bar/pulls\?.*"
+    respx_mock.get(url__regex=pattern).mock(
+        return_value=Response(200, json=[])
+    )
+    respx_mock.post("https://api.github.com/repos/foo/bar/pulls").mock(
+        side_effect=check_pr_post
+    )
+    mock_enable_auto_merge(respx_mock, "foo", "bar", "42")
 
-        # Unfortunately, the mock_push fixture can't be used here because we
-        # want to use git.Remote.push in create_upstream_git_repository.
-        factory = Factory(config, session)
-        processor = factory.create_processor()
-        with patch_clone_from("foo", "bar", upstream_path):
-            with patch.object(Remote, "push") as mock_push:
-                mock_push.return_value = push_result
-                await processor.process()
+    # Unfortunately, the mock_push fixture can't be used here because we
+    # want to use git.Remote.push in create_upstream_git_repository.
+    factory = Factory(config, client)
+    processor = factory.create_processor()
+    with patch_clone_from("foo", "bar", upstream_path):
+        with patch.object(Remote, "push") as mock_push:
+            mock_push.return_value = push_result
+            await processor.process()
 
     assert mock_push.call_args_list == [
         call("u/neophile:u/neophile", force=True)
@@ -162,7 +167,9 @@ async def test_processor(tmp_path: Path, session: ClientSession) -> None:
 
 
 @pytest.mark.asyncio
-async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
+async def test_no_updates(
+    tmp_path: Path, client: AsyncClient, respx_mock: respx.Router
+) -> None:
     tmp_repo = setup_python_repo(tmp_path / "tmp")
     subprocess.run(
         ["make", "update-deps"], cwd=str(tmp_path / "tmp"), check=True
@@ -176,23 +183,20 @@ async def test_no_updates(tmp_path: Path, session: ClientSession) -> None:
         repositories=[GitHubRepository(owner="foo", repo="bar")],
         work_area=tmp_path / "work",
     )
-    user = {"name": "Someone", "email": "someone@example.com"}
+    register_mock_github_tags(respx_mock, "ambv", "black", ["19.10b0"])
+    register_mock_github_tags(
+        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
+    )
+    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
-    with aioresponses() as mock:
-        register_mock_github_tags(mock, "ambv", "black", ["19.10b0"])
-        register_mock_github_tags(
-            mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-        )
-        register_mock_github_tags(
-            mock, "timothycrosley", "isort", ["4.3.21-2"]
-        )
-        register_mock_github_tags(mock, "pycqa", "flake8", ["3.8.1"])
-        mock.get("https://api.github.com/user", payload=user)
-        factory = Factory(config, session)
-        processor = factory.create_processor()
-        with patch_clone_from("foo", "bar", upstream_path):
-            with patch.object(Remote, "push") as mock_push:
-                await processor.process()
+    factory = Factory(config, client)
+    processor = factory.create_processor()
+    with patch_clone_from("foo", "bar", upstream_path):
+        with patch.object(Remote, "push") as mock_push:
+            await processor.process()
 
     assert mock_push.call_count == 0
     repo = Repo(str(tmp_path / "work" / "bar"))

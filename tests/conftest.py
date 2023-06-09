@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 import pytest_asyncio
-from aiohttp import ClientSession
 from git import PushInfo, Remote
+from httpx import AsyncClient
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def mock_push() -> Iterator[Mock]:
 
 
 @pytest_asyncio.fixture
-async def session() -> AsyncIterator[ClientSession]:
-    """Return an `aiohttp.ClientSession` for testing."""
-    async with ClientSession() as session:
-        yield session
+async def client() -> AsyncIterator[AsyncClient]:
+    """Return an `httpx.AsyncClient` for testing."""
+    async with AsyncClient() as client:
+        yield client

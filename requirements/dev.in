@@ -8,7 +8,6 @@
 -c main.txt
 
 # Testing
-aioresponses
 coverage[toml]
 mypy
 pre-commit
@@ -16,6 +15,7 @@ pytest
 pytest-asyncio
 pytest-cov
 pytest-sugar
+respx
 ruff
 
 # Documentation
