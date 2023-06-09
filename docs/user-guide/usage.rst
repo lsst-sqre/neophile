@@ -55,20 +55,6 @@ However, the ``repositories`` setting is best set via a configuration file.
 Here are all of the configuration settings and the corresponding environment variable.
 At least ``github_user`` and ``github_token`` must be set.
 
-``allow_expressions`` (env: ``NEOPHILE_ALLOW_EXPRESSIONS``)
-    If set to true, version ranges will be permitted in dependencies.
-    If set to false (the default), range dependencies will be updated to pin the latest version.
-    Currently, this setting only affects Helm chart dependencies.
-
-``cache_enabled`` (env: ``NEOPHILE_CACHE_ENABLED``)
-    If set to true (the default), inventory results may be cached for up to one day to speed interactive command-line usage.
-    The cache location is controlled by the ``cache_path`` setting.
-    Currently, this setting only affects Helm chart repository inventories.
-
-``cache_path`` (env: ``NEOPHILE_CACHE_PATH``)
-    A directory in which to write inventory cache files if ``cache_enabled`` is set to true.
-    The default is ``$XDG_CACHE_HOME/neophile`` (which normally expands to ``$HOME/.cache/neophile``).
-
 ``github_email`` (env: ``NEOPHILE_GITHUB_EMAIL``)
     The email address to use for commits when pushing to GitHub.
     If not set, the default is the public email address of the configured GitHub user.
@@ -108,8 +94,6 @@ Here is an example configuration file suitable for use inside a Docker container
 
 .. code-block:: yaml
 
-   allow_expressions: true
-   cache_enabled: false
    github_user: some-github-user
    github_token: some-github-token
    repositories:

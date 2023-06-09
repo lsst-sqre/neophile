@@ -23,19 +23,19 @@ Helm deployment
 The is Helm chart for neophile is available from the `Rubin Observatory charts repository <https://lsst-sqre.github.io/charts/>`__.
 To use that chart, you will need to set the following parameters (either on the Helm command line or in a ``values.yaml`` file):
 
-``github_email``
+``neophile.config.githubEmail``
     The email address to use for commit messages.
     If not set, the public email address of the configured GitHub user will be used.
 
-``github_user``
+``neophile.config.githubUser``
     The user corresponding to the GitHub token in the secret.
 
-``repositories``
+``neophile.config.repositories``
     A list of repositories.
     This has the same format as the corresponding setting.
     See :ref:`settings` for more information.
 
-``image`` (optional)
+``neophile.image`` (optional)
     Controls the Docker image to use via the following keys.
     The default is the current release of neophile from its official repository.
 
@@ -49,14 +49,14 @@ To use that chart, you will need to set the following parameters (either on the 
         The Kubernetes pull policy.
         Defaults to ``IfNotPresent``.
 
-``schedule`` (optional)
-    The schedule on which to run neophile as a cron expression.
-    Defaults to ``0 4 * * 1`` (4am each Monday).
-
-``volume_claim`` (optional)
+``neophile.persistence.volumeClaim`` (optional)
     The name of a ``PersistentVolumeClaim`` to use as the working directory.
     This makes neophile more efficient by allowing it to update existing checkouts of repositories rather than redownload each monitored repository on each run.
     If not set, neophile will use ``emptyDir``, which will not preserve the working directory between runs.
 
-``vault_secrets_path``
+``neophile.schedule`` (optional)
+    The schedule on which to run neophile as a cron expression.
+    Defaults to ``0 4 * * 1`` (4am each Monday).
+
+``neophile.vaultSecretsPath``
     The path in Vault to the secret containing the GitHub token.
