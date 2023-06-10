@@ -89,9 +89,7 @@ def test_analyze_update(tmp_path: Path, respx_mock: respx.Router) -> None:
     register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     result = runner.invoke(
-        main,
-        ["analyze", "--path", str(tmp_path), "--update"],
-        env={"NEOPHILE_CACHE_ENABLED": "0"},
+        main, ["analyze", "--path", str(tmp_path), "--update", "pre-commit"]
     )
     assert result.exit_code == 0
     data = yaml.load(dst)

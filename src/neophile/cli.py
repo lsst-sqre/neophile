@@ -67,6 +67,7 @@ def help(ctx: click.Context, topic: str | None) -> None:
 
 
 @main.command()
+@click.argument("types", type=click.Choice(["pre-commit", "python"]), nargs=-1)
 @click.option(
     "--path",
     type=click.Path(path_type=Path),
@@ -85,6 +86,7 @@ def help(ctx: click.Context, topic: str | None) -> None:
 @run_with_asyncio
 async def analyze(
     ctx: click.Context,
+    types: list[str],
     *,
     path: Path,
     pr: bool,
@@ -95,7 +97,7 @@ async def analyze(
 
     async with AsyncClient() as client:
         factory = Factory(config, client)
-        processor = factory.create_processor()
+        processor = factory.create_processor(types=types if types else None)
         if pr:
             await processor.process_checkout(path)
         elif update:
