@@ -275,9 +275,9 @@ docutils==0.19 \
     #   sphinx
     #   sphinx-click
     #   sphinxcontrib-bibtex
-filelock==3.12.0 \
-    --hash=sha256:ad98852315c2ab702aeb628412cbf7e95b7ce8c3bf9565670b4eaecf1db370a9 \
-    --hash=sha256:fc03ae43288c013d2ea83c8597001b1129db351aad9c57fe2409327916b8e718
+filelock==3.12.1 \
+    --hash=sha256:42f1e4ff2b497311213d61ad7aac5fed9050608e5309573f101eefa94143134a \
+    --hash=sha256:82b1f7da46f0ae42abf1bc78e548667f484ac59d2bcec38c713cee7e2eb51e83
     # via virtualenv
 fonttools==4.39.4 \
     --hash=sha256:106caf6167c4597556b31a8d9175a3fdc0356fdcd70ab19973c3b0d4c893c461 \
@@ -678,9 +678,9 @@ pillow==9.5.0 \
     --hash=sha256:fe7e1c262d3392afcf5071df9afa574544f28eac825284596ac6db56e6d11062 \
     --hash=sha256:fed1e1cf6a42577953abbe8e6cf2fe2f566daebde7c34724ec8803c4c0cda579
     # via matplotlib
-platformdirs==3.5.1 \
-    --hash=sha256:412dae91f52a6f84830f39a8078cecd0e866cb72294a5c66808e74d5e88d251f \
-    --hash=sha256:e2378146f1964972c03c085bb5662ae80b2b8c06226c54b2ff4aa9483e8a13a5
+platformdirs==3.5.3 \
+    --hash=sha256:0ade98a4895e87dc51d47151f7d2ec290365a585151d97b4d8d6312ed6132fed \
+    --hash=sha256:e48fabd87db8f3a7df7150a4a5ea22c546ee8bc39bc2473244730d4b56d2cc4e
     # via virtualenv
 pluggy==1.0.0 \
     --hash=sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159 \
@@ -756,9 +756,9 @@ pyparsing==3.0.9 \
     --hash=sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb \
     --hash=sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc
     # via matplotlib
-pytest==7.3.1 \
-    --hash=sha256:3799fa815351fea3a5e96ac7e503a96fa51cc9942c3753cda7651b93c1cfa362 \
-    --hash=sha256:434afafd78b1d78ed0addf160ad2b77a30d35d4bdf8af234fe621919d9ed15e3
+pytest==7.3.2 \
+    --hash=sha256:cdcbd012c9312258922f8cd3f1b62a6580fdced17db6014896053d47cddf9295 \
+    --hash=sha256:ee990a3cc55ba808b80795a79944756f315c67c12b56abd3ac993a7b8c17030b
     # via
     #   -r requirements/dev.in
     #   pytest-asyncio
