@@ -60,13 +60,19 @@ def test_analyze(tmp_path: Path, respx_mock: respx.Router) -> None:
     register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     result = runner.invoke(main, ["analyze", "--path", str(tmp_path)])
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     yaml = YAML()
     data = yaml.load(result.output)
     repository = "https://github.com/ambv/black"
     assert data["pre-commit"][0]["repository"] == repository
     assert data["pre-commit"][0]["current"] == "19.10b0"
     assert data["pre-commit"][0]["latest"] == "20.0.0"
+
+    # Try again with no changes required.
+    register_mock_github_tags(respx_mock, "ambv", "black", ["19.10b0"])
+    result = runner.invoke(main, ["analyze", "--path", str(tmp_path)])
+    assert not result.output
+    assert result.exit_code == 0
 
 
 def test_analyze_update(tmp_path: Path, respx_mock: respx.Router) -> None:

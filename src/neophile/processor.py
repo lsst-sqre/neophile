@@ -50,7 +50,12 @@ class Processor:
             Any updates found, organized by the analyzer that found the
             update.
         """
-        return {a.name: await a.analyze(path) for a in self._analyzers}
+        results = {}
+        for analyzer in self._analyzers:
+            analysis = await analyzer.analyze(path)
+            if analysis:
+                results[analyzer.name] = analysis
+        return results
 
     async def process(self) -> None:
         """Process all configured repositories for updates."""
