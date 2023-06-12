@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from gidgethub import BadRequest
+from gidgethub import GitHubException
 from gidgethub.httpx import GitHubAPI
 from httpx import AsyncClient, HTTPError
 
@@ -73,7 +73,7 @@ class GitHubInventory:
                 async for tag in tags
                 if cls.is_valid(tag["name"])
             ]
-        except (BadRequest, HTTPError) as e:
+        except (GitHubException, HTTPError) as e:
             error = type(e).__name__
             if str(e):
                 error += f": {e!s}"

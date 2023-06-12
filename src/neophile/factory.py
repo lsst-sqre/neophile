@@ -33,20 +33,22 @@ class Factory:
         self._config = config
         self._http_client = http_client
 
-    def create_all_analyzers(
-        self, *, use_venv: bool = False
+    def create_analyzers(
+        self, types: list[str] | None = None, *, use_venv: bool = False
     ) -> list[BaseAnalyzer]:
         """Create all analyzers.
 
         Parameters
         ----------
+        types
+            If given, only create analyzers of the given types.
         use_venv
             Whether to use a virtualenv to isolate analysis.
 
         Returns
         -------
         list of BaseAnalyzer
-            List of all available analyzers.
+            List of analyzers.
 
         Notes
         -----
@@ -55,10 +57,15 @@ class Factory:
         analyzers are run in update mode (which means they will make changes
         to the working tree).
         """
-        return [
-            self.create_python_analyzer(use_venv=use_venv),
-            self.create_pre_commit_analyzer(),
-        ]
+        if not types:
+            types = ["python", "pre-commit"]
+
+        analyzers: list[BaseAnalyzer] = []
+        if "python" in types:
+            analyzers.append(self.create_python_analyzer(use_venv=use_venv))
+        if "pre-commit" in types:
+            analyzers.append(self.create_pre_commit_analyzer())
+        return analyzers
 
     def create_all_scanners(self) -> list[BaseScanner]:
         """Create all scanners.
@@ -103,13 +110,13 @@ class Factory:
         else:
             return PythonAnalyzer()
 
-    def create_processor(self) -> Processor:
+    def create_processor(self, types: list[str] | None = None) -> Processor:
         """Create a new repository processor.
 
         Parameters
         ----------
-        use_venv
-            Whether to use a virtualenv to isolate analysis.
+        types
+            If given, only process dependencies of the given types.
 
         Returns
         -------
@@ -118,7 +125,7 @@ class Factory:
         """
         return Processor(
             self._config,
-            self.create_all_analyzers(use_venv=True),
+            self.create_analyzers(types, use_venv=True),
             self.create_pull_requester(),
         )
 
