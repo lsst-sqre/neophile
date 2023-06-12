@@ -104,9 +104,11 @@ async def analyze(
             await processor.update_checkout(path)
         else:
             results = await processor.analyze_checkout(path)
-            print_yaml(
-                {k: [u.to_dict() for u in v] for k, v in results.items()}
-            )
+            if results:
+                print_yaml(
+                    {k: [u.to_dict() for u in v] for k, v in results.items()}
+                )
+                sys.exit(1)
 
 
 @main.command()
