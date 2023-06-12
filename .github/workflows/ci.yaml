@@ -67,7 +67,7 @@ jobs:
         run: make init
 
       - name: Run neophile
-        run: neophile analyze python
+        run: neophile check python
 
   docs:
     runs-on: ubuntu-latest

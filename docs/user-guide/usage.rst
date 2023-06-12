@@ -16,7 +16,8 @@ neophile's processing is divided into five steps:
 #. **update**: Apply the changes found by analyze.
 #. **pull request**: Create a GitHub pull request.
 
-The primary command for command-line use is ``neophile analyze``, which will analyze the current working directory for out-of-date dependencies and produce either a report (the default), update those dependencies (``--update``), or create a GitHub pull request (``--pr``).
+The primary command for command-line use is ``neophile update``, which will analyze the current working directory for out-of-date dependencies and either update those dependencies (the default), or create a GitHub pull request (``--pr``).
+``neophile check`` checks whether dependencies are up-to-date and exits with a non-zero status if they are not.
 Other commands are provided to run only one of the above steps.
 
 The primary command when run as a cron job is ``neophile process``.

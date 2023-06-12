@@ -60,7 +60,7 @@ def test_analyze(tmp_path: Path, respx_mock: respx.Router) -> None:
     register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     result = runner.invoke(main, ["analyze", "--path", str(tmp_path)])
-    assert result.exit_code == 1
+    assert result.exit_code == 0
     yaml = YAML()
     data = yaml.load(result.output)
     repository = "https://github.com/ambv/black"
@@ -75,7 +75,81 @@ def test_analyze(tmp_path: Path, respx_mock: respx.Router) -> None:
     assert result.exit_code == 0
 
 
-def test_analyze_update(tmp_path: Path, respx_mock: respx.Router) -> None:
+def test_check(tmp_path: Path, respx_mock: respx.Router) -> None:
+    runner = CliRunner()
+    src = Path(__file__).parent / "data" / "python" / ".pre-commit-config.yaml"
+    dst = tmp_path / ".pre-commit-config.yaml"
+    shutil.copy(src, dst)
+    register_mock_github_tags(
+        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    )
+    register_mock_github_tags(
+        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
+    )
+    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
+
+    result = runner.invoke(main, ["check", "--path", str(tmp_path)])
+    assert result.exit_code == 1
+    assert result.output == "pre-commit dependencies out of date\n"
+
+    # Try again with no changes required.
+    register_mock_github_tags(respx_mock, "ambv", "black", ["19.10b0"])
+    result = runner.invoke(main, ["check", "--path", str(tmp_path)])
+    assert not result.output
+    assert result.exit_code == 0
+
+
+def test_github_inventory(respx_mock: respx.Router) -> None:
+    respx_mock.get("https://api.github.com/repos/foo/bar/tags").mock(
+        return_value=Response(200, json=[{"name": "1.1.0"}, {"name": "1.2.0"}])
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["github-inventory", "foo", "bar"])
+    assert result.exit_code == 0
+    assert result.output == "1.2.0\n"
+
+
+def test_process(tmp_path: Path) -> None:
+    """Test the process subcommand.
+
+    Notes
+    -----
+    This tests processing an empty set of repositories, since otherwise the
+    amount of setup required to mock everything out is too tedious.
+    Processing with all of the mocks is tested separately in the unit test for
+    the processor object.
+    """
+    runner = CliRunner()
+    config = {
+        "repositories": [],
+        "work_area": str(tmp_path),
+    }
+    config_path = tmp_path / "neophile.yaml"
+    with config_path.open("w") as f:
+        yaml = YAML()
+        yaml.dump(config, f)
+
+    result = runner.invoke(main, ["-c", str(config_path), "process"])
+    assert result.exit_code == 0
+
+
+def test_scan() -> None:
+    runner = CliRunner()
+
+    path = Path(__file__).parent / "data" / "python"
+    result = runner.invoke(main, ["scan", "--path", str(path)])
+    assert result.exit_code == 0
+    yaml = YAML()
+    data = yaml.load(result.output)
+    pre_commit_results = sorted(data["pre-commit"], key=lambda r: r["repo"])
+    assert pre_commit_results[0]["version"] == "19.10b0"
+
+
+def test_update(tmp_path: Path, respx_mock: respx.Router) -> None:
     runner = CliRunner()
     src = Path(__file__).parent / "data" / "python" / ".pre-commit-config.yaml"
     dst = tmp_path / ".pre-commit-config.yaml"
@@ -95,14 +169,14 @@ def test_analyze_update(tmp_path: Path, respx_mock: respx.Router) -> None:
     register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     result = runner.invoke(
-        main, ["analyze", "--path", str(tmp_path), "--update", "pre-commit"]
+        main, ["update", "--path", str(tmp_path), "pre-commit"]
     )
     assert result.exit_code == 0
     data = yaml.load(dst)
     assert data["repos"][2]["rev"] == "20.0.0"
 
 
-def test_analyze_pr(
+def test_update_pr(
     tmp_path: Path, respx_mock: respx.Router, mock_push: Mock
 ) -> None:
     runner = CliRunner()
@@ -167,57 +241,10 @@ def test_analyze_pr(
     )
     mock_enable_auto_merge(respx_mock, "foo", "bar", "42")
 
-    result = runner.invoke(main, ["analyze", "--path", str(tmp_path), "--pr"])
+    result = runner.invoke(main, ["update", "--path", str(tmp_path), "--pr"])
     assert result.exit_code == 0
     assert created_pr
     assert mock_push.call_args_list == [
         call("u/neophile:u/neophile", force=True)
     ]
     assert repo.head.ref.name == "main"
-
-
-def test_github_inventory(respx_mock: respx.Router) -> None:
-    respx_mock.get("https://api.github.com/repos/foo/bar/tags").mock(
-        return_value=Response(200, json=[{"name": "1.1.0"}, {"name": "1.2.0"}])
-    )
-
-    runner = CliRunner()
-    result = runner.invoke(main, ["github-inventory", "foo", "bar"])
-    assert result.exit_code == 0
-    assert result.output == "1.2.0\n"
-
-
-def test_process(tmp_path: Path) -> None:
-    """Test the process subcommand.
-
-    Notes
-    -----
-    This tests processing an empty set of repositories, since otherwise the
-    amount of setup required to mock everything out is too tedious.
-    Processing with all of the mocks is tested separately in the unit test for
-    the processor object.
-    """
-    runner = CliRunner()
-    config = {
-        "repositories": [],
-        "work_area": str(tmp_path),
-    }
-    config_path = tmp_path / "neophile.yaml"
-    with config_path.open("w") as f:
-        yaml = YAML()
-        yaml.dump(config, f)
-
-    result = runner.invoke(main, ["-c", str(config_path), "process"])
-    assert result.exit_code == 0
-
-
-def test_scan() -> None:
-    runner = CliRunner()
-
-    path = Path(__file__).parent / "data" / "python"
-    result = runner.invoke(main, ["scan", "--path", str(path)])
-    assert result.exit_code == 0
-    yaml = YAML()
-    data = yaml.load(result.output)
-    pre_commit_results = sorted(data["pre-commit"], key=lambda r: r["repo"])
-    assert pre_commit_results[0]["version"] == "19.10b0"
