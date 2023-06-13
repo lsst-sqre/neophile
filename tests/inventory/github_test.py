@@ -9,7 +9,7 @@ from httpx import AsyncClient, Response
 from neophile.config import Config
 from neophile.inventory.github import GitHubInventory
 
-from ..util import register_mock_github_tags
+from ..support.github import mock_github_tags
 
 
 @pytest.mark.asyncio
@@ -24,7 +24,7 @@ async def test_inventory(
     ]
 
     for test in tests:
-        register_mock_github_tags(respx_mock, "foo", "bar", test["tags"])
+        mock_github_tags(respx_mock, "foo/bar", test["tags"])
         inventory = GitHubInventory(Config(), client)
         latest = await inventory.inventory("foo", "bar")
         assert latest == test["latest"]
@@ -36,7 +36,7 @@ async def test_inventory_semantic(
 ) -> None:
     tags = ["1.19.0", "1.18.0", "1.15.1", "20171120-1"]
 
-    register_mock_github_tags(respx_mock, "foo", "bar", tags)
+    mock_github_tags(respx_mock, "foo/bar", tags)
     inventory = GitHubInventory(Config(), client)
     latest = await inventory.inventory("foo", "bar")
     assert latest == "20171120-1"
@@ -49,7 +49,7 @@ async def test_inventory_missing(
     client: AsyncClient, respx_mock: respx.Router
 ) -> None:
     """Missing and empty version lists should return None."""
-    register_mock_github_tags(respx_mock, "foo", "bar", [])
+    mock_github_tags(respx_mock, "foo/bar", [])
     respx_mock.get("https://api.github.com/repos/foo/nonexistent/tags").mock(
         return_value=Response(404)
     )

@@ -12,33 +12,26 @@ from neophile.config import Config
 from neophile.factory import Factory
 from neophile.update.pre_commit import PreCommitUpdate
 
-from ..util import register_mock_github_tags
+from ..support.github import mock_github_tags
 
 
 @pytest.mark.asyncio
 async def test_analyzer(client: AsyncClient, respx_mock: respx.Router) -> None:
     data_path = Path(__file__).parent.parent / "data" / "python"
-    register_mock_github_tags(
+    pre_commit_path = data_path / ".pre-commit-config.yaml"
+    mock_github_tags(
         respx_mock,
-        "pre-commit",
-        "pre-commit-hooks",
+        "pre-commit/pre-commit-hooks",
         ["v3.0.0", "v3.1.0", "v3.2.0"],
     )
-    register_mock_github_tags(
-        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
-    )
-    register_mock_github_tags(
-        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
-    )
-    register_mock_github_tags(
-        respx_mock, "pycqa", "flake8", ["3.7.0", "3.9.0"]
-    )
+    mock_github_tags(respx_mock, "timothycrosley/isort", ["4.3.21-2"])
+    mock_github_tags(respx_mock, "ambv/black", ["20.0.0", "19.10b0"])
+    mock_github_tags(respx_mock, "pycqa/flake8", ["3.7.0", "3.9.0"])
 
     factory = Factory(Config(), client)
     analyzer = factory.create_pre_commit_analyzer()
     results = await analyzer.analyze(data_path)
 
-    pre_commit_path = data_path / ".pre-commit-config.yaml"
     assert results == [
         PreCommitUpdate(
             path=pre_commit_path,

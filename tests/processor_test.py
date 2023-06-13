@@ -22,11 +22,11 @@ from neophile.config import Config, GitHubRepository
 from neophile.factory import Factory
 from neophile.pr import CommitMessage
 
-from .util import (
+from .support.github import (
     mock_enable_auto_merge,
-    register_mock_github_tags,
-    setup_python_repo,
+    mock_github_tags_from_precommit,
 )
+from .util import setup_python_repo
 
 
 def create_upstream_git_repository(repo: Repo, upstream_path: Path) -> None:
@@ -119,16 +119,11 @@ async def test_processor(
         created_pr = True
         return Response(201, json={"number": 42})
 
-    register_mock_github_tags(
-        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    mock_github_tags_from_precommit(
+        respx_mock,
+        tmp_path / "tmp" / ".pre-commit-config.yaml",
+        {"ambv/black": ["20.0.0"]},
     )
-    register_mock_github_tags(
-        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-    )
-    register_mock_github_tags(
-        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
-    )
-    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
     respx_mock.get("https://api.github.com/user").mock(
         return_value=Response(
             200, json={"name": "Someone", "email": "someone@example.com"}
@@ -183,14 +178,9 @@ async def test_no_updates(
         repositories=[GitHubRepository(owner="foo", repo="bar")],
         work_area=tmp_path / "work",
     )
-    register_mock_github_tags(respx_mock, "ambv", "black", ["19.10b0"])
-    register_mock_github_tags(
-        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
+    mock_github_tags_from_precommit(
+        respx_mock, tmp_path / "tmp" / ".pre-commit-config.yaml"
     )
-    register_mock_github_tags(
-        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
-    )
-    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     factory = Factory(config, client)
     processor = factory.create_processor()
