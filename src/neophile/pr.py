@@ -246,10 +246,10 @@ class PullRequester:
         author
             Actor to use for commits.
         """
-        response = await self._github.getitem("/user")
         if self._config.github_email:
-            return Actor(response["name"], self._config.github_email)
+            return Actor(self._config.github_user, self._config.github_email)
         else:
+            response = await self._github.getitem("/user")
             return Actor(response["name"], response["email"])
 
     async def _get_github_default_branch(
