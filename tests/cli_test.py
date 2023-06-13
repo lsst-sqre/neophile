@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import shutil
-from io import StringIO
 from pathlib import Path
 from unittest.mock import Mock, call
 
@@ -19,7 +18,11 @@ from ruamel.yaml import YAML
 from neophile.cli import main
 from neophile.pr import CommitMessage
 
-from .util import mock_enable_auto_merge, register_mock_github_tags
+from .support.github import (
+    mock_enable_auto_merge,
+    mock_github_tags,
+    mock_github_tags_from_precommit,
+)
 
 
 def test_help() -> None:
@@ -48,16 +51,9 @@ def test_analyze(tmp_path: Path, respx_mock: respx.Router) -> None:
     src = Path(__file__).parent / "data" / "python" / ".pre-commit-config.yaml"
     dst = tmp_path / ".pre-commit-config.yaml"
     shutil.copy(src, dst)
-    register_mock_github_tags(
-        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    mock_github_tags_from_precommit(
+        respx_mock, src, {"ambv/black": ["20.0.0"]}
     )
-    register_mock_github_tags(
-        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-    )
-    register_mock_github_tags(
-        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
-    )
-    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     result = runner.invoke(main, ["analyze", "--path", str(tmp_path)])
     assert result.exit_code == 0
@@ -69,7 +65,7 @@ def test_analyze(tmp_path: Path, respx_mock: respx.Router) -> None:
     assert data["pre-commit"][0]["latest"] == "20.0.0"
 
     # Try again with no changes required.
-    register_mock_github_tags(respx_mock, "ambv", "black", ["19.10b0"])
+    mock_github_tags_from_precommit(respx_mock, src)
     result = runner.invoke(main, ["analyze", "--path", str(tmp_path)])
     assert not result.output
     assert result.exit_code == 0
@@ -80,32 +76,23 @@ def test_check(tmp_path: Path, respx_mock: respx.Router) -> None:
     src = Path(__file__).parent / "data" / "python" / ".pre-commit-config.yaml"
     dst = tmp_path / ".pre-commit-config.yaml"
     shutil.copy(src, dst)
-    register_mock_github_tags(
-        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    mock_github_tags_from_precommit(
+        respx_mock, src, {"ambv/black": ["20.0.0"]}
     )
-    register_mock_github_tags(
-        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-    )
-    register_mock_github_tags(
-        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
-    )
-    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     result = runner.invoke(main, ["check", "--path", str(tmp_path)])
     assert result.exit_code == 1
     assert result.output == "pre-commit dependencies out of date\n"
 
     # Try again with no changes required.
-    register_mock_github_tags(respx_mock, "ambv", "black", ["19.10b0"])
+    mock_github_tags_from_precommit(respx_mock, src)
     result = runner.invoke(main, ["check", "--path", str(tmp_path)])
     assert not result.output
     assert result.exit_code == 0
 
 
 def test_github_inventory(respx_mock: respx.Router) -> None:
-    respx_mock.get("https://api.github.com/repos/foo/bar/tags").mock(
-        return_value=Response(200, json=[{"name": "1.1.0"}, {"name": "1.2.0"}])
-    )
+    mock_github_tags(respx_mock, "foo/bar", ["1.1.0", "1.2.0"])
 
     runner = CliRunner()
     result = runner.invoke(main, ["github-inventory", "foo", "bar"])
@@ -155,18 +142,9 @@ def test_update(tmp_path: Path, respx_mock: respx.Router) -> None:
     dst = tmp_path / ".pre-commit-config.yaml"
     shutil.copy(src, dst)
     yaml = YAML()
-    output = StringIO()
-    output.getvalue()
-    register_mock_github_tags(
-        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    mock_github_tags_from_precommit(
+        respx_mock, src, {"ambv/black": ["20.0.0"]}
     )
-    register_mock_github_tags(
-        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-    )
-    register_mock_github_tags(
-        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
-    )
-    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
 
     result = runner.invoke(
         main, ["update", "--path", str(tmp_path), "pre-commit"]
@@ -214,16 +192,9 @@ def test_update_pr(
         created_pr = True
         return Response(201, json={"number": 42})
 
-    register_mock_github_tags(
-        respx_mock, "ambv", "black", ["20.0.0", "19.10b0"]
+    mock_github_tags_from_precommit(
+        respx_mock, src, {"ambv/black": ["20.0.0"]}
     )
-    register_mock_github_tags(
-        respx_mock, "pre-commit", "pre-commit-hooks", ["v3.1.0"]
-    )
-    register_mock_github_tags(
-        respx_mock, "timothycrosley", "isort", ["4.3.21-2"]
-    )
-    register_mock_github_tags(respx_mock, "pycqa", "flake8", ["3.8.1"])
     respx_mock.get("https://api.github.com/user").mock(
         return_value=Response(
             200, json={"name": "Someone", "email": "someone@example.com"}

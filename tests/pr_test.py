@@ -19,7 +19,8 @@ from neophile.pr import CommitMessage, PullRequester
 from neophile.repository import Repository
 from neophile.update.pre_commit import PreCommitUpdate
 
-from .util import mock_enable_auto_merge, setup_python_repo
+from .support.github import mock_enable_auto_merge
+from .util import setup_python_repo
 
 
 @pytest.mark.asyncio
