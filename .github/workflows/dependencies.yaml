@@ -24,4 +24,5 @@ jobs:
       - name: Run neophile
         run: neophile update --pr pre-commit
         env:
+          NEOPHILE_GITHUB_EMAIL: "24442459+sqrbot@users.noreply.github.com"
           NEOPHILE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
