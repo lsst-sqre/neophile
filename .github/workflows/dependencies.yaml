@@ -24,4 +24,4 @@ jobs:
       - name: Run neophile
         run: neophile update --pr pre-commit
         env:
-          NEOPHILE_GITNUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEOPHILE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
