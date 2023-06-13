@@ -32,9 +32,7 @@ class Config(BaseSettings):
     )
 
     github_token: SecretStr = Field(
-        SecretStr(""),
-        description="GitHub token for creating pull requests",
-        env="GITHUB_TOKEN",
+        SecretStr(""), description="GitHub token for creating pull requests"
     )
 
     github_user: str = Field(
