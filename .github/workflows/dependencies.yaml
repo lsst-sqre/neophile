@@ -1,0 +1,25 @@
+name: Dependency Update
+
+"on":
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install neophile
+        run: make init
+
+      - name: Run neophile
+        run: neophile update --pr pre-commit
