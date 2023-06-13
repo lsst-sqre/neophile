@@ -249,32 +249,6 @@ async def test_pr_update(
 
 
 @pytest.mark.asyncio
-async def test_get_authenticated_remote(
-    tmp_path: Path, client: AsyncClient
-) -> None:
-    repo = Repo.init(str(tmp_path), initial_branch="main")
-
-    config = Config(github_user="test", github_token=SecretStr("some-token"))
-    pr = PullRequester(config, client)
-
-    remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
-    url = pr._get_authenticated_remote(repo)
-    assert url == "https://test:some-token@github.com/foo/bar"
-
-    remote.set_url("https://foo@github.com:8080/foo/bar")
-    url = pr._get_authenticated_remote(repo)
-    assert url == "https://test:some-token@github.com:8080/foo/bar"
-
-    remote.set_url("git@github.com:bar/foo")
-    url = pr._get_authenticated_remote(repo)
-    assert url == "https://test:some-token@github.com/bar/foo"
-
-    remote.set_url("ssh://git:blahblah@github.com/baz/stuff")
-    url = pr._get_authenticated_remote(repo)
-    assert url == "https://test:some-token@github.com/baz/stuff"
-
-
-@pytest.mark.asyncio
 async def test_get_github_repo(tmp_path: Path, client: AsyncClient) -> None:
     repo = Repo.init(str(tmp_path), initial_branch="main")
 

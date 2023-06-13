@@ -234,29 +234,6 @@ class PullRequester:
             )
             logging.exception(msg)
 
-    def _get_authenticated_remote(self, repo: Repo) -> str:
-        """Get the URL with authentication credentials of the origin remote.
-
-        Supports an ssh URL, an https URL, or the SSH syntax that Git
-        understands (user@host:path).
-
-        Parameters
-        ----------
-        repo
-            Local Git repository.
-
-        Returns
-        -------
-        url
-            URL suitable for an authenticated push of a new branch.
-        """
-        url = self._get_remote_url(repo)
-        token = self._config.github_token.get_secret_value()
-        auth = f"{self._config.github_user}:{token}"
-        host = url.netloc.rsplit("@", 1)[-1]
-        url = url._replace(scheme="https", netloc=f"{auth}@{host}")
-        return url.geturl()
-
     async def _get_github_actor(self) -> Actor:
         """Get authorship information for commits.
 
@@ -308,8 +285,13 @@ class PullRequester:
         GitHubRepository
             GitHub repository information.
         """
-        url = self._get_remote_url(repo)
-        _, owner, github_repo = url.path.split("/")
+        url = next(repo.remotes.origin.urls)
+        if "//" in url:
+            parsed_url = urlparse(url)
+        else:
+            path = url.rsplit(":", 1)[-1]
+            parsed_url = urlparse(f"https://github.com/{path}")
+        owner, github_repo = parsed_url.path.lstrip("/").split("/")
         if github_repo.endswith(".git"):
             github_repo = github_repo[: -len(".git")]
         return GitHubRepository(owner=owner, repo=github_repo)
@@ -388,7 +370,7 @@ class PullRequester:
             Raised if pushing the branch to GitHub failed.
         """
         branch = repo.head.ref.name
-        remote_url = self._get_authenticated_remote(repo)
+        remote_url = next(repo.remotes.origin.urls)
         remote = Remote.add(repo, "tmp-neophile", remote_url)
         try:
             push_info = remote.push(f"{branch}:{branch}", force=True)
