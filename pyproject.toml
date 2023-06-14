@@ -18,9 +18,33 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.11"
-# Use requirements/main.in for runtime dependencies instead.
-dependencies = []
+dependencies = [
+    "GitPython",
+    "click",
+    "gidgethub",
+    "httpx",
+    "packaging",
+    "pydantic",
+    "ruamel.yaml",
+    "safir",
+    "semver",
+]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-sugar",
+    "respx",
+    # documentation
+    "autodoc_pydantic",
+    "documenteer[guide]",
+    "scriv[toml]",
+    "sphinx-click",
+]
 
 [project.scripts]
 neophile = "neophile.cli:main"
