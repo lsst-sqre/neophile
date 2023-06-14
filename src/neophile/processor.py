@@ -57,14 +57,6 @@ class Processor:
                 results[analyzer.name] = analysis
         return results
 
-    async def process(self) -> None:
-        """Process all configured repositories for updates."""
-        for github_repo in self._config.repositories:
-            url = f"https://github.com/{github_repo.owner}/{github_repo.repo}"
-            path = self._config.work_area / github_repo.repo
-            repo = Repository.clone_or_update(path, url)
-            await self._process_one_repository(repo, path)
-
     async def process_checkout(self, path: Path) -> None:
         """Check a cloned repository for updates.
 

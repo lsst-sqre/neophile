@@ -13,7 +13,6 @@ from .pr import PullRequester
 from .processor import Processor
 from .scanner.base import BaseScanner
 from .scanner.pre_commit import PreCommitScanner
-from .virtualenv import VirtualEnv
 
 __all__ = ["Factory"]
 
@@ -23,18 +22,16 @@ class Factory:
 
     Parameters
     ----------
-    config
-        neophile configuration.
     http_client
         HTTP client to use for requests.
     """
 
-    def __init__(self, config: Config, http_client: AsyncClient) -> None:
-        self._config = config
+    def __init__(self, http_client: AsyncClient) -> None:
         self._http_client = http_client
+        self._config = Config()
 
     def create_analyzers(
-        self, types: list[str] | None = None, *, use_venv: bool = False
+        self, types: list[str] | None = None
     ) -> list[BaseAnalyzer]:
         """Create all analyzers.
 
@@ -42,8 +39,6 @@ class Factory:
         ----------
         types
             If given, only create analyzers of the given types.
-        use_venv
-            Whether to use a virtualenv to isolate analysis.
 
         Returns
         -------
@@ -62,7 +57,7 @@ class Factory:
 
         analyzers: list[BaseAnalyzer] = []
         if "python" in types:
-            analyzers.append(self.create_python_analyzer(use_venv=use_venv))
+            analyzers.append(self.create_python_analyzer())
         if "pre-commit" in types:
             analyzers.append(self.create_pre_commit_analyzer())
         return analyzers
@@ -89,26 +84,15 @@ class Factory:
         inventory = GitHubInventory(self._config, self._http_client)
         return PreCommitAnalyzer(scanner, inventory)
 
-    def create_python_analyzer(
-        self, *, use_venv: bool = False
-    ) -> PythonAnalyzer:
+    def create_python_analyzer(self) -> PythonAnalyzer:
         """Create a new Python frozen dependency analyzer.
-
-        Parameters
-        ----------
-        use_venv
-            Whether to use a virtualenv to isolate analysis.
 
         Returns
         -------
         PythonAnalyzer
             New analyzer.
         """
-        if use_venv:
-            virtualenv = VirtualEnv(self._config.work_area / "venv")
-            return PythonAnalyzer(virtualenv)
-        else:
-            return PythonAnalyzer()
+        return PythonAnalyzer()
 
     def create_processor(self, types: list[str] | None = None) -> Processor:
         """Create a new repository processor.
@@ -125,7 +109,7 @@ class Factory:
         """
         return Processor(
             self._config,
-            self.create_analyzers(types, use_venv=True),
+            self.create_analyzers(types),
             self.create_pull_requester(),
         )
 

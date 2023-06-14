@@ -6,11 +6,9 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from _pytest.logging import LogCaptureFixture
 from git.util import Actor
 from httpx import AsyncClient
 
-from neophile.config import Config
 from neophile.exceptions import UncommittedChangesError
 from neophile.factory import Factory
 from neophile.update.python import PythonFrozenUpdate
@@ -23,7 +21,7 @@ async def test_analyzer(tmp_path: Path, client: AsyncClient) -> None:
     repo = setup_python_repo(tmp_path)
     actor = Actor("Someone", "someone@example.com")
 
-    factory = Factory(Config(), client)
+    factory = Factory(client)
     analyzer = factory.create_python_analyzer()
     results = await analyzer.analyze(tmp_path)
 
@@ -37,7 +35,7 @@ async def test_analyzer(tmp_path: Path, client: AsyncClient) -> None:
     # If the repo is dirty, analysis will fail.
     subprocess.run(["make", "update-deps"], cwd=str(tmp_path), check=True)
     assert repo.is_dirty()
-    factory = Factory(Config(), client)
+    factory = Factory(client)
     analyzer = factory.create_python_analyzer()
     with pytest.raises(UncommittedChangesError):
         results = await analyzer.analyze(tmp_path)
@@ -46,7 +44,7 @@ async def test_analyzer(tmp_path: Path, client: AsyncClient) -> None:
     # file.  Analysis should now return no changes.
     repo.index.add(str(tmp_path / "requirements"))
     repo.index.commit("Update dependencies", author=actor, committer=actor)
-    factory = Factory(Config(), client)
+    factory = Factory(client)
     analyzer = factory.create_python_analyzer()
     results = await analyzer.analyze(tmp_path)
     assert results == []
@@ -56,7 +54,7 @@ async def test_analyzer(tmp_path: Path, client: AsyncClient) -> None:
 async def test_analyzer_update(tmp_path: Path, client: AsyncClient) -> None:
     repo = setup_python_repo(tmp_path)
 
-    factory = Factory(Config(), client)
+    factory = Factory(client)
     analyzer = factory.create_python_analyzer()
     results = await analyzer.update(tmp_path)
 
@@ -64,15 +62,3 @@ async def test_analyzer_update(tmp_path: Path, client: AsyncClient) -> None:
         PythonFrozenUpdate(path=tmp_path / "requirements", applied=True)
     ]
     assert repo.is_dirty()
-
-
-@pytest.mark.asyncio
-async def test_virtualenv(
-    tmp_path: Path, client: AsyncClient, caplog: LogCaptureFixture
-) -> None:
-    setup_python_repo(tmp_path, require_venv=True)
-
-    factory = Factory(Config(), client)
-    analyzer = factory.create_python_analyzer()
-    assert await analyzer.analyze(tmp_path) == []
-    assert "make update-deps failed" in caplog.records[0].msg

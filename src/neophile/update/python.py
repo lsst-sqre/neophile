@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import logging
 import subprocess
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from pathlib import Path  # noqa: F401
 
-from ..virtualenv import VirtualEnv
 from .base import Update
 
 __all__ = ["PythonFrozenUpdate"]
@@ -16,12 +15,6 @@ __all__ = ["PythonFrozenUpdate"]
 @dataclass
 class PythonFrozenUpdate(Update):
     """An update to Python frozen dependencies."""
-
-    virtualenv: InitVar[VirtualEnv | None] = None
-    """Virtual environment to use for updates."""
-
-    def __post_init__(self, virtualenv: VirtualEnv | None) -> None:
-        self._virtualenv = virtualenv
 
     def apply(self) -> None:
         """Apply an update to frozen Python dependencies.
@@ -36,20 +29,12 @@ class PythonFrozenUpdate(Update):
         rootdir = self.path.parent
 
         try:
-            if self._virtualenv:
-                self._virtualenv.run(
-                    ["make", "update-deps"],
-                    cwd=str(rootdir),
-                    check=True,
-                    capture_output=True,
-                )
-            else:
-                subprocess.run(
-                    ["make", "update-deps"],
-                    cwd=str(rootdir),
-                    check=True,
-                    capture_output=True,
-                )
+            subprocess.run(
+                ["make", "update-deps"],
+                cwd=str(rootdir),
+                check=True,
+                capture_output=True,
+            )
         except subprocess.CalledProcessError as e:
             logging.exception(
                 "make update-deps failed: %s%s", e.stdout, e.stderr

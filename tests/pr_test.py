@@ -13,9 +13,9 @@ from git.repo import Repo
 from httpx import AsyncClient, Request, Response
 from pydantic import SecretStr
 
-from neophile.config import Config, GitHubRepository
+from neophile.config import Config
 from neophile.exceptions import PushError
-from neophile.pr import CommitMessage, PullRequester
+from neophile.pr import CommitMessage, GitHubRepository, PullRequester
 from neophile.repository import Repository
 from neophile.update.pre_commit import PreCommitUpdate
 
@@ -77,7 +77,6 @@ async def test_pr(
     assert commit.committer.email == "someone@example.com"
     change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
-    assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
 @pytest.mark.asyncio
@@ -176,7 +175,6 @@ async def test_pr_no_automerge(
     assert commit.committer.email == "someone@example.com"
     change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
-    assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
 @pytest.mark.asyncio

@@ -18,7 +18,6 @@ from git.util import Actor
 from httpx import AsyncClient, Request, Response
 from ruamel.yaml import YAML
 
-from neophile.config import Config, GitHubRepository
 from neophile.factory import Factory
 from neophile.pr import CommitMessage
 
@@ -79,13 +78,11 @@ def patch_clone_from(owner: str, repo: str, path: Path) -> Iterator[None]:
 async def test_processor(
     tmp_path: Path, client: AsyncClient, respx_mock: respx.Router
 ) -> None:
-    tmp_repo = setup_python_repo(tmp_path / "tmp", require_venv=True)
+    tmp_repo = setup_python_repo(tmp_path / "tmp")
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
-    config = Config(
-        repositories=[GitHubRepository(owner="foo", repo="bar")],
-        work_area=tmp_path / "work",
-    )
+    with tmp_repo.remotes.origin.config_writer as cw:
+        cw.set("url", "git@github.com:foo/bar")
     remote = Mock(spec=Remote)
     push_result = [PushInfo(PushInfo.NEW_HEAD, None, "", remote)]
     created_pr = False
@@ -105,10 +102,10 @@ async def test_processor(
             "draft": False,
         }
 
-        repo = Repo(str(tmp_path / "work" / "bar"))
+        repo = Repo(str(tmp_path / "tmp"))
         assert repo.head.ref.name == "u/neophile"
         yaml = YAML()
-        data = yaml.load(tmp_path / "work" / "bar" / ".pre-commit-config.yaml")
+        data = yaml.load(tmp_path / "tmp" / ".pre-commit-config.yaml")
         assert data["repos"][2]["rev"] == "20.0.0"
         commit = repo.head.commit
         assert commit.author.name == "Someone"
@@ -143,22 +140,20 @@ async def test_processor(
 
     # Unfortunately, the mock_push fixture can't be used here because we
     # want to use git.Remote.push in create_upstream_git_repository.
-    factory = Factory(config, client)
+    factory = Factory(client)
     processor = factory.create_processor()
     with patch_clone_from("foo", "bar", upstream_path):
         with patch.object(Remote, "push") as mock_push:
             mock_push.return_value = push_result
-            await processor.process()
+            await processor.process_checkout(tmp_path / "tmp")
 
     assert mock_push.call_args_list == [
         call("u/neophile:u/neophile", force=True)
     ]
     assert created_pr
-    repo = Repo(str(tmp_path / "work" / "bar"))
-    assert not repo.is_dirty()
-    assert repo.head.ref.name == "main"
-    assert "u/neophile" not in [h.name for h in repo.heads]
-    assert "tmp-neophile" not in [r.name for r in repo.remotes]
+    assert not tmp_repo.is_dirty()
+    assert tmp_repo.head.ref.name == "main"
+    assert "u/neophile" not in [h.name for h in tmp_repo.heads]
 
 
 @pytest.mark.asyncio
@@ -174,21 +169,16 @@ async def test_no_updates(
     tmp_repo.index.commit("Update dependencies", author=actor, committer=actor)
     upstream_path = tmp_path / "upstream"
     create_upstream_git_repository(tmp_repo, upstream_path)
-    config = Config(
-        repositories=[GitHubRepository(owner="foo", repo="bar")],
-        work_area=tmp_path / "work",
-    )
     mock_github_tags_from_precommit(
         respx_mock, tmp_path / "tmp" / ".pre-commit-config.yaml"
     )
 
-    factory = Factory(config, client)
+    factory = Factory(client)
     processor = factory.create_processor()
     with patch_clone_from("foo", "bar", upstream_path):
         with patch.object(Remote, "push") as mock_push:
-            await processor.process()
+            await processor.process_checkout(tmp_path / "tmp")
 
     assert mock_push.call_count == 0
-    repo = Repo(str(tmp_path / "work" / "bar"))
-    assert not repo.is_dirty()
-    assert repo.head.ref.name == "main"
+    assert not tmp_repo.is_dirty()
+    assert tmp_repo.head.ref.name == "main"

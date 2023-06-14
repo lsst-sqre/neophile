@@ -11,17 +11,18 @@ from urllib.parse import ParseResult, urlencode, urlparse
 
 from gidgethub import QueryError
 from gidgethub.httpx import GitHubAPI
-from git import PushInfo, Remote
+from git import PushInfo
 from git.repo import Repo
 from git.util import Actor
 from httpx import AsyncClient
 
-from .config import Config, GitHubRepository
+from .config import Config
 from .exceptions import PushError
 from .update.base import Update
 
 __all__ = [
     "CommitMessage",
+    "GitHubRepository",
     "PullRequester",
 ]
 
@@ -63,6 +64,17 @@ class CommitMessage:
     def body(self) -> str:
         """Body of the commit message."""
         return "- " + "\n- ".join(self.changes) + "\n"
+
+
+@dataclass(frozen=True)
+class GitHubRepository:
+    """An individual GitHub repository."""
+
+    owner: str
+    """The owner of the repository."""
+
+    repo: str
+    """The name of the repository."""
 
 
 class PullRequester:
@@ -370,16 +382,12 @@ class PullRequester:
             Raised if pushing the branch to GitHub failed.
         """
         branch = repo.head.ref.name
-        remote_url = next(repo.remotes.origin.urls)
-        remote = Remote.add(repo, "tmp-neophile", remote_url)
-        try:
-            push_info = remote.push(f"{branch}:{branch}", force=True)
-            for result in push_info:
-                if result.flags & PushInfo.ERROR:
-                    msg = f"Pushing {branch} failed: {result.summary}"
-                    raise PushError(msg)
-        finally:
-            Remote.remove(repo, "tmp-neophile")
+        origin = repo.remotes.origin
+        push_info = origin.push(f"{branch}:{branch}", force=True)
+        for result in push_info:
+            if result.flags & PushInfo.ERROR:
+                msg = f"Pushing {branch} failed: {result.summary}"
+                raise PushError(msg)
 
     async def _update_pr(
         self,

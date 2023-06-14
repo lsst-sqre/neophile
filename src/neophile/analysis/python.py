@@ -11,7 +11,6 @@ from git.repo import Repo
 from ..exceptions import UncommittedChangesError
 from ..update.base import Update
 from ..update.python import PythonFrozenUpdate
-from ..virtualenv import VirtualEnv
 from .base import BaseAnalyzer
 
 __all__ = ["PythonAnalyzer"]
@@ -27,9 +26,6 @@ class PythonAnalyzer(BaseAnalyzer):
     virtualenv
         Virtual environment manager.
     """
-
-    def __init__(self, virtualenv: VirtualEnv | None = None) -> None:
-        self._virtualenv = virtualenv
 
     async def analyze(
         self, root: Path, *, update: bool = False
@@ -69,20 +65,12 @@ class PythonAnalyzer(BaseAnalyzer):
             raise UncommittedChangesError(msg)
 
         try:
-            if self._virtualenv:
-                self._virtualenv.run(
-                    ["make", "update-deps"],
-                    cwd=str(root),
-                    check=True,
-                    capture_output=True,
-                )
-            else:
-                subprocess.run(
-                    ["make", "update-deps"],
-                    cwd=str(root),
-                    check=True,
-                    capture_output=True,
-                )
+            subprocess.run(
+                ["make", "update-deps"],
+                cwd=str(root),
+                check=True,
+                capture_output=True,
+            )
         except subprocess.CalledProcessError as e:
             logging.exception(
                 "make update-deps failed: %s%s", e.stdout, e.stderr
@@ -94,13 +82,7 @@ class PythonAnalyzer(BaseAnalyzer):
 
         if not update:
             repo.git.restore(".")
-        return [
-            PythonFrozenUpdate(
-                path=root / "requirements",
-                applied=update,
-                virtualenv=self._virtualenv,
-            )
-        ]
+        return [PythonFrozenUpdate(path=root / "requirements", applied=update)]
 
     @property
     def name(self) -> str:
