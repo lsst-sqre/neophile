@@ -8,7 +8,6 @@ import pytest
 import respx
 from httpx import AsyncClient
 
-from neophile.config import Config
 from neophile.factory import Factory
 from neophile.update.pre_commit import PreCommitUpdate
 
@@ -28,7 +27,7 @@ async def test_analyzer(client: AsyncClient, respx_mock: respx.Router) -> None:
     mock_github_tags(respx_mock, "ambv/black", ["20.0.0", "19.10b0"])
     mock_github_tags(respx_mock, "pycqa/flake8", ["3.7.0", "3.9.0"])
 
-    factory = Factory(Config(), client)
+    factory = Factory(client)
     analyzer = factory.create_pre_commit_analyzer()
     results = await analyzer.analyze(data_path)
 

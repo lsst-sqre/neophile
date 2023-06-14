@@ -40,5 +40,3 @@ Python internal API
 .. automodapi:: neophile.update.pre_commit
 
 .. automodapi:: neophile.update.python
-
-.. automodapi:: neophile.virtualenv
