@@ -11,7 +11,6 @@ from httpx import AsyncClient
 from ruamel.yaml import YAML
 from safir.asyncio import run_with_asyncio
 
-from .config import Config
 from .factory import Factory
 from .inventory.github import GitHubInventory
 
@@ -106,7 +105,7 @@ async def check(types: list[str], *, path: Path) -> None:
 async def github_inventory(owner: str, repo: str) -> None:
     """Inventory available GitHub tags."""
     async with AsyncClient() as client:
-        inventory = GitHubInventory(Config(), client)
+        inventory = GitHubInventory(client)
         result = await inventory.inventory(owner, repo)
         if result:
             sys.stdout.write(result + "\n")

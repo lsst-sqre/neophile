@@ -19,6 +19,7 @@ from neophile.cli import main
 from neophile.pr import CommitMessage
 
 from .support.github import (
+    mock_app_authenticate,
     mock_enable_auto_merge,
     mock_github_tags,
     mock_github_tags_from_precommit,
@@ -131,7 +132,7 @@ def test_update(tmp_path: Path, respx_mock: respx.Router) -> None:
 
 
 def test_update_pr(
-    tmp_path: Path, respx_mock: respx.Router, mock_push: Mock
+    tmp_path: Path, respx_mock: respx.Router, github_key: str, mock_push: Mock
 ) -> None:
     runner = CliRunner()
     repo = Repo.init(str(tmp_path), initial_branch="main")
@@ -160,8 +161,8 @@ def test_update_pr(
         data = yaml.load(dst)
         assert data["repos"][2]["rev"] == "20.0.0"
         commit = repo.head.commit
-        assert commit.author.name == "Someone"
-        assert commit.author.email == "someone@example.com"
+        assert commit.author.name == "neophile"
+        assert commit.author.email == "neophile@example.com"
         assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
 
         nonlocal created_pr
@@ -171,11 +172,7 @@ def test_update_pr(
     mock_github_tags_from_precommit(
         respx_mock, src, {"ambv/black": ["20.0.0"]}
     )
-    respx_mock.get("https://api.github.com/user").mock(
-        return_value=Response(
-            200, json={"name": "Someone", "email": "someone@example.com"}
-        )
-    )
+    mock_app_authenticate(respx_mock, "foo/bar")
     respx_mock.get("https://api.github.com/repos/foo/bar").mock(
         return_value=Response(200, json={"default_branch": "main"})
     )
@@ -188,7 +185,14 @@ def test_update_pr(
     )
     mock_enable_auto_merge(respx_mock, "foo", "bar", "42")
 
-    result = runner.invoke(main, ["update", "--path", str(tmp_path), "--pr"])
+    result = runner.invoke(
+        main,
+        ["update", "--path", str(tmp_path), "--pr"],
+        env={
+            "NEOPHILE_GITHUB_PRIVATE_KEY": github_key,
+            "NEOPHILE_COMMIT_EMAIL": "neophile@example.com",
+        },
+    )
     assert result.exit_code == 0
     assert created_pr
     assert mock_push.call_args_list == [

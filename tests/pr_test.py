@@ -19,7 +19,7 @@ from neophile.pr import CommitMessage, GitHubRepository, PullRequester
 from neophile.repository import Repository
 from neophile.update.pre_commit import PreCommitUpdate
 
-from .support.github import mock_enable_auto_merge
+from .support.github import mock_app_authenticate, mock_enable_auto_merge
 from .util import setup_python_repo
 
 
@@ -28,12 +28,15 @@ async def test_pr(
     tmp_path: Path,
     client: AsyncClient,
     respx_mock: respx.Router,
+    github_key: str,
     mock_push: Mock,
 ) -> None:
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
-        github_user="someone", github_token=SecretStr("some-token")
+        commit_name="Someone",
+        commit_email="someone@example.com",
+        github_private_key=SecretStr(github_key),
     )
     update = PreCommitUpdate(
         path=tmp_path / ".pre-commit-config.yaml",
@@ -42,11 +45,7 @@ async def test_pr(
         current="19.10b0",
         latest="23.3.0",
     )
-    respx_mock.get("https://api.github.com/user").mock(
-        return_value=Response(
-            200, json={"name": "Someone", "email": "someone@example.com"}
-        )
-    )
+    mock_app_authenticate(respx_mock, "foo/bar")
     respx_mock.get("https://api.github.com/repos/foo/bar").mock(
         return_value=Response(200, json={"default_branch": "main"})
     )
@@ -81,13 +80,14 @@ async def test_pr(
 
 @pytest.mark.asyncio
 async def test_pr_push_failure(
-    tmp_path: Path, client: AsyncClient, respx_mock: respx.Router
+    tmp_path: Path,
+    client: AsyncClient,
+    respx_mock: respx.Router,
+    github_key: str,
 ) -> None:
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
-    config = Config(
-        github_user="someone", github_token=SecretStr("some-token")
-    )
+    config = Config(github_private_key=SecretStr(github_key))
     update = PreCommitUpdate(
         path=tmp_path / ".pre-commit-config.yaml",
         applied=False,
@@ -99,11 +99,7 @@ async def test_pr_push_failure(
     push_error = PushInfo(
         PushInfo.ERROR, None, "", remote, summary="Some error"
     )
-    respx_mock.get("https://api.github.com/user").mock(
-        return_value=Response(
-            200, json={"name": "Someone", "email": "someone@example.com"}
-        )
-    )
+    mock_app_authenticate(respx_mock, "foo/bar")
     respx_mock.get("https://api.github.com/repos/foo/bar").mock(
         return_value=Response(200, json={"default_branch": "main"})
     )
@@ -126,12 +122,15 @@ async def test_pr_no_automerge(
     tmp_path: Path,
     client: AsyncClient,
     respx_mock: respx.Router,
+    github_key: str,
     mock_push: Mock,
 ) -> None:
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
-        github_user="someone", github_token=SecretStr("some-token")
+        commit_name="Someone",
+        commit_email="someone@example.com",
+        github_private_key=SecretStr(github_key),
     )
     update = PreCommitUpdate(
         path=tmp_path / ".pre-commit-config.yaml",
@@ -140,11 +139,7 @@ async def test_pr_no_automerge(
         current="19.10b0",
         latest="23.3.0",
     )
-    respx_mock.get("https://api.github.com/user").mock(
-        return_value=Response(
-            200, json={"name": "Someone", "email": "someone@example.com"}
-        )
-    )
+    mock_app_authenticate(respx_mock, "foo/bar")
     respx_mock.get("https://api.github.com/repos/foo/bar").mock(
         return_value=Response(200, json={"default_branch": "main"})
     )
@@ -182,15 +177,16 @@ async def test_pr_update(
     tmp_path: Path,
     client: AsyncClient,
     respx_mock: respx.Router,
+    github_key: str,
     mock_push: Mock,
 ) -> None:
     """Test updating an existing PR."""
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
-        github_email="otheremail@example.com",
-        github_token=SecretStr("some-token"),
-        github_user="someone",
+        commit_name="Someone",
+        commit_email="otheremail@example.com",
+        github_private_key=SecretStr(github_key),
     )
     update = PreCommitUpdate(
         path=tmp_path / ".pre-commit-config.yaml",
@@ -212,11 +208,7 @@ async def test_pr_update(
         updated_pr = True
         return Response(200)
 
-    respx_mock.get("https://api.github.com/user").mock(
-        return_value=Response(
-            200, json={"name": "Someone", "email": "someone@example.com"}
-        )
-    )
+    mock_app_authenticate(respx_mock, "foo/bar")
     respx_mock.get("https://api.github.com/repos/foo/bar").mock(
         return_value=Response(200, json={})
     )
@@ -241,18 +233,16 @@ async def test_pr_update(
     assert not repo.is_dirty()
     assert repo.head.ref.name == "u/neophile"
     commit = repo.head.commit
-    assert commit.author.name == "someone"
+    assert commit.author.name == "Someone"
     assert commit.author.email == "otheremail@example.com"
-    assert commit.committer.name == "someone"
+    assert commit.committer.name == "Someone"
     assert commit.committer.email == "otheremail@example.com"
 
 
 @pytest.mark.asyncio
 async def test_get_github_repo(tmp_path: Path, client: AsyncClient) -> None:
     repo = Repo.init(str(tmp_path), initial_branch="main")
-
-    config = Config(github_user="test", github_token=SecretStr("some-token"))
-    pr = PullRequester(config, client)
+    pr = PullRequester(Config(), client)
 
     remote = Remote.create(repo, "origin", "git@github.com:foo/bar.git")
     github_repo = pr._get_github_repo(repo)
