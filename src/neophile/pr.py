@@ -13,8 +13,8 @@ from gidgethub import QueryError
 from gidgethub.httpx import GitHubAPI
 from git import PushInfo
 from git.repo import Repo
-from git.util import Actor
 from httpx import AsyncClient
+from safir.github import GitHubAppClientFactory
 
 from .config import Config
 from .exceptions import PushError
@@ -90,10 +90,11 @@ class PullRequester:
 
     def __init__(self, config: Config, http_client: AsyncClient) -> None:
         self._config = config
-        self._github = GitHubAPI(
-            http_client,
-            config.github_user,
-            oauth_token=config.github_token.get_secret_value(),
+        self._factory = GitHubAppClientFactory(
+            id=config.github_app_id,
+            key=config.github_private_key.get_secret_value(),
+            name="lsst-sqre/neophile",
+            http_client=http_client,
         )
 
     async def make_pull_request(
@@ -115,15 +116,27 @@ class PullRequester:
         """
         repo = Repo(str(path))
         github_repo = self._get_github_repo(repo)
-        default_branch = await self._get_github_default_branch(github_repo)
-        pr_number = await self._get_pr(github_repo, default_branch)
+        github = await self._factory.create_installation_client_for_repo(
+            owner=github_repo.owner,
+            repo=github_repo.repo,
+        )
+        default_branch = await self._get_github_default_branch(
+            github, github_repo
+        )
+        pr_number = await self._get_pr(github, github_repo, default_branch)
 
         message = await self._commit_changes(repo, changes)
         self._push_branch(repo)
         if pr_number is not None:
-            await self._update_pr(github_repo, pr_number, message)
+            await self._update_pr(
+                github=github,
+                github_repo=github_repo,
+                pr_number=pr_number,
+                message=message,
+            )
         else:
             await self._create_pr(
+                github=github,
                 repo=repo,
                 github_repo=github_repo,
                 base_branch=default_branch,
@@ -167,16 +180,17 @@ class PullRequester:
         CommitMessage
             Commit message of the commit.
         """
-        actor = await self._get_github_actor()
         for change in changes:
             repo.index.add(str(change.path))
         message = self._build_commit_message(changes)
+        actor = self._config.actor
         repo.index.commit(str(message), author=actor, committer=actor)
         return message
 
     async def _create_pr(
         self,
         *,
+        github: GitHubAPI,
         repo: Repo,
         github_repo: GitHubRepository,
         base_branch: str,
@@ -186,6 +200,8 @@ class PullRequester:
 
         Parameters
         ----------
+        github
+            GitHub API client.
         repo
             Local Git repository.
         github_repo
@@ -204,15 +220,16 @@ class PullRequester:
             "maintainer_can_modify": True,
             "draft": False,
         }
-        response = await self._github.post(
+        response = await github.post(
             "/repos{/owner}{/repo}/pulls",
             url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
             data=data,
         )
-        await self._enable_auto_merge(github_repo, str(response["number"]))
+        pr_number = str(response["number"])
+        await self._enable_auto_merge(github, github_repo, pr_number)
 
     async def _enable_auto_merge(
-        self, github_repo: GitHubRepository, pr_number: str
+        self, github: GitHubAPI, github_repo: GitHubRepository, pr_number: str
     ) -> None:
         """Enable automerge for a PR.
 
@@ -220,6 +237,8 @@ class PullRequester:
 
         Parameters
         ----------
+        github
+            GitHub API client.
         github_repo
             GitHub repository in which to create the pull request.
         pr_number
@@ -229,14 +248,14 @@ class PullRequester:
         # mutation.  To use that, we have to retrieve the GraphQL ID of the PR
         # we just created, and then send the mutation.
         try:
-            response = await self._github.graphql(
+            response = await github.graphql(
                 _GRAPHQL_PR_ID,
                 owner=github_repo.owner,
                 repo=github_repo.repo,
                 pr_number=int(pr_number),
             )
             pr_id = response["repository"]["pullRequest"]["id"]
-            response = await self._github.graphql(
+            response = await github.graphql(
                 _GRAPHQL_ENABLE_AUTO_MERGE, pr_id=pr_id
             )
         except QueryError as e:
@@ -246,26 +265,8 @@ class PullRequester:
             )
             logging.exception(msg)
 
-    async def _get_github_actor(self) -> Actor:
-        """Get authorship information for commits.
-
-        Using the GitHub API, retrieve the name and email address of the user
-        for which we have a GitHub token.  Use that to construct the Author
-        information for a GitHub commit.
-
-        Returns
-        -------
-        author
-            Actor to use for commits.
-        """
-        if self._config.github_email:
-            return Actor(self._config.github_user, self._config.github_email)
-        else:
-            response = await self._github.getitem("/user")
-            return Actor(response["name"], response["email"])
-
     async def _get_github_default_branch(
-        self, github_repo: GitHubRepository
+        self, github: GitHubAPI, github_repo: GitHubRepository
     ) -> str:
         """Get the main branch of the repository.
 
@@ -273,6 +274,8 @@ class PullRequester:
 
         Parameters
         ----------
+        github
+            GitHub API client.
         github_repo
             GitHub repository in which to create the pull request.
 
@@ -281,7 +284,7 @@ class PullRequester:
         str
             Name of the main branch.
         """
-        repo = await self._github.getitem(
+        repo = await github.getitem(
             "/repos{/owner}{/repo}",
             url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
         )
@@ -309,12 +312,17 @@ class PullRequester:
         return GitHubRepository(owner=owner, repo=github_repo)
 
     async def _get_pr(
-        self, github_repo: GitHubRepository, base_branch: str
+        self,
+        github: GitHubAPI,
+        github_repo: GitHubRepository,
+        base_branch: str,
     ) -> str | None:
         """Get the pull request number of an existing neophile PR.
 
         Parameters
         ----------
+        github
+            GitHub API client.
         github_repo
             GitHub repository in which to search for a pull request.
         base_branch
@@ -337,7 +345,7 @@ class PullRequester:
             "base": base_branch,
         }
 
-        prs = self._github.getiter(
+        prs = github.getiter(
             f"/repos{{/owner}}{{/repo}}/pulls?{urlencode(query)}",
             url_vars={"owner": github_repo.owner, "repo": github_repo.repo},
         )
@@ -391,6 +399,8 @@ class PullRequester:
 
     async def _update_pr(
         self,
+        *,
+        github: GitHubAPI,
         github_repo: GitHubRepository,
         pr_number: str,
         message: CommitMessage,
@@ -399,6 +409,8 @@ class PullRequester:
 
         Parameters
         ----------
+        github
+            GitHub API client.
         github_repo
             GitHub repository in which to create the pull request.
         pr_number
@@ -410,7 +422,7 @@ class PullRequester:
             "title": message.title,
             "body": message.body,
         }
-        await self._github.patch(
+        await github.patch(
             "/repos{/owner}{/repo}/pulls{/pull_number}",
             url_vars={
                 "owner": github_repo.owner,
@@ -419,4 +431,4 @@ class PullRequester:
             },
             data=data,
         )
-        await self._enable_auto_merge(github_repo, pr_number)
+        await self._enable_auto_merge(github, github_repo, pr_number)

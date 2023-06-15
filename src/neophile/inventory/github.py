@@ -8,7 +8,6 @@ from gidgethub import GitHubException
 from gidgethub.httpx import GitHubAPI
 from httpx import AsyncClient, HTTPError
 
-from ..config import Config
 from .version import PackagingVersion, ParsedVersion, SemanticVersion
 
 __all__ = ["GitHubInventory"]
@@ -19,18 +18,12 @@ class GitHubInventory:
 
     Parameters
     ----------
-    config
-        neophile configuration.
     http_client
         HTTP client to use for requests.
     """
 
-    def __init__(self, config: Config, http_client: AsyncClient) -> None:
-        self._github = GitHubAPI(
-            http_client,
-            config.github_user,
-            oauth_token=config.github_token.get_secret_value(),
-        )
+    def __init__(self, http_client: AsyncClient) -> None:
+        self._github = GitHubAPI(http_client, "lsst-sqre/neophile")
 
     async def inventory(
         self, owner: str, repo: str, *, semantic: bool = False

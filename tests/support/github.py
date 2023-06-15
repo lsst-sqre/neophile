@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
@@ -16,10 +17,28 @@ from ruamel.yaml import YAML
 from neophile.pr import _GRAPHQL_ENABLE_AUTO_MERGE, _GRAPHQL_PR_ID
 
 __all__ = [
+    "mock_app_authenticate",
     "mock_enable_auto_merge",
     "mock_github_tags",
     "mock_github_tags_from_precommit",
 ]
+
+
+def mock_app_authenticate(respx_mock: respx.Router, slug: str) -> None:
+    """Set up mocks for the GitHub API calls used for app authentication.
+
+    Parameters
+    ----------
+    respx_mock
+        Mock object for HTTP requests.
+    slug
+        Slug for the GitHub repository.
+    """
+    url = f"https://api.github.com/repos/{slug}/installation"
+    respx_mock.get(url).mock(return_value=Response(200, json={"id": 1}))
+    url = "https://api.github.com/app/installations/1/access_tokens"
+    response = Response(200, json={"token": "ghs_" + os.urandom(16).hex()})
+    respx_mock.post(url).mock(return_value=response)
 
 
 def mock_enable_auto_merge(

@@ -81,7 +81,7 @@ class Factory:
             New analyzer.
         """
         scanner = PreCommitScanner()
-        inventory = GitHubInventory(self._config, self._http_client)
+        inventory = GitHubInventory(self._http_client)
         return PreCommitAnalyzer(scanner, inventory)
 
     def create_python_analyzer(self) -> PythonAnalyzer:
