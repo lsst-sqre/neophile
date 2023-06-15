@@ -8,6 +8,7 @@ name: Periodic CI
 "on":
   schedule:
     - cron: "0 12 * * 1"
+  workflow_dispatch: {}
 
 jobs:
   test:
@@ -28,6 +29,16 @@ jobs:
           python-version: ${{ matrix.python }}
           tox-envs: "lint,typing,py"
           use-cache: false
+
+      - name: Report status
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: "failure"
+          notification_title: "Periodic test for {repo} failed"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK }}
 
   docs:
     runs-on: ubuntu-latest
@@ -52,6 +63,16 @@ jobs:
           tox-envs: "docs,docs-linkcheck"
           use-cache: false
 
+      - name: Report status
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: "failure"
+          notification_title: "Periodic documentation build for {repo} failed"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK }}
+
   pypi:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -68,3 +89,13 @@ jobs:
           pypi-token: ""
           python-version: "3.11"
           upload: false
+
+      - name: Report status
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notify_when: "failure"
+          notification_title: "Periodic PyPI test for {repo} failed"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK }}
