@@ -34,6 +34,7 @@ python_api_dir = "dev/internals"
 rst_epilog_file = "_rst_epilog.rst"
 
 [sphinx.intersphinx.projects]
+git = "https://gitpython.readthedocs.io/en/stable/"
 packaging = "https://packaging.pypa.io/en/latest/"
 python = "https://docs.python.org/3/"
 semver = "https://python-semver.readthedocs.io/en/latest/"
