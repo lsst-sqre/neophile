@@ -6,7 +6,7 @@ This page gives an overview of how neophile releases are made.
 This information is only useful for maintainers.
 
 neophile's releases are largely automated through GitHub Actions (see the `ci.yaml`_ workflow file for details).
-When a semantic version tag is pushed to GitHub, documentation is built and pushed for each version (see https://neophile.lsst.io/v).
+When a semantic version tag is pushed to GitHub, documentation is built and pushed `for each version <https://neophile.lsst.io/v/index.html>`__).
 
 .. _`ci.yaml`: https://github.com/lsst-sqre/neophile/blob/main/.github/workflows/ci.yaml
 

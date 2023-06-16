@@ -1,6 +1,8 @@
-###########################################
-Using neophile with Dependabot and Renovate
-###########################################
+.. _managing-dependencies:
+
+#####################
+Managing dependencies
+#####################
 
 As documented in :sqr:`042`, none of Dependabot, Mend Renovate, or neophile can handle all types of dependencies with the desired feature set.
 All three should therefore be used in different situations.
@@ -56,37 +58,6 @@ For Python library packages, add the following to the ``updates`` key:
 
 No further repository configuration is required.
 
-neophile
-========
-
-neophile is a locally-written service to fill gaps left by Dependabot and Renovate.
-Use it for:
-
-#. Python frozen dependencies
-#. pre-commit hooks
-
-Any Python package using pre-commit should use neophile, but is particularly useful for Python applications using dependencies frozen with ``pip-compile``.
-
-To enable neophile scanning of a repository, the GitHub ``sqrbot`` user must be added as a collaborator on the repository with ``Write`` permissions.
-This will already be done automatically if ``sqrbot`` created the repository.
-Otherwise, it must be done by a repository or organization admin.
-Do this in the GitHub web interface by going to the repository, going to :guilabel:`Settings`, and then going to :guilabel:`Manage access`.
-Then use :guilabel:`Invite teams or people` to add ``sqrbot`` with the ``Write`` role.
-
-Then, enable neophile by editing `its configuration in Roundtable <https://github.com/lsst-sqre/roundtable/blob/master/deployments/neophile/values.yaml>`__.
-Add the repository to the ``repositories`` key.
-A sample entry looks like:
-
-.. code-block:: yaml
-
-   - owner: "lsst-sqre"
-     repo: "neophile"
-
-for the ``lsst-sqre/neophile`` repository.
-
-This is the only configuration that is necessary (or supported).
-neophile will create a pull request weekly with any updates that it has detected to be needed and set automerge on that pull request.
-
 Mend Renovate
 =============
 
@@ -98,7 +69,7 @@ Use it for:
 #. Packages that use ``docker-compose`` to stand up a test environment.
    (Although consider using the ``latest`` tag of any test dependencies if you don't expect their behavior to change significantly, such as Redis and PostgreSQL images used only for testing.)
 
-Renovate is capable of doing all of the updates that dependabot can do, but since dependabot is a first-party GitHub application that is almost certain not to go away, we prefer to use it when it does a good enough job.
+Renovate is capable of doing all of the updates that Dependabot can do, but since Dependabot is a first-party GitHub application that is almost certain not to go away, we prefer to use it when it does a good enough job.
 
 Renovate generates a lot of spam and pull requests if enabled for an entire organization, so we selectively enable it only for the repositories where we want to use it.
 To enable it for a repository, go to the GitHub page for the organization that owns that repository (`lsst-sqre <https://github.com/lsst-sqre>`__, for example).
@@ -179,3 +150,16 @@ This groups updates to the ``docker-compose`` configuration into a single pull r
 Once you have updated the configuration, push the modified configuration to the same PR branch that Renovate used originally.
 Renovate will then regenerate its preview of PRs that it will create.
 When you're happy with the results, merge the PR, and Renovate will start scanning the repository.
+
+neophile
+========
+
+neophile is a locally-written service to fill gaps left by Dependabot and Renovate.
+Use it for:
+
+#. Python frozen dependencies
+#. pre-commit hooks
+
+Any Python package using pre-commit should use neophile, but is particularly useful for Python applications using dependencies frozen with ``pip-compile``.
+
+To enable neophile for a repository, see :doc:`github-actions`.
