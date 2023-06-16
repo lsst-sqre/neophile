@@ -2,16 +2,15 @@
 User guide
 ##########
 
-.. toctree::
-   :caption: Overview
-
-   setup
+neophile can be installed directly from PyPI and run as a command-line tool, but it is normally run via GitHub Actions.
 
 .. toctree::
-   :caption: Installation
+   :caption: Guides
 
-   install
-   usage
+   prerequisites
+   running
+   github-actions
+   managing-dependencies
 
 .. toctree::
    :caption: Reference
