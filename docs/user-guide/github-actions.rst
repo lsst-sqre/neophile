@@ -89,7 +89,7 @@ Any package that uses pre-commit may wish to add the following workflow file, co
 
          - name: Report status
            if: always()
-           uses: ravsamhq/notify-slack-action@v1
+           uses: ravsamhq/notify-slack-action@v2
            with:
              status: ${{ job.status }}
              notify_when: "failure"
@@ -139,9 +139,10 @@ Addressing upgrade issues regularly avoids having to do a massive round of upgra
 The recommended approach for doing this is a weekly GitHub Actions workflow that uses neophile to update dependencies and then runs the test suite.
 
 .. code-block:: yaml
+   :caption: periodic.yaml
 
    # This is a separate run of the Python test suite that doesn't cache
-   # the tox environment and runs from a schedule.  The purpose is to test
+   # the tox environment and runs from a schedule. The purpose is to test
    # compatibility with the latest versions of all modules neophile
    # depends on, since neophile (being a PyPI application) does not pin
    # its dependencies.
@@ -188,7 +189,7 @@ The recommended approach for doing this is a weekly GitHub Actions workflow that
 
          - name: Report status
            if: always()
-           uses: ravsamhq/notify-slack-action@v1
+           uses: ravsamhq/notify-slack-action@v2
            with:
              status: ${{ job.status }}
              notify_when: "failure"
