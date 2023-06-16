@@ -11,6 +11,34 @@ Changes for the upcoming release can be found in [changelog.d](https://github.co
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-1.0.0'></a>
+## 1.0.0 (2023-06-16)
+
+### Backwards-incompatible changes
+
+- neophile is now intended to be run either via GitHub Actions or on a local checkout, and never as a Kubernetes service. The `neophile process` command, the configuration specific to that command (work area, lists of repositories), and support for running inside a virtualenv have been removed.
+- When creating PRs, neophile now must be configured as a GitHub App with a suitable application ID and private key in environment variables.
+- neophile no longer provides Docker images and instead is now a conventional Python package installable from PyPI.
+- Support for Helm and Kustomize dependency checking and updating has been removed, along with the configuration options for Helm chart caching and version patterns in Helm charts. Mend Renovate and Dependabot support Helm and Kustomize dependency checking with more features, and we haven't used this support in several years.
+- Add a new `neophile update` command that updates known dependencies in the provided tree and (if the `--pr` flag is given) creates a GitHub pull request. This replaces the `--update` and `--pr` flags to `neophile analyze`.
+- When creating PRs, neophile no longer embeds the GitHub username and token in the remote URL. It instead uses the existing `origin` remote and assumes Git operations are already authenticated.
+- Name and email address are now used only for Git commits, so the names of the environment variables to set them have changed accordingly to `NEOPHILE_COMMIT_NAME` and `NEOPHILE_COMMIT_EMAIL`.
+
+### New features
+
+- Add a new `neophile check` command that checks to see if all dependencies are up-to-date and exits with a non-zero status and messages to standard error if they are not. This is intended for use as a GitHub Actions check.
+- The types of dependencies to analyze may now be specified as command-line arguments to `neophile analyze` (and the new `neophile check` and `neophile update` commands). The default continues to be to analyze all known dependencies.
+
+### Bug fixes
+
+- `neophile analyze` now prints nothing if no pending updates were found, and omits dependency types with no pending updates from its output.
+
+### Other changes
+
+- neophile now uses the [Ruff](https://beta.ruff.rs/docs/) linter instead of flake8 and isort.
+- The neophile change log is now maintained using [scriv](https://scriv.readthedocs.io/en/latest/).
+- neophile no longer creates a separate remote for pusing PRs and instead uses the `origin` remote directly.
+
 ## 0.4.0 (2023-05-03)
 
 ### Backwards-incompatible changes
