@@ -143,9 +143,7 @@ The recommended approach for doing this is a weekly GitHub Actions workflow that
 
    # This is a separate run of the Python test suite that doesn't cache
    # the tox environment and runs from a schedule. The purpose is to test
-   # compatibility with the latest versions of all modules neophile
-   # depends on, since neophile (being a PyPI application) does not pin
-   # its dependencies.
+   # whether updating pinned dependencies would cause any tests to fail.
 
    name: Periodic CI
 
