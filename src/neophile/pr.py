@@ -11,7 +11,7 @@ from urllib.parse import ParseResult, urlencode, urlparse
 
 from gidgethub import QueryError
 from gidgethub.httpx import GitHubAPI
-from git import PushInfo
+from git import PushInfo, Remote
 from git.repo import Repo
 from httpx import AsyncClient
 from safir.github import GitHubAppClientFactory
@@ -120,13 +120,16 @@ class PullRequester:
             owner=github_repo.owner,
             repo=github_repo.repo,
         )
+        if not github.oauth_token:
+            # Mostly for mypy's benefit.
+            raise RuntimeError("No OAuth token for installation client")
         default_branch = await self._get_github_default_branch(
             github, github_repo
         )
         pr_number = await self._get_pr(github, github_repo, default_branch)
 
         message = await self._commit_changes(repo, changes)
-        self._push_branch(repo)
+        self._push_branch(repo, github.oauth_token)
         if pr_number is not None:
             await self._update_pr(
                 github=github,
@@ -376,13 +379,47 @@ class PullRequester:
             path = url.rsplit(":", 1)[-1]
             return urlparse(f"https://github.com/{path}")
 
-    def _push_branch(self, repo: Repo) -> None:
+    def _get_authenticated_remote(self, repo: Repo, token: str) -> str:
+        """Construct an authenticated URL for use as a Git remote.
+
+        When running in GitHub Actions, we need to push changes using the
+        GitHub App installation token rather than the default GitHub Actions
+        token so that GitHub Actions CI workflows will run.
+
+        This is a separate method primarily for testing purposes.
+
+        Parameters
+        ----------
+        repo
+            Local Git repository. The ``origin`` remote's URL will be parsed
+            to determine what GitHub repository this is a clone of.
+        token
+            GitHub App installation token.
+
+        Returns
+        -------
+        str
+            URL to use as an authenticated remote for Git pushes.
+        """
+        url = self._get_remote_url(repo)
+        host = url.netloc.rsplit("@", 1)[-1]
+        url = url._replace(scheme="https", netloc=f"neophile:{token}@{host}")
+        return url.geturl()
+
+    def _push_branch(self, repo: Repo, token: str) -> None:
         """Push the ``u/neophile`` branch to GitHub.
+
+        The complication here is that when running in a GitHub Action, the
+        default remote is authenticated using the GitHub Action token, which
+        will not allow GitHub Action CI to run. We need to instead push to a
+        remote using our GitHub App installation token.
 
         Parameters
         ----------
         repo
             Local Git repository.
+        token
+            GitHub App installation token.
 
         Raises
         ------
@@ -390,12 +427,16 @@ class PullRequester:
             Raised if pushing the branch to GitHub failed.
         """
         branch = repo.head.ref.name
-        origin = repo.remotes.origin
-        push_info = origin.push(f"{branch}:{branch}", force=True)
-        for result in push_info:
-            if result.flags & PushInfo.ERROR:
-                msg = f"Pushing {branch} failed: {result.summary}"
-                raise PushError(msg)
+        url = self._get_authenticated_remote(repo, token)
+        remote = Remote.add(repo, "tmp-neophile", url)
+        try:
+            push_info = remote.push(f"{branch}:{branch}", force=True)
+            for result in push_info:
+                if result.flags & PushInfo.ERROR:
+                    msg = f"Pushing {branch} failed: {result.summary}"
+                    raise PushError(msg)
+        finally:
+            Remote.remove(repo, "tmp-neophile")
 
     async def _update_pr(
         self,
