@@ -11,6 +11,13 @@ Changes for the upcoming release can be found in [changelog.d](https://github.co
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2.0.1'></a>
+## 2.0.1 (2023-07-07)
+
+### Bug fixes
+
+- Pin Pydantic to version 1.x for now. neophile will require changes to work properly with Pydantic 2.x, which will be done after Safir adds support for it.
+
 <a id='changelog-2.0.0'></a>
 ## 2.0.0 (2023-07-07)
 
