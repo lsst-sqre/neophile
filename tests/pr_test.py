@@ -33,11 +33,7 @@ async def test_pr(
 ) -> None:
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
-    config = Config(
-        commit_name="Someone",
-        commit_email="someone@example.com",
-        github_private_key=SecretStr(github_key),
-    )
+    config = Config(github_private_key=SecretStr(github_key))
     update = PreCommitUpdate(
         path=tmp_path / ".pre-commit-config.yaml",
         applied=False,
@@ -46,6 +42,9 @@ async def test_pr(
         latest="23.3.0",
     )
     mock_app_authenticate(respx_mock, "foo/bar")
+    respx_mock.get(f"https://api.github.com/users/{config.username}").mock(
+        return_value=Response(200, json={"id": 123456}),
+    )
     respx_mock.get("https://api.github.com/repos/foo/bar").mock(
         return_value=Response(200, json={"default_branch": "main"})
     )
@@ -70,10 +69,11 @@ async def test_pr(
     assert not repo.is_dirty()
     assert repo.head.ref.name == "u/neophile"
     commit = repo.head.commit
-    assert commit.author.name == "Someone"
-    assert commit.author.email == "someone@example.com"
-    assert commit.committer.name == "Someone"
-    assert commit.committer.email == "someone@example.com"
+    expected_email = f"123456+{config.username}@users.noreply.github.com"
+    assert commit.author.name == config.username
+    assert commit.author.email == expected_email
+    assert commit.committer.name == config.username
+    assert commit.committer.email == expected_email
     change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
     assert "tmp-neophile" not in [r.name for r in repo.remotes]
@@ -88,7 +88,10 @@ async def test_pr_push_failure(
 ) -> None:
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
-    config = Config(github_private_key=SecretStr(github_key))
+    config = Config(
+        commit_email="someone@example.com",
+        github_private_key=SecretStr(github_key),
+    )
     update = PreCommitUpdate(
         path=tmp_path / ".pre-commit-config.yaml",
         applied=False,
@@ -129,7 +132,6 @@ async def test_pr_no_automerge(
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
-        commit_name="Someone",
         commit_email="someone@example.com",
         github_private_key=SecretStr(github_key),
     )
@@ -165,9 +167,9 @@ async def test_pr_no_automerge(
     assert not repo.is_dirty()
     assert repo.head.ref.name == "u/neophile"
     commit = repo.head.commit
-    assert commit.author.name == "Someone"
+    assert commit.author.name == config.username
     assert commit.author.email == "someone@example.com"
-    assert commit.committer.name == "Someone"
+    assert commit.committer.name == config.username
     assert commit.committer.email == "someone@example.com"
     change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
@@ -186,7 +188,7 @@ async def test_pr_update(
     repo = setup_python_repo(tmp_path)
     Remote.create(repo, "origin", "https://github.com/foo/bar")
     config = Config(
-        commit_name="Someone",
+        username="neophile[bot]",
         commit_email="otheremail@example.com",
         github_private_key=SecretStr(github_key),
     )
@@ -235,9 +237,9 @@ async def test_pr_update(
     assert not repo.is_dirty()
     assert repo.head.ref.name == "u/neophile"
     commit = repo.head.commit
-    assert commit.author.name == "Someone"
+    assert commit.author.name == "neophile[bot]"
     assert commit.author.email == "otheremail@example.com"
-    assert commit.committer.name == "Someone"
+    assert commit.committer.name == "neophile[bot]"
     assert commit.committer.email == "otheremail@example.com"
 
 

@@ -161,8 +161,8 @@ def test_update_pr(
         data = yaml.load(dst)
         assert data["repos"][2]["rev"] == "20.0.0"
         commit = repo.head.commit
-        assert commit.author.name == "neophile"
-        assert commit.author.email == "neophile@example.com"
+        assert commit.author.name == "neophile-square[bot]"
+        assert commit.author.email == "someone@example.com"
         assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
 
         nonlocal created_pr
@@ -189,8 +189,8 @@ def test_update_pr(
         main,
         ["update", "--path", str(tmp_path), "--pr"],
         env={
+            "NEOPHILE_COMMIT_EMAIL": "someone@example.com",
             "NEOPHILE_GITHUB_PRIVATE_KEY": github_key,
-            "NEOPHILE_COMMIT_EMAIL": "neophile@example.com",
         },
     )
     assert result.exit_code == 0
