@@ -11,6 +11,21 @@ Changes for the upcoming release can be found in [changelog.d](https://github.co
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-2.0.0'></a>
+## 2.0.0 (2023-07-07)
+
+### Backwards-incompatible changes
+
+- The `NEOPHILE_COMMIT_NAME` environment variable is no longer supported. Instead, `NEOPHILE_USERNAME` configures the GitHub username of the running instantiation of neophile, used as both the name for Git commits and to construct the email address unless `NEOPHILE_COMMIT_EMAIL` is given. `NEOPHILE_USERNAME` defaults to `neophile-square[bot]`, the instantiation of neophile for the lsst-sqre organization.
+
+### New features
+
+- Setting `NEOPHILE_COMMIT_EMAIL` is now optional. If not set, the UID of the GitHub user from `NEOPHILE_USERNAME` is retrieved from the GitHub API and used to form a standard GitHub no-replay email address.
+
+### Bug fixes
+
+- Use the GitHub App installation token when pushing Git changes in preparation for creating a PR rather than using the default GitHub Actions token. If the branch was pushed with the GitHub Actions token, further GitHub Actions refuse to run on that branch to avoid creating a loop, but we need GitHub Actions to run so that the dependency update PR can be automerged.
+
 <a id='changelog-1.0.0'></a>
 ## 1.0.0 (2023-06-16)
 
