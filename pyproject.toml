@@ -24,7 +24,7 @@ dependencies = [
     "gidgethub",
     "httpx",
     "packaging",
-    "pydantic",
+    "pydantic<2",
     "ruamel.yaml",
     "safir",
     "semver",
