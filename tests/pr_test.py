@@ -76,6 +76,7 @@ async def test_pr(
     assert commit.committer.email == "someone@example.com"
     change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
+    assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
 @pytest.mark.asyncio
@@ -170,6 +171,7 @@ async def test_pr_no_automerge(
     assert commit.committer.email == "someone@example.com"
     change = "Update ambv/black pre-commit hook from 19.10b0 to 23.3.0"
     assert commit.message == f"{CommitMessage.title}\n\n- {change}\n"
+    assert "tmp-neophile" not in [r.name for r in repo.remotes]
 
 
 @pytest.mark.asyncio
@@ -237,6 +239,30 @@ async def test_pr_update(
     assert commit.author.email == "otheremail@example.com"
     assert commit.committer.name == "Someone"
     assert commit.committer.email == "otheremail@example.com"
+
+
+@pytest.mark.asyncio
+async def test_get_authenticated_remote(
+    tmp_path: Path, client: AsyncClient
+) -> None:
+    repo = Repo.init(str(tmp_path), initial_branch="main")
+    pr = PullRequester(Config(), client)
+
+    remote = Remote.create(repo, "origin", "https://github.com/foo/bar")
+    url = pr._get_authenticated_remote(repo, "some-token")
+    assert url == "https://neophile:some-token@github.com/foo/bar"
+
+    remote.set_url("https://foo@github.com:8080/foo/bar")
+    url = pr._get_authenticated_remote(repo, "some-token")
+    assert url == "https://neophile:some-token@github.com:8080/foo/bar"
+
+    remote.set_url("git@github.com:bar/foo")
+    url = pr._get_authenticated_remote(repo, "some-token")
+    assert url == "https://neophile:some-token@github.com/bar/foo"
+
+    remote.set_url("ssh://git:blahblah@github.com/baz/stuff")
+    url = pr._get_authenticated_remote(repo, "some-token")
+    assert url == "https://neophile:some-token@github.com/baz/stuff"
 
 
 @pytest.mark.asyncio
