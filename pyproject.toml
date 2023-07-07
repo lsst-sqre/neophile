@@ -20,7 +20,7 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
     "GitPython",
-    "click",
+    "click!=8.1.4",  # see https://github.com/pallets/click/issues/2558
     "gidgethub",
     "httpx",
     "packaging",
