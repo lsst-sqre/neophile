@@ -19,6 +19,7 @@ from httpx import AsyncClient, Request, Response
 from pydantic import SecretStr
 from ruamel.yaml import YAML
 
+from neophile.config import Config
 from neophile.factory import Factory
 from neophile.pr import CommitMessage
 
@@ -113,7 +114,7 @@ async def test_processor(
         data = yaml.load(tmp_path / "tmp" / ".pre-commit-config.yaml")
         assert data["repos"][2]["rev"] == "20.0.0"
         commit = repo.head.commit
-        assert commit.author.name == "neophile"
+        assert commit.author.name == "neophile-square[bot]"
         assert commit.author.email == "someone@example.com"
         assert commit.message == f"{CommitMessage.title}\n\n{body}"
 
@@ -142,8 +143,10 @@ async def test_processor(
     # Unfortunately, the mock_push fixture can't be used here because we
     # want to use git.Remote.push in create_upstream_git_repository.
     factory = Factory(client)
-    factory._config.commit_email = "someone@example.com"
-    factory._config.github_private_key = SecretStr(github_key)
+    factory._config = Config(
+        commit_email="someone@example.com",
+        github_private_key=SecretStr(github_key),
+    )
     processor = factory.create_processor()
     with patch_clone_from("foo", "bar", upstream_path):
         with patch.object(Remote, "push") as mock_push:

@@ -83,7 +83,6 @@ Any package that uses pre-commit may wish to add the following workflow file, co
          - name: Run neophile
            run: neophile update --pr pre-commit
            env:
-             NEOPHILE_COMMIT_EMAIL: "24442459+sqrbot@users.noreply.github.com"
              NEOPHILE_GITHUB_APP_ID: ${{ secrets.NEOPHILE_APP_ID }}
              NEOPHILE_GITHUB_PRIVATE_KEY: ${{ secrets.NEOPHILE_PRIVATE_KEY }}
 
@@ -109,14 +108,14 @@ neophile configuration
 See :ref:`actions-setup` for more information.
 Two more environment variables may be set to customize neophile's behavior:
 
-``NEOPHILE_COMMIT_NAME`` (optional)
-    The name portion of the author and committer for the Git commit updating the dependencies.
-    If not set, defaults to ``neophile``.
-
-``NEOPHILE_COMMIT_EMAIL`` (required)
+``NEOPHILE_COMMIT_EMAIL`` (optional)
     The email address to use for the author and committer of the Git commit updating these dependencies.
-    The value shown in the example above is the GitHub email for the ``sqrbot`` user used by SQuaRE, and is an appropriate setting for SQuaRE-maintained packages.
-    For non-SQuaRE packages, set it to some appropriate value for your organization.
+    If this is not set, a standard GitHub email address will be derived from ``NEOPHILE_USERNAME``.
+
+``NEOPHILE_USERNAME`` (optional)
+    The GitHub username (``login``) of the GitHub App, used as the name portion of the author and committer for Git commits.
+    If ``NEOPHILE_COMMIT_EMAIL`` is not set, this is also used to retrieve the UID of this GitHub user and construct a standard GitHub email address to use for the commit.
+    If not set, defaults to ``neophile-square[bot]``.
 
 .. _slack-alerts:
 

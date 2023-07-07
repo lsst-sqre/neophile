@@ -13,6 +13,7 @@ from gidgethub import QueryError
 from gidgethub.httpx import GitHubAPI
 from git import PushInfo, Remote
 from git.repo import Repo
+from git.util import Actor
 from httpx import AsyncClient
 from safir.github import GitHubAppClientFactory
 
@@ -128,7 +129,7 @@ class PullRequester:
         )
         pr_number = await self._get_pr(github, github_repo, default_branch)
 
-        message = await self._commit_changes(repo, changes)
+        message = await self._commit_changes(repo, changes, github)
         self._push_branch(repo, github.oauth_token)
         if pr_number is not None:
             await self._update_pr(
@@ -165,7 +166,7 @@ class PullRequester:
         return CommitMessage(changes=descriptions)
 
     async def _commit_changes(
-        self, repo: Repo, changes: Sequence[Update]
+        self, repo: Repo, changes: Sequence[Update], github: GitHubAPI
     ) -> CommitMessage:
         """Commit a set of changes to the repository.
 
@@ -177,6 +178,8 @@ class PullRequester:
             Local Git repository.
         changes
             Changes to apply and commit.
+        github
+            GitHub API client.
 
         Returns
         -------
@@ -186,7 +189,16 @@ class PullRequester:
         for change in changes:
             repo.index.add(str(change.path))
         message = self._build_commit_message(changes)
-        actor = self._config.actor
+        username = self._config.username
+        if self._config.commit_email:
+            email = self._config.commit_email
+        else:
+            response = await github.getitem(
+                "/users{/user}", url_vars={"user": username}
+            )
+            uid = str(response["id"])
+            email = f"{uid}+{username}@users.noreply.github.com"
+        actor = Actor(username, email)
         repo.index.commit(str(message), author=actor, committer=actor)
         return message
 
