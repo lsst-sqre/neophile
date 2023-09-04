@@ -21,7 +21,7 @@ jobs:
           - "3.11"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run tox
         uses: lsst-sqre/run-tox@v1
@@ -45,7 +45,7 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # Ensure the documentation gets the right version.
           fetch-depth: 0
@@ -79,7 +79,7 @@ jobs:
     needs: [test, docs]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # full history for setuptools_scm
 
